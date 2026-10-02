@@ -1,0 +1,307 @@
+{"kind":"deck","id":"pr/yr6ang","name":"Deck"}
+{"kind":"layout","layoutId":"c4fcd417-e30c-49d4-9828-8dbb1d4ce36e","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"80ba2da7-8f55-4263-b806-82dd317784e9","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/04b439","slide":1,"title":"信息系统建设理解与下一阶段路径","textShapes":2}
+{"kind":"textbox","id":"sh/07ml0fuh","slide":1,"text":"信息系统建设理解与下一阶段路径","textPreview":"信息系统建设理解与下一阶段路径","textChars":15,"textLines":1,"bbox":[160,248,960,72]}
+{"kind":"textbox","id":"sh/z6dk7atw","slide":1,"text":"客户要求、运营能力与系统建设路径","textPreview":"客户要求、运营能力与系统建设路径","textChars":16,"textLines":1,"bbox":[240,330,800,36]}
+{"kind":"shape","id":"sh/y543y5cb","slide":1,"bbox":[0,652,780,30]}
+{"kind":"shape","id":"sh/9wf2dkby","slide":1,"bbox":[760,652,120,30]}
+{"kind":"shape","id":"sh/8v6l4fad","slide":1,"bbox":[858,652,422,30]}
+{"kind":"notes","id":"nt/04b439","slide":1,"text":"封面已去除公司 logo 和名称，仅保留原模板的蓝绿底栏风格。"}
+{"kind":"slide","id":"sl/83dhep","slide":2,"title":"汇报切入点","textShapes":9}
+{"kind":"textbox","id":"sh/ed07e1kb","slide":2,"text":"汇报切入点","textPreview":"汇报切入点","textChars":5,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/10r69g3m","slide":2,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/0zipgb21","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/n2tob6ls","slide":2,"text":"原系统/软件规划路径解读","textPreview":"原系统/软件规划路径解读","textChars":12,"textLines":1,"bbox":[86,180,320,54]}
+{"kind":"textbox","id":"sh/m107ilk7","slide":2,"text":"宁波海威与浙江海威已有两阶段系统规划，浙江海威因 CATL强化要求进一步补强。","textPreview":"宁波海威与浙江海威已有两阶段系统规划，浙江海威因 CATL强化要求进一步补强。","textChars":39,"textLines":1,"bbox":[86,252,320,190]}
+{"kind":"textbox","id":"sh/94b6dg3y","slide":2,"text":"运营能力剖析","textPreview":"运营能力剖析","textChars":6,"textLines":1,"bbox":[476,180,320,54]}
+{"kind":"textbox","id":"sh/o32pkb2d","slide":2,"text":"客户关注的不是系统名称，而是稳定交付、过程可控和质量可证明。","textPreview":"客户关注的不是系统名称，而是稳定交付、过程可控和质量可证明。","textChars":30,"textLines":1,"bbox":[476,252,320,190]}
+{"kind":"textbox","id":"sh/36pozmlo","slide":2,"text":"系统建设路径","textPreview":"系统建设路径","textChars":6,"textLines":1,"bbox":[866,180,320,54]}
+{"kind":"textbox","id":"sh/25gn6hk3","slide":2,"text":"系统工具要回应当前运作问题，并强化计划、物料、质量和设备数据能力。","textPreview":"系统工具要回应当前运作问题，并强化计划、物料、质量和设备数据能力。","textChars":33,"textLines":1,"bbox":[866,252,320,190]}
+{"kind":"textbox","id":"sh/wnap876l","slide":2,"text":"客户要求是入口，运营能力是主题，系统功能是手段。","textPreview":"客户要求是入口，运营能力是主题，系统功能是手段。","textChars":24,"textLines":1,"bbox":[190,522,900,40]}
+{"kind":"shape","id":"sh/hoj61s76","slide":2,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/uls76xof","slide":2,"bbox":[920,688,360,18]}
+{"kind":"notes","id":"nt/83dhep","slide":2,"text":""}
+{"kind":"slide","id":"sl/do2a2c","slide":3,"title":"原系统/软件规划路径来源页","textShapes":3}
+{"kind":"textbox","id":"sh/zehgvuhg","slide":3,"text":"原系统/软件规划路径来源页","textPreview":"原系统/软件规划路径来源页","textChars":13,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/kfqhozy1","slide":3,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/lgzyx4zm","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"shape","id":"sh/7ihgzehc","slide":3,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/83ahszyx","slide":3,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/94jy14zi","slide":3,"text":"现场穿插：保留原系统/软件规划路径来源页，不删除","textPreview":"现场穿插：保留原系统/软件规划路径来源页，不删除","textChars":24,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"image","id":"im/fixobyls","slide":3,"name":"","alt":"原系统/软件规划路径来源页","bbox":[0,0,1280,720]}
+{"kind":"notes","id":"nt/do2a2c","slide":3,"text":"用户手动加入的原系统/软件规划路径来源页，作为后续解读来源。"}
+{"kind":"slide","id":"sl/08dsv8","slide":4,"title":"原系统/软件规划路径的重新理解","textShapes":10}
+{"kind":"textbox","id":"sh/julkze18","slide":4,"text":"原系统/软件规划路径的重新理解","textPreview":"原系统/软件规划路径的重新理解","textChars":15,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/kvul8jit","slide":4,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/5w321oje","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/a5s329kr","slide":4,"text":"原有系统建设思路","textPreview":"原有系统建设思路","textChars":8,"textLines":1,"bbox":[92,146,485,48]}
+{"kind":"textbox","id":"sh/v6lkvu1c","slide":4,"text":"CATL强化要求（浙江海威）带来的变化","textPreview":"CATL强化要求（浙江海威）带来的变化","textChars":19,"textLines":1,"bbox":[704,146,485,48]}
+{"kind":"shape","id":"sh/w7ul4zih","slide":4,"bbox":[110,236,10,10]}
+{"kind":"textbox","id":"sh/xs32x4j2","slide":4,"text":"一阶段系统规划（宁波海威+浙江海威）偏 WMS/MES，解决库存、出入库、生产执行和基础追溯。","textPreview":"一阶段系统规划（宁波海威+浙江海威）偏 WMS/MES，解决库存、出入库、生产执行和基础追溯。","textChars":47,"textLines":1,"bbox":[134,228,406,74]}
+{"kind":"shape","id":"sh/m1sjypkf","slide":4,"bbox":[110,304,10,10]}
+{"kind":"textbox","id":"sh/n21kru10","slide":4,"text":"二阶段系统规划（宁波海威+浙江海威）本来就计划补强 QMS、TPM、IoT 等能力。","textPreview":"二阶段系统规划（宁波海威+浙江海威）本来就计划补强 QMS、TPM、IoT 等能力。","textChars":42,"textLines":1,"bbox":[134,296,406,74]}
+{"kind":"shape","id":"sh/nudszap4","slide":4,"bbox":[110,372,10,10]}
+{"kind":"textbox","id":"sh/mt4rq58z","slide":4,"text":"原系统/软件规划路径不是从无到有，而是宁波海威与浙江海威共同的一阶段/二阶段系统规划；CATL强化要求（浙江海威）是在浙江海威（嵊州）面向主要客户 CATL 的运营能力补强。","textPreview":"原系统/软件规划路径不是从无到有，而是宁波海威与浙江海威共同的一阶段/二阶段系统规划；CATL强化要求（浙江海威）是在浙江海威（嵊州）面向主要客户 CATL 的运营能力补强。","textChars":87,"textLines":1,"bbox":[134,364,406,74]}
+{"kind":"shape","id":"sh/9gva1k7a","slide":4,"bbox":[722,236,10,10]}
+{"kind":"textbox","id":"sh/8vm9sfqp","slide":4,"text":"CATL强化要求（浙江海威）把功能清单推向过程控制要求。","textPreview":"CATL强化要求（浙江海威）把功能清单推向过程控制要求。","textChars":28,"textLines":1,"bbox":[746,228,406,74]}
+{"kind":"shape","id":"sh/vixs3upg","slide":4,"bbox":[722,304,10,10]}
+{"kind":"textbox","id":"sh/ah4bup8v","slide":4,"text":"强化项更关注批次、参数、权限、点检、SPC 和全工序数据。","textPreview":"强化项更关注批次、参数、权限、点检、SPC 和全工序数据。","textChars":29,"textLines":1,"bbox":[746,296,406,74]}
+{"kind":"shape","id":"sh/xkfa5k7m","slide":4,"bbox":[722,372,10,10]}
+{"kind":"textbox","id":"sh/wj6twfq1","slide":4,"text":"系统建设从功能补充，转向浙江海威（嵊州）的运营能力证明。","textPreview":"系统建设从功能补充，转向浙江海威（嵊州）的运营能力证明。","textChars":28,"textLines":1,"bbox":[746,364,406,74]}
+{"kind":"shape","id":"sh/bmtsrqpc","slide":4,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/qlkril8r","slide":4,"bbox":[920,688,360,18]}
+{"kind":"notes","id":"nt/08dsv8","slide":4,"text":"这里解释 CATL强化要求（浙江海威）的由来：主要客户关心供应商过程是否稳定、可控、可追溯。"}
+{"kind":"slide","id":"sl/d8n7db","slide":5,"title":"客户关注的是运营能力","textShapes":10}
+{"kind":"textbox","id":"sh/h8nqp43y","slide":5,"text":"客户关注的是运营能力","textPreview":"客户关注的是运营能力","textChars":10,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/u5cre947","slide":5,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/v6l8nuls","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/4be9kjm9","slide":5,"text":"稳定交付","textPreview":"稳定交付","textChars":4,"textLines":1,"bbox":[84,158,470,48]}
+{"kind":"textbox","id":"sh/pcnqto3u","slide":5,"text":"计划能否牵引物料、工序和设备，交期偏差能否及时反馈。","textPreview":"计划能否牵引物料、工序和设备，交期偏差能否及时反馈。","textChars":26,"textLines":1,"bbox":[84,220,470,92]}
+{"kind":"textbox","id":"sh/29wri94j","slide":5,"text":"过程可控","textPreview":"过程可控","textChars":4,"textLines":1,"bbox":[664,158,470,48]}
+{"kind":"textbox","id":"sh/3a58relo","slide":5,"text":"人员、参数、程序、工装夹具和检测动作是否被过程约束。","textPreview":"人员、参数、程序、工装夹具和检测动作是否被过程约束。","textChars":26,"textLines":1,"bbox":[664,220,470,92]}
+{"kind":"textbox","id":"sh/czy9ojml","slide":5,"text":"质量可证明","textPreview":"质量可证明","textChars":5,"textLines":1,"bbox":[84,368,470,48]}
+{"kind":"textbox","id":"sh/d07axo36","slide":5,"text":"质量不是只有检验记录，还要有标准、曲线、SPC 和异常闭环证据。","textPreview":"质量不是只有检验记录，还要有标准、曲线、SPC 和异常闭环证据。","textChars":32,"textLines":1,"bbox":[84,430,470,92]}
+{"kind":"textbox","id":"sh/1s7ut07y","slide":5,"text":"异常可闭环","textPreview":"异常可闭环","textChars":5,"textLines":1,"bbox":[664,368,470,48]}
+{"kind":"textbox","id":"sh/gryd0vqd","slide":5,"text":"异常出现后，系统能否触发停线、确认、replan 或客户要求的处理动作。","textPreview":"异常出现后，系统能否触发停线、确认、replan 或客户要求的处理动作。","textChars":36,"textLines":1,"bbox":[664,430,470,92]}
+{"kind":"shape","id":"sh/fqpcraps","slide":5,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/epgvy587","slide":5,"bbox":[920,688,360,18]}
+{"kind":"notes","id":"nt/d8n7db","slide":5,"text":""}
+{"kind":"slide","id":"sl/006dyx","slide":6,"title":"功能从系统模块转向业务能力","textShapes":16}
+{"kind":"textbox","id":"sh/3i5gbe9k","slide":6,"text":"功能从系统模块转向业务能力","textPreview":"功能从系统模块转向业务能力","textChars":13,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/ojeh4ja5","slide":6,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/pknyd4rq","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/etcfyps3","slide":6,"text":"原系统语言来源","textPreview":"原系统语言来源","textChars":7,"textLines":1,"bbox":[112,144,300,34]}
+{"kind":"textbox","id":"sh/fulg7u9o","slide":6,"text":"重组后的业务能力","textPreview":"重组后的业务能力","textChars":8,"textLines":1,"bbox":[790,144,330,34]}
+{"kind":"textbox","id":"sh/gvux0zat","slide":6,"text":"WMS / MES / TPM","textPreview":"WMS / MES / TPM","textChars":15,"textLines":1,"bbox":[150,208,220,42]}
+{"kind":"textbox","id":"sh/1w3y94re","slide":6,"text":"实物／物料流管理","textPreview":"实物／物料流管理","textChars":8,"textLines":1,"bbox":[790,208,330,42]}
+{"kind":"shape","id":"sh/ypgzats7","slide":6,"bbox":[390,229,380,0]}
+{"kind":"textbox","id":"sh/zqpgjy9s","slide":6,"text":"WMS / MES / TPM","textPreview":"WMS / MES / TPM","textChars":15,"textLines":1,"bbox":[150,280,220,42]}
+{"kind":"textbox","id":"sh/jqdozqdk","slide":6,"text":"生产计划管理","textPreview":"生产计划管理","textChars":6,"textLines":1,"bbox":[790,280,330,42]}
+{"kind":"shape","id":"sh/ip4n6lwz","slide":6,"bbox":[390,301,380,0]}
+{"kind":"textbox","id":"sh/5sv610vq","slide":6,"text":"WMS / MES / TPM","textPreview":"WMS / MES / TPM","textChars":15,"textLines":1,"bbox":[150,352,220,42]}
+{"kind":"textbox","id":"sh/4rm58ve5","slide":6,"text":"生产过程与工艺管理","textPreview":"生产过程与工艺管理","textChars":9,"textLines":1,"bbox":[790,352,330,42]}
+{"kind":"shape","id":"sh/rudo3adg","slide":6,"bbox":[390,373,380,0]}
+{"kind":"textbox","id":"sh/6t4na5wv","slide":6,"text":"QMS","textPreview":"QMS","textChars":3,"textLines":1,"bbox":[150,424,220,42]}
+{"kind":"textbox","id":"sh/tgf650vm","slide":6,"text":"QM 相关界面输出","textPreview":"QM 相关界面输出","textChars":9,"textLines":1,"bbox":[790,424,330,42]}
+{"kind":"shape","id":"sh/sv6pcve1","slide":6,"bbox":[390,445,380,0]}
+{"kind":"textbox","id":"sh/fixo7ads","slide":6,"text":"IoT","textPreview":"IoT","textChars":3,"textLines":1,"bbox":[150,496,220,42]}
+{"kind":"textbox","id":"sh/eho7e5w7","slide":6,"text":"设备数据采集","textPreview":"设备数据采集","textChars":6,"textLines":1,"bbox":[790,496,330,42]}
+{"kind":"shape","id":"sh/qd8r69gf","slide":6,"bbox":[390,517,380,0]}
+{"kind":"textbox","id":"sh/beh8zex0","slide":6,"text":"这一步把系统清单转成经营和现场能讨论的业务语言。","textPreview":"这一步把系统清单转成经营和现场能讨论的业务语言。","textChars":24,"textLines":1,"bbox":[230,594,820,34]}
+{"kind":"shape","id":"sh/cfa98jyl","slide":6,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/dgjq1ofq","slide":6,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/2p8r29g3","slide":6,"text":"现场穿插：业务过程与功能重组工作台","textPreview":"现场穿插：业务过程与功能重组工作台","textChars":17,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/006dyx","slide":6,"text":"这不是模块替换，而是把客户要求重新归入业务能力。"}
+{"kind":"slide","id":"sl/xmjclt","slide":7,"title":"功能落到价值流后才有意义","textShapes":14}
+{"kind":"textbox","id":"sh/ito3ypc7","slide":7,"text":"功能落到价值流后才有意义","textPreview":"功能落到价值流后才有意义","textChars":12,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/5wf2tkby","slide":7,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/kv6l0zud","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/v6dknatg","slide":7,"text":"供应商","textPreview":"供应商","textChars":3,"textLines":1,"bbox":[50,184,104,54]}
+{"kind":"shape","id":"sh/a54ju5cv","slide":7,"bbox":[154,211,14,0]}
+{"kind":"textbox","id":"sh/xsf2pkbm","slide":7,"text":"收货","textPreview":"收货","textChars":2,"textLines":1,"bbox":[168,184,104,54]}
+{"kind":"shape","id":"sh/w7mlwfu1","slide":7,"bbox":[272,211,14,0]}
+{"kind":"textbox","id":"sh/n2dkzatk","slide":7,"text":"入库检","textPreview":"入库检","textChars":3,"textLines":1,"bbox":[286,184,104,54]}
+{"kind":"shape","id":"sh/m14jq5cz","slide":7,"bbox":[390,211,14,0]}
+{"kind":"textbox","id":"sh/8jy9gvmx","slide":7,"text":"仓库","textPreview":"仓库","textChars":2,"textLines":1,"bbox":[404,184,104,54]}
+{"kind":"shape","id":"sh/tk7q9g3i","slide":7,"bbox":[508,211,14,0]}
+{"kind":"textbox","id":"sh/6hgrel4r","slide":7,"text":"材料出库","textPreview":"材料出库","textChars":4,"textLines":1,"bbox":[522,184,104,54]}
+{"kind":"textbox","id":"sh/7ip87qlc","slide":7,"text":"生产工序","textPreview":"生产工序","textChars":4,"textLines":1,"bbox":[50,360,104,54]}
+{"kind":"textbox","id":"sh/kve9cbm1","slide":7,"text":"WIP","textPreview":"WIP","textChars":3,"textLines":1,"bbox":[168,360,104,54]}
+{"kind":"shape","id":"sh/lgnq5g3m","slide":7,"bbox":[154,387,14,0]}
+{"kind":"textbox","id":"sh/ytw7a14v","slide":7,"text":"成品检验","textPreview":"成品检验","textChars":4,"textLines":1,"bbox":[286,360,104,54]}
+{"kind":"shape","id":"sh/ju5836lg","slide":7,"bbox":[272,387,14,0]}
+{"kind":"textbox","id":"sh/4ri9ofm5","slide":7,"text":"成品出库","textPreview":"成品出库","textChars":4,"textLines":1,"bbox":[404,360,104,54]}
+{"kind":"shape","id":"sh/5crqh03q","slide":7,"bbox":[390,387,14,0]}
+{"kind":"textbox","id":"sh/dw3ilgri","slide":7,"text":"客户","textPreview":"客户","textChars":2,"textLines":1,"bbox":[522,360,104,54]}
+{"kind":"shape","id":"sh/svuhcbqx","slide":7,"bbox":[508,387,14,0]}
+{"kind":"shape","id":"sh/rul0j69s","slide":7,"bbox":[626,211,0,176]}
+{"kind":"textbox","id":"sh/qtcza187","slide":7,"text":"每个功能项都要落到过程节点，才能判断它服务的动作和管理意义。","textPreview":"每个功能项都要落到过程节点，才能判断它服务的动作和管理意义。","textChars":30,"textLines":1,"bbox":[168,535,944,42]}
+{"kind":"shape","id":"sh/5s3ihwrm","slide":7,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/4ruh8ra1","slide":7,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/3qlgfm9g","slide":7,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/xmjclt","slide":7,"text":"进入价值流后才能看清功能发生在哪、解决什么问题、输出什么证据。"}
+{"kind":"slide","id":"sl/cbjs43","slide":8,"title":"价值流中的三类状态","textShapes":10}
+{"kind":"textbox","id":"sh/zal87ipg","slide":8,"text":"价值流中的三类状态","textPreview":"价值流中的三类状态","textChars":9,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/0bu9gnq1","slide":8,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/1c3q9s7m","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/mdwrix87","slide":8,"text":"已有基础","textPreview":"已有基础","textChars":4,"textLines":1,"bbox":[86,180,320,54]}
+{"kind":"textbox","id":"sh/ne58b2ps","slide":8,"text":"库存、出入库、FIFO、派工、报工、追溯和检验入口，更多解决记录和基础管控。","textPreview":"库存、出入库、FIFO、派工、报工、追溯和检验入口，更多解决记录和基础管控。","textChars":38,"textLines":1,"bbox":[86,252,320,190]}
+{"kind":"textbox","id":"sh/ofe9knqx","slide":8,"text":"二阶段系统规划","textPreview":"二阶段系统规划","textChars":7,"textLines":1,"bbox":[476,180,320,54]}
+{"kind":"textbox","id":"sh/9gnqds7i","slide":8,"text":"QMS、TPM、IoT 等方向，边界在于是否能进入过程动作并形成反馈。","textPreview":"QMS、TPM、IoT 等方向，边界在于是否能进入过程动作并形成反馈。","textChars":35,"textLines":1,"bbox":[476,252,320,190]}
+{"kind":"textbox","id":"sh/2hs76t8n","slide":8,"text":"CATL强化要求（浙江海威）","textPreview":"CATL强化要求（浙江海威）","textChars":14,"textLines":1,"bbox":[866,180,320,54]}
+{"kind":"textbox","id":"sh/3i18zyp8","slide":8,"text":"权限、点检、参数、防错、SPC、设备数据和全工序控制继续加深。","textPreview":"权限、点检、参数、防错、SPC、设备数据和全工序控制继续加深。","textChars":31,"textLines":1,"bbox":[866,252,320,190]}
+{"kind":"textbox","id":"sh/fehgfqpk","slide":8,"text":"同一个价值流节点上，可能同时存在已有能力、二阶段系统规划和 CATL强化要求（浙江海威）。","textPreview":"同一个价值流节点上，可能同时存在已有能力、二阶段系统规划和 CATL强化要求（浙江海威）。","textChars":45,"textLines":1,"bbox":[190,522,900,40]}
+{"kind":"shape","id":"sh/ed8zmloz","slide":8,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/1gjyhgnq","slide":8,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/gfqhov65","slide":8,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/cbjs43","slide":8,"text":""}
+{"kind":"slide","id":"sl/3c5bka","slide":9,"title":"当前基础与二期边界","textShapes":11}
+{"kind":"textbox","id":"sh/1obat0b2","slide":9,"text":"当前基础与二期边界","textPreview":"当前基础与二期边界","textChars":9,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/elkbi5cr","slide":9,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/fmtsrqtw","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/or2tofut","slide":9,"text":"已有基础如何现场加强","textPreview":"已有基础如何现场加强","textChars":10,"textLines":1,"bbox":[92,146,485,48]}
+{"kind":"textbox","id":"sh/psvaxkbe","slide":9,"text":"二阶段系统规划的边界","textPreview":"二阶段系统规划的边界","textChars":10,"textLines":1,"bbox":[704,146,485,48]}
+{"kind":"shape","id":"sh/2pkbm5cn","slide":9,"bbox":[110,236,10,10]}
+{"kind":"textbox","id":"sh/nqtsvat8","slide":9,"text":"把记录型功能转成现场动作入口。","textPreview":"把记录型功能转成现场动作入口。","textChars":15,"textLines":1,"bbox":[134,228,406,74]}
+{"kind":"shape","id":"sh/4vi9cbu9","slide":9,"bbox":[110,304,10,10]}
+{"kind":"textbox","id":"sh/5wralgbu","slide":9,"text":"让库存、发料、报工、检验与计划偏差建立关联。","textPreview":"让库存、发料、报工、检验与计划偏差建立关联。","textChars":22,"textLines":1,"bbox":[134,296,406,74]}
+{"kind":"shape","id":"sh/xwrulc36","slide":9,"bbox":[110,372,10,10]}
+{"kind":"textbox","id":"sh/wvits721","slide":9,"text":"补齐跨工序 WIP 水位和后工序拉动前工序的判断。","textPreview":"补齐跨工序 WIP 水位和后工序拉动前工序的判断。","textChars":25,"textLines":1,"bbox":[134,364,406,74]}
+{"kind":"shape","id":"sh/bupcjmlg","slide":9,"bbox":[722,236,10,10]}
+{"kind":"textbox","id":"sh/atgbqhkv","slide":9,"text":"QMS 如果只做记录，很难承担过程控制。","textPreview":"QMS 如果只做记录，很难承担过程控制。","textChars":20,"textLines":1,"bbox":[746,228,406,74]}
+{"kind":"shape","id":"sh/l0rupw3i","slide":9,"bbox":[722,304,10,10]}
+{"kind":"textbox","id":"sh/kzidgr2x","slide":9,"text":"TPM/IoT 如果只采集设备状态，很难解释产出波动。","textPreview":"TPM/IoT 如果只采集设备状态，很难解释产出波动。","textChars":27,"textLines":1,"bbox":[746,296,406,74]}
+{"kind":"shape","id":"sh/jy9cnmlc","slide":9,"bbox":[722,372,10,10]}
+{"kind":"textbox","id":"sh/yx0buhkr","slide":9,"text":"二阶段系统规划能否承接 CATL强化要求（浙江海威），取决于 Planning、过程动作和数据反馈是否打通。","textPreview":"二阶段系统规划能否承接 CATL强化要求（浙江海威），取决于 Planning、过程动作和数据反馈是否打通。","textChars":54,"textLines":1,"bbox":[746,364,406,74]}
+{"kind":"shape","id":"sh/tobutwje","slide":9,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/8n2dkr2t","slide":9,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/sraxwfa5","slide":9,"text":"现场穿插：业务过程与功能重组工作台","textPreview":"现场穿插：业务过程与功能重组工作台","textChars":17,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/3c5bka","slide":9,"text":"回答：CATL强化要求（浙江海威）是否能从二阶段系统规划中展开，以及当前条件是否足够。"}
+{"kind":"slide","id":"sl/mxjvii","slide":10,"title":"后续加强能否实现目的","textShapes":2}
+{"kind":"textbox","id":"sh/3adsrm5c","slide":10,"text":"后续加强能否实现目的","textPreview":"后续加强能否实现目的","textChars":10,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/ob69k7mx","slide":10,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/pcfatcni","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"shape","id":"sh/f6dsn25g","slide":10,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/g7m9g7m1","slide":10,"bbox":[920,688,360,18]}
+{"kind":"table","id":"tb/bi9wjqdc","slide":10,"name":"","rows":5,"cols":2,"preview":"后续加强方向 | 实现条件","bbox":[140,150,1000,370]}
+{"kind":"notes","id":"nt/mxjvii","slide":10,"text":""}
+{"kind":"slide","id":"sl/m24yxy","slide":11,"title":"全工序数据的分类角度","textShapes":12}
+{"kind":"textbox","id":"sh/j2tg7ehc","slide":11,"text":"全工序数据的分类角度","textPreview":"全工序数据的分类角度","textChars":10,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/k32hgzyh","slide":11,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/54by94z2","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/ax0fap0f","slide":11,"text":"全工序数据","textPreview":"全工序数据","textChars":5,"textLines":1,"bbox":[535,276,210,88]}
+{"kind":"textbox","id":"sh/vy9g3uh0","slide":11,"text":"设备状态","textPreview":"设备状态","textChars":4,"textLines":1,"bbox":[132,160,160,48]}
+{"kind":"shape","id":"sh/wzixczil","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/x0ry54z6","slide":11,"text":"质量指标","textPreview":"质量指标","textChars":4,"textLines":1,"bbox":[420,142,160,48]}
+{"kind":"shape","id":"sh/et4zmtgz","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/fudgfyh4","slide":11,"text":"技术参数","textPreview":"技术参数","textChars":4,"textLines":1,"bbox":[750,142,160,48]}
+{"kind":"shape","id":"sh/n6pwbq1c","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/m5gv2lkr","slide":11,"text":"产品状态","textPreview":"产品状态","textChars":4,"textLines":1,"bbox":[1010,160,160,48]}
+{"kind":"shape","id":"sh/9s7ed0ji","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/8ryd4v2x","slide":11,"text":"生产进度","textPreview":"生产进度","textChars":4,"textLines":1,"bbox":[182,450,160,48]}
+{"kind":"shape","id":"sh/vupwfq1o","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/utgv6lk3","slide":11,"text":"节拍 CT","textPreview":"节拍 CT","textChars":5,"textLines":1,"bbox":[552,500,160,48]}
+{"kind":"shape","id":"sh/hwreh0je","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/wvyx8v2t","slide":11,"text":"Performance Rate","textPreview":"Performance Rate","textChars":16,"textLines":1,"bbox":[905,450,160,48]}
+{"kind":"shape","id":"sh/jy9w3a1k","slide":11,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/ix0fa5kz","slide":11,"text":"原系统/软件规划路径多次提到全工序数据。分类的目的，是区分哪些数据触发即时动作，哪些数据用于长期沉淀。","textPreview":"原系统/软件规划路径多次提到全工序数据。分类的目的，是区分哪些数据触发即时动作，哪些数据用于长期沉淀。","textChars":51,"textLines":1,"bbox":[150,606,980,38]}
+{"kind":"shape","id":"sh/etkz2947","slide":11,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/futgbels","slide":11,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/gvmh4jmd","slide":11,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/m24yxy","slide":11,"text":""}
+{"kind":"slide","id":"sl/tba37o","slide":12,"title":"数据采集意义的展开面向","textShapes":10}
+{"kind":"textbox","id":"sh/it43e5sn","slide":12,"text":"数据采集意义的展开面向","textPreview":"数据采集意义的展开面向","textChars":11,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/5wv2p0re","slide":12,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/4vmlgvat","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/vqdkjq9w","slide":12,"text":"风险阻断","textPreview":"风险阻断","textChars":4,"textLines":1,"bbox":[86,180,320,54]}
+{"kind":"textbox","id":"sh/up43alsr","slide":12,"text":"设备状态或质量指标异常时，触发停线、确认、曲线跟踪和异常闭环。","textPreview":"设备状态或质量指标异常时，触发停线、确认、曲线跟踪和异常闭环。","textChars":31,"textLines":1,"bbox":[86,252,320,190]}
+{"kind":"textbox","id":"sh/hsv2l0r2","slide":12,"text":"经验沉淀","textPreview":"经验沉淀","textChars":4,"textLines":1,"bbox":[476,180,320,54]}
+{"kind":"textbox","id":"sh/grmlcvah","slide":12,"text":"对照产品状态变化，沉淀有效技术参数，服务产品开发和工艺设定。","textPreview":"对照产品状态变化，沉淀有效技术参数，服务产品开发和工艺设定。","textChars":30,"textLines":1,"bbox":[476,252,320,190]}
+{"kind":"textbox","id":"sh/72tkfq90","slide":12,"text":"进度调整","textPreview":"进度调整","textChars":4,"textLines":1,"bbox":[866,180,320,54]}
+{"kind":"textbox","id":"sh/61k36lsf","slide":12,"text":"跟踪工序衔接和 WIP 水位，触发短周期 replan，减少等待和堆积。","textPreview":"跟踪工序衔接和 WIP 水位，触发短周期 replan，减少等待和堆积。","textChars":36,"textLines":1,"bbox":[866,252,320,190]}
+{"kind":"textbox","id":"sh/0vqdc3id","slide":12,"text":"数据采集不是越多越好，而是要从后续动作反推范围和手段。","textPreview":"数据采集不是越多越好，而是要从后续动作反推范围和手段。","textChars":27,"textLines":1,"bbox":[190,522,900,40]}
+{"kind":"shape","id":"sh/1wzu58jy","slide":12,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/e98vat0n","slide":12,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/zahc3y1s","slide":12,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/tba37o","slide":12,"text":""}
+{"kind":"slide","id":"sl/hze6p6","slide":13,"title":"数据的价值收益方向","textShapes":2}
+{"kind":"textbox","id":"sh/nudsz2d8","slide":13,"text":"数据的价值收益方向","textPreview":"数据的价值收益方向","textChars":9,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/ovm98net","slide":13,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/pwva1sve","slide":13,"text":"13","textPreview":"13","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"shape","id":"sh/fqtsvidc","slide":13,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/0r294nex","slide":13,"bbox":[920,688,360,18]}
+{"kind":"table","id":"tb/vq1wrudk","slide":13,"name":"","rows":5,"cols":2,"preview":"价值方向 | 收益逻辑","bbox":[140,150,1000,370]}
+{"kind":"notes","id":"nt/hze6p6","slide":13,"text":""}
+{"kind":"slide","id":"sl/4r4f34","slide":14,"title":"Planning 是后续重点","textShapes":12}
+{"kind":"textbox","id":"sh/v29kza10","slide":14,"text":"Planning 是后续重点","textPreview":"Planning 是后续重点","textChars":14,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/w3i1sfil","slide":14,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/x4r21kj6","slide":14,"text":"14","textPreview":"14","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/mdgjml0j","slide":14,"text":"ERP 1D 计划","textPreview":"ERP 1D 计划","textChars":9,"textLines":1,"bbox":[42,255,118,58]}
+{"kind":"textbox","id":"sh/nep0vq1o","slide":14,"text":"参数校准","textPreview":"参数校准","textChars":4,"textLines":1,"bbox":[192,255,118,58]}
+{"kind":"textbox","id":"sh/8zi1ovi9","slide":14,"text":"小时级基准","textPreview":"小时级基准","textChars":5,"textLines":1,"bbox":[342,255,118,58]}
+{"kind":"textbox","id":"sh/90r2x0ju","slide":14,"text":"现场数据","textPreview":"现场数据","textChars":4,"textLines":1,"bbox":[492,255,118,58]}
+{"kind":"textbox","id":"sh/y9gjil07","slide":14,"text":"偏差判断","textPreview":"偏差判断","textChars":4,"textLines":1,"bbox":[642,255,118,58]}
+{"kind":"textbox","id":"sh/zap0rq1s","slide":14,"text":"短周期 Replan","textPreview":"短周期 Replan","textChars":10,"textLines":1,"bbox":[792,255,118,58]}
+{"kind":"textbox","id":"sh/va5s7mx0","slide":14,"text":"物料拉动","textPreview":"物料拉动","textChars":4,"textLines":1,"bbox":[942,255,118,58]}
+{"kind":"textbox","id":"sh/u9wrehwf","slide":14,"text":"执行反馈","textPreview":"执行反馈","textChars":4,"textLines":1,"bbox":[1092,255,118,58]}
+{"kind":"shape","id":"sh/hc7a9cf6","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/gbe9grel","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/3epsbmxw","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/idgrihwb","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/5g7adwf2","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/4fytkreh","slide":14,"bbox":[0,0,0,0]}
+{"kind":"shape","id":"sh/jilsz2xs","slide":14,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/yhcr6xw7","slide":14,"text":"小时级计划基准不是把 ERP 日计划简单拆细，而是先把 CT、SA、setup、planned stop 与 R&R 观察校准成 Planning 可用约束。","textPreview":"小时级计划基准不是把 ERP 日计划简单拆细，而是先把 CT、SA、setup、planned stop 与 R&R 观察校准成 Planning 可用约束。","textChars":79,"textLines":1,"bbox":[168,430,944,70]}
+{"kind":"shape","id":"sh/m943upk7","slide":14,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/nad43uls","slide":14,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/8bmlwz2x","slide":14,"text":"现场穿插：Planning 参数校准工具","textPreview":"现场穿插：Planning 参数校准工具","textChars":20,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/4r4f34","slide":14,"text":""}
+{"kind":"slide","id":"sl/0mnapu","slide":15,"title":"不同工艺过程的拉动方式","textShapes":11}
+{"kind":"textbox","id":"sh/1wfahkfm","slide":15,"text":"不同工艺过程的拉动方式","textPreview":"不同工艺过程的拉动方式","textChars":11,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/et4bm5wv","slide":15,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/zudsfaxg","slide":15,"text":"15","textPreview":"15","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/8z6tsfex","slide":15,"text":"工单驱动适用场景","textPreview":"工单驱动适用场景","textChars":8,"textLines":1,"bbox":[92,146,485,48]}
+{"kind":"textbox","id":"sh/90falkvi","slide":15,"text":"拉动式物流适用场景","textPreview":"拉动式物流适用场景","textChars":9,"textLines":1,"bbox":[704,146,485,48]}
+{"kind":"shape","id":"sh/mxobq5wr","slide":15,"bbox":[110,236,10,10]}
+{"kind":"textbox","id":"sh/nyxsjaxc","slide":15,"text":"工单可以驱动料单和发料动作。","textPreview":"工单可以驱动料单和发料动作。","textChars":14,"textLines":1,"bbox":[134,228,406,74]}
+{"kind":"shape","id":"sh/w3qtwze9","slide":15,"bbox":[110,304,10,10]}
+{"kind":"textbox","id":"sh/xozup4ve","slide":15,"text":"铝锭等原材料发至铸造产线，可以由工单牵引。","textPreview":"铝锭等原材料发至铸造产线，可以由工单牵引。","textChars":21,"textLines":1,"bbox":[134,296,406,74]}
+{"kind":"shape","id":"sh/xkzatcve","slide":15,"bbox":[110,372,10,10]}
+{"kind":"textbox","id":"sh/wjq9k7ut","slide":15,"text":"计划仍负责材料需求和产能边界。","textPreview":"计划仍负责材料需求和产能边界。","textChars":15,"textLines":1,"bbox":[134,364,406,74]}
+{"kind":"shape","id":"sh/vihsr2do","slide":15,"bbox":[722,236,10,10]}
+{"kind":"textbox","id":"sh/ah8rixc3","slide":15,"text":"铸造完成品到后续工序。","textPreview":"铸造完成品到后续工序。","textChars":11,"textLines":1,"bbox":[746,228,406,74]}
+{"kind":"shape","id":"sh/58jaxcvq","slide":15,"bbox":[722,304,10,10]}
+{"kind":"textbox","id":"sh/knq9o7u5","slide":15,"text":"机加到装配。","textPreview":"机加到装配。","textChars":6,"textLines":1,"bbox":[746,296,406,74]}
+{"kind":"shape","id":"sh/jmhsv2dk","slide":15,"bbox":[722,372,10,10]}
+{"kind":"textbox","id":"sh/il8rmhcz","slide":15,"text":"排产基于库存水位展开，真实物料移动由后工序消耗节奏触发。","textPreview":"排产基于库存水位展开，真实物料移动由后工序消耗节奏触发。","textChars":28,"textLines":1,"bbox":[746,364,406,74]}
+{"kind":"shape","id":"sh/lsfalsv6","slide":15,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/0r69cnu1","slide":15,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/cva9sn2h","slide":15,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/0mnapu","slide":15,"text":"结合成本展开：不同拉动方式会影响库存占用、等待时间、换线和异常调整成本。"}
+{"kind":"slide","id":"sl/lyfjva","slide":16,"title":"成本向展开","textShapes":10}
+{"kind":"textbox","id":"sh/4jepkzmh","slide":16,"text":"成本向展开","textPreview":"成本向展开","textChars":5,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/3i58bulw","slide":16,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/ihw7ip4b","slide":16,"text":"16","textPreview":"16","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/hgnq9k3q","slide":16,"text":"库存成本","textPreview":"库存成本","textChars":4,"textLines":1,"bbox":[125,150,190,52]}
+{"kind":"textbox","id":"sh/gvepgfm5","slide":16,"text":"跨工序 WIP 水位不清，会带来过量库存、缺料等待和账实偏差。","textPreview":"跨工序 WIP 水位不清，会带来过量库存、缺料等待和账实偏差。","textChars":31,"textLines":1,"bbox":[348,150,780,52]}
+{"kind":"textbox","id":"sh/vu587alk","slide":16,"text":"波动成本","textPreview":"波动成本","textChars":4,"textLines":1,"bbox":[125,255,190,52]}
+{"kind":"textbox","id":"sh/utw7e54f","slide":16,"text":"计划弱和反馈慢，会造成等待、堆积、断流和局部加急。","textPreview":"计划弱和反馈慢，会造成等待、堆积、断流和局部加急。","textChars":25,"textLines":1,"bbox":[348,255,780,52]}
+{"kind":"textbox","id":"sh/1crqlo3u","slide":16,"text":"质量成本","textPreview":"质量成本","textChars":4,"textLines":1,"bbox":[125,360,190,52]}
+{"kind":"textbox","id":"sh/0ry9sjmp","slide":16,"text":"异常阻断不及时，导致报废、返工和客户证据不足。","textPreview":"异常阻断不及时，导致报废、返工和客户证据不足。","textChars":23,"textLines":1,"bbox":[348,360,780,52]}
+{"kind":"textbox","id":"sh/ylc72dwn","slide":16,"text":"数据成本","textPreview":"数据成本","textChars":4,"textLines":1,"bbox":[125,465,190,52]}
+{"kind":"textbox","id":"sh/zml8vix8","slide":16,"text":"未定义动作的数据采集，会增加点位、存储、解释和维护成本。","textPreview":"未定义动作的数据采集，会增加点位、存储、解释和维护成本。","textChars":28,"textLines":1,"bbox":[348,465,780,52]}
+{"kind":"shape","id":"sh/0nup4ned","slide":16,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/lonqxsfy","slide":16,"bbox":[920,688,360,18]}
+{"kind":"notes","id":"nt/lyfjva","slide":16,"text":""}
+{"kind":"slide","id":"sl/0vonhl","slide":17,"title":"AI 的初步落地方案","textShapes":9}
+{"kind":"textbox","id":"sh/f6pgbyp0","slide":17,"text":"AI 的初步落地方案","textPreview":"AI 的初步落地方案","textChars":10,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/gryh43ql","slide":17,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/hsryd876","slide":17,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/2t0z6d8r","slide":17,"text":"边缘模型","textPreview":"边缘模型","textChars":4,"textLines":1,"bbox":[122,174,260,50]}
+{"kind":"textbox","id":"sh/3u9gfypc","slide":17,"text":"在状态异常和质量指标偏离时，辅助判断停线、降速、参数切换，并过滤非必要参数。","textPreview":"在状态异常和质量指标偏离时，辅助判断停线、降速、参数切换，并过滤非必要参数。","textChars":38,"textLines":1,"bbox":[122,250,260,130]}
+{"kind":"textbox","id":"sh/4vih836x","slide":17,"text":"服务器模型","textPreview":"服务器模型","textChars":5,"textLines":1,"bbox":[472,174,260,50]}
+{"kind":"textbox","id":"sh/pwryh87i","slide":17,"text":"基于小时级计划基准、跨工序状态和 WIP 水位，生成短周期 replan 建议。","textPreview":"基于小时级计划基准、跨工序状态和 WIP 水位，生成短周期 replan 建议。","textChars":40,"textLines":1,"bbox":[472,250,260,130]}
+{"kind":"textbox","id":"sh/qx0zado3","slide":17,"text":"协同边界","textPreview":"协同边界","textChars":4,"textLines":1,"bbox":[822,174,260,50]}
+{"kind":"textbox","id":"sh/ry90jip8","slide":17,"text":"边缘模型快速处理当前覆盖范围，服务器模型处理全局计划重排和跨工序取舍。","textPreview":"边缘模型快速处理当前覆盖范围，服务器模型处理全局计划重排和跨工序取舍。","textChars":35,"textLines":1,"bbox":[822,250,260,130]}
+{"kind":"textbox","id":"sh/bah8j2p0","slide":17,"text":"边缘 AI 解决现场快速响应与参数过滤；计划重排更适合由服务器侧模型结合全局约束来判断。","textPreview":"边缘 AI 解决现场快速响应与参数过滤；计划重排更适合由服务器侧模型结合全局约束来判断。","textChars":44,"textLines":1,"bbox":[170,512,940,54]}
+{"kind":"shape","id":"sh/a98rqxof","slide":17,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/xwjalc76","slide":17,"bbox":[920,688,360,18]}
+{"kind":"notes","id":"nt/0vonhl","slide":17,"text":""}
+{"kind":"slide","id":"sl/xqd130","slide":18,"title":"阶段路线与下一步","textShapes":12}
+{"kind":"textbox","id":"sh/7i5svu5s","slide":18,"text":"阶段路线与下一步","textPreview":"阶段路线与下一步","textChars":8,"textLines":1,"bbox":[58,36,880,56]}
+{"kind":"shape","id":"sh/s3e94zmd","slide":18,"bbox":[58,96,1110,0]}
+{"kind":"textbox","id":"sh/t4nax4ny","slide":18,"text":"18","textPreview":"18","textChars":2,"textLines":1,"bbox":[1178,42,44,28]}
+{"kind":"textbox","id":"sh/u5wr694j","slide":18,"text":"阶段一","textPreview":"阶段一","textChars":3,"textLines":1,"bbox":[105,160,275,44]}
+{"kind":"textbox","id":"sh/f65sze54","slide":18,"text":"重新解读原系统/软件规划路径","textPreview":"重新解读原系统/软件规划路径","textChars":14,"textLines":1,"bbox":[105,222,275,70]}
+{"kind":"textbox","id":"sh/g7e98zm9","slide":18,"text":"识别客户要求、业务问题、能力短板和价值流位置","textPreview":"识别客户要求、业务问题、能力短板和价值流位置","textChars":22,"textLines":1,"bbox":[105,312,275,156]}
+{"kind":"textbox","id":"sh/h87a14nu","slide":18,"text":"阶段二","textPreview":"阶段二","textChars":3,"textLines":1,"bbox":[477,160,275,44]}
+{"kind":"textbox","id":"sh/a9cru54z","slide":18,"text":"数据采集与计划闭环","textPreview":"数据采集与计划闭环","textChars":9,"textLines":1,"bbox":[477,222,275,70]}
+{"kind":"textbox","id":"sh/val8na5k","slide":18,"text":"参数校准、小时级计划基准、拉动物流、replan","textPreview":"参数校准、小时级计划基准、拉动物流、replan","textChars":24,"textLines":1,"bbox":[477,312,275,156]}
+{"kind":"textbox","id":"sh/zmxwryhk","slide":18,"text":"阶段三","textPreview":"阶段三","textChars":3,"textLines":1,"bbox":[849,160,275,44]}
+{"kind":"textbox","id":"sh/y14vitgz","slide":18,"text":"AI 与数字孪生调整","textPreview":"AI 与数字孪生调整","textChars":10,"textLines":1,"bbox":[849,222,275,70]}
+{"kind":"textbox","id":"sh/lofet8zq","slide":18,"text":"边缘模型、参数过滤、短周期重排、成本优化","textPreview":"边缘模型、参数过滤、短周期重排、成本优化","textChars":20,"textLines":1,"bbox":[849,312,275,156]}
+{"kind":"shape","id":"sh/0n6dk3y5","slide":18,"bbox":[0,688,920,18]}
+{"kind":"shape","id":"sh/bydwnyho","slide":18,"bbox":[920,688,360,18]}
+{"kind":"textbox","id":"sh/qx4vetg3","slide":18,"text":"现场穿插：价值流画板","textPreview":"现场穿插：价值流画板","textChars":10,"textLines":1,"bbox":[58,650,650,24]}
+{"kind":"notes","id":"nt/xqd130","slide":18,"text":""}

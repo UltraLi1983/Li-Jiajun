@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>排产产能参数工具 - 正式版</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f8;
+      --surface: #ffffff;
+      --line: #d8e1e6;
+      --text: #17212b;
+      --muted: #637281;
+      --teal: #226b70;
+      --green: #177245;
+      --amber: #9a620d;
+      --red: #b23b3b;
+      --blue: #2367a8;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: 320px minmax(0, 1fr); }
+    aside { border-right: 1px solid var(--line); background: #eef4f5; padding: 22px 18px; }
+    main { padding: 22px; overflow: auto; }
+    .brand h1 { margin: 0; font-size: 22px; line-height: 1.2; }
+    .brand p { margin: 8px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .nav-step { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: 8px; color: #364653; background: transparent; font: inherit; font-weight: 650; text-align: left; cursor: pointer; }
+    .nav-step:hover, .nav-step:focus-visible { background: #e4eff1; outline: 2px solid #b8d1d5; }
+    .nav-step.active { background: #dcebed; outline: 2px solid #b8d1d5; color: var(--teal); }
+    .nav-step > span:first-child { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; background: #fff; font-size: 13px; }
+    .nav-step > span:last-child { flex: 1; min-width: 0; line-height: 1.35; }
+    .workflow-stage[hidden] { display: none; }
+    .stage-footer { display: flex; justify-content: flex-end; margin-top: 14px; }
+    .control-card { margin-top: 24px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+    label { display: block; color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+    select, input { width: 100%; height: 42px; border: 1px solid #aebbc6; border-radius: 7px; background: #fff; color: var(--text); padding: 0 10px; font: inherit; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+    .page-head h2 { margin: 0; font-size: 24px; }
+    .page-head p { margin: 6px 0 0; color: var(--muted); }
+    .badge { padding: 7px 10px; border: 1px solid #b9d7de; border-radius: 999px; color: var(--teal); background: #eef9fb; font-weight: 700; font-size: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .metric, .panel, .operation-row, .assignment-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+    .metric { padding: 14px; min-height: 116px; border-left: 4px solid #9db0bb; }
+    .metric.good { border-left-color: var(--green); }
+    .metric.warn { border-left-color: var(--amber); }
+    .metric.bad { border-left-color: var(--red); }
+    .metric p { margin: 0 0 12px; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .metric strong { display: block; font-size: 24px; line-height: 1.1; }
+    .metric span { display: block; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .setup-grid { display: grid; grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.15fr); gap: 14px; align-items: start; }
+    .panel { padding: 16px; }
+    .sub-card { border: 1px solid #e1e8ed; border-radius: 8px; padding: 14px; background: #fbfdfe; }
+    .sub-card h3 { margin: 0; font-size: 16px; }
+    .panel-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .section-label { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; background: #edf3f7; color: #52616e; font-size: 11px; font-weight: 850; text-transform: uppercase; }
+    .panel-head, .assignment-top, .operation-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .panel h2, .operation-row h3, .assignment-card h4 { margin: 0; }
+    .eyebrow { margin: 0 0 5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0; font-size: 11px; font-weight: 800; }
+    .pill, .status { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 4px 9px; border-radius: 999px; border: 1px solid #c9d7de; color: #52616e; background: #f6fafb; font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .pill.good, .status.good { color: var(--green); border-color: #abd9c1; background: #eefaf3; }
+    .pill.bad, .status.bad { color: var(--red); border-color: #e4b0b0; background: #fff2f2; }
+    .status.warn { color: var(--amber); border-color: #e6c887; background: #fff8e8; }
+    .field-grid, .mini-grid { display: grid; gap: 10px; margin-top: 14px; }
+    .field-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .field { border: 1px solid #e1e8ed; border-radius: 7px; padding: 10px; background: #fbfdfe; min-width: 0; }
+    .field span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .field strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+    .checkbox-field { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .checkbox-field input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; padding: 0; accent-color: var(--teal); }
+    .checkbox-field span { margin: 0; }
+    .operation-row { padding: 14px; margin-top: 12px; }
+    .operation-row:focus { outline: 3px solid #b8d1d5; outline-offset: 2px; }
+    .operation-row.selectable { cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+    .operation-row.selectable:hover, .operation-row.selectable.active { border-color: #94bdc4; box-shadow: 0 0 0 2px #dcebed; }
+    .operation-main { justify-content: flex-start; }
+    .operation-main p { margin: 4px 0 0; color: var(--muted); }
+    .op-seq { width: 54px; min-width: 54px; height: 44px; border-radius: 8px; display: grid; place-items: center; background: #e5f0f1; color: var(--teal); font-weight: 850; }
+    .operation-checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .assignment-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .role-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 7px; border: 1px solid #d5e0e5; background: #fbfdfe; color: #44525f; font-size: 12px; font-weight: 700; }
+    .role-chip.bad { color: var(--red); border-color: #e4b0b0; background: #fff2f2; }
+    .assignment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .assignment-card { padding: 12px; border-top: 4px solid #9db0bb; }
+    .assignment-card.good { border-top-color: var(--green); }
+    .assignment-card.warn { border-top-color: var(--amber); }
+    .assignment-card.bad { border-top-color: var(--red); }
+    .assignment-card h4 { font-size: 16px; }
+    .note { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .message-list { margin: 10px 0 0; padding-left: 18px; color: #4d5c68; line-height: 1.5; }
+    .message-list.compact { font-size: 13px; }
+    .empty { margin: 10px 0 0; color: var(--muted); }
+    .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+    .split h3 { margin: 0; font-size: 15px; }
+    .action-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px; border-radius: 8px; background: #f8fbfc; border: 1px solid var(--line); }
+    .button { border: 0; border-radius: 7px; padding: 10px 14px; background: var(--teal); color: #fff; font: inherit; font-weight: 800; }
+    .button.secondary { background: #52616e; }
+    .button:disabled { background: #aebbc6; cursor: not-allowed; }
+    .table-input { min-width: 120px; height: 34px; font-size: 13px; }
+
+    .kind-select-wrap { display: flex; align-items: center; gap: 8px; }
+    .kind-dot { display: inline-block; width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+    .actual-kind { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .kind-dot.production { background: var(--green); }
+    .kind-dot.setup { background: var(--blue); }
+    .kind-dot.break { background: var(--amber); }
+    .kind-dot.maintenance, .kind-dot.plannedStop { background: #6b5b95; }
+    .kind-dot.unscheduled { background: #8b98a5; }
+    .time-pair { display: grid; grid-template-columns: minmax(72px, 1fr) minmax(72px, 1fr); gap: 6px; }
+    .time-pair select { height: 42px; }
+    .time-pair.compact select { height: 34px; min-width: 70px; font-size: 13px; }
+    .timeline-wrap { margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: auto; }
+    .timeline-hours { display: grid; grid-template-columns: 120px repeat(8, minmax(80px, 1fr)); min-width: 880px; border-bottom: 1px solid #e4ebef; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .timeline-hours span { padding: 8px 10px; border-left: 1px solid #edf2f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .timeline-hours span:first-child { border-left: 0; }
+    .timeline-row { display: grid; grid-template-columns: 120px minmax(760px, 1fr); min-width: 880px; min-height: 92px; }
+    .timeline-station { padding: 14px 10px; border-right: 1px solid #e4ebef; font-weight: 850; color: var(--teal); background: #f8fbfc; }
+    .timeline-track { position: relative; margin: 14px 12px; border-radius: 8px; background: repeating-linear-gradient(to right, #edf2f5 0, #edf2f5 1px, transparent 1px, transparent 12.5%); min-height: 66px; }
+    .timeline-segment { position: absolute; top: 3px; min-width: 6px; height: 58px; padding: 0; color: #fff; font-size: 12px; font-weight: 850; overflow: visible; white-space: nowrap; text-overflow: ellipsis; container-type: inline-size; }
+    .timeline-segment-label { display: block; height: 28px; padding: 6px 8px; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; background: inherit; }
+    .timeline-segment-time { display: block; padding: 5px 3px 0; overflow: hidden; text-overflow: ellipsis; color: #fff; font-size: 11px; font-weight: 850; text-align: center; }
+    .timeline-segment.production { background: var(--green); --segment-ink: #116b49; }
+    .timeline-segment.setup { background: var(--blue); --segment-ink: #fff; }
+    .timeline-segment.break { background: var(--amber); --segment-ink: #9a6500; }
+    .timeline-segment.maintenance, .timeline-segment.plannedStop { background: #6b5b95; --segment-ink: #604c8b; }
+    .timeline-segment.unscheduled { background: #8b98a5; --segment-ink: #647482; }
+    .timeline-segment.equipmentFailure, .timeline-segment.toolingIssue,
+    .timeline-segment.logisticsWaiting, .timeline-segment.qualityHold,
+    .timeline-segment.laborIssue { background: #b43d43; --segment-ink: #a33239; }
+    .kind-dot.equipmentFailure, .kind-dot.toolingIssue, .kind-dot.logisticsWaiting,
+    .kind-dot.qualityHold, .kind-dot.laborIssue { background: #b43d43; }
+    .rnr-comparison { --rnr-timeline-width: 1050px; }
+    .rnr-comparison .rnr-axis, .rnr-comparison .timeline-row {
+      display: grid; grid-template-columns: 120px minmax(0, 1fr);
+      min-width: var(--rnr-timeline-width);
+    }
+    .rnr-comparison .rnr-axis { min-height: 58px; border-bottom: 1px solid #e4ebef; }
+    .rnr-comparison .rnr-axis-track { position: relative; margin: 0 12px; }
+    .rnr-comparison .rnr-axis-track span {
+      position: absolute; top: 8px; max-width: 130px; color: var(--muted);
+      font-size: 12px; font-weight: 800; white-space: nowrap;
+      transform: translateX(-1px);
+    }
+    .rnr-comparison .rnr-axis-track span.end { transform: translateX(-100%); }
+    .rnr-comparison .timeline-row + .timeline-row { border-top: 1px solid #e4ebef; }
+    .rnr-comparison .timeline-track { margin: 14px 12px; min-height: 66px; }
+    .rnr-comparison .timeline-station small { display: block; color: var(--muted); font-weight: 600; }
+    .form-error { margin: 10px 0 0; color: var(--red); font-weight: 800; }
+    .table-wrap { margin-top: 14px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .assignment-matrix tr.blocked td { background: #fff7f7; }
+    .assignment-matrix .backup-condition { color: var(--red); font-weight: 800; }
+    .load-warning { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #e6c887; border-radius: 8px; background: #fff8e8; color: var(--amber); font-weight: 700; }
+    .load-warning[hidden] { display: none; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4ebef; font-size: 13px; }
+    th { color: var(--muted); background: #f8fbfc; font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    @media (max-width: 1180px) {
+      .app-shell { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      .metrics, .assignment-grid, .field-grid, .setup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      main { padding: 14px; }
+      .metrics, .assignment-grid, .field-grid, .mini-grid, .split, .setup-grid { grid-template-columns: 1fr; }
+      .page-head { display: block; }
+      .badge { margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside>
+      <div class="brand">
+        <h1 data-i18n="appTitle">排产产能参数工具</h1>
+        <p data-i18n="appSubtitle">工艺路线、标准 SA、现场 R&R 与产能分析。</p>
+      </div>
+      <nav aria-label="工作流">
+        <button class="nav-step active" type="button" data-stage-nav="routing" aria-current="step"><span>1</span><span data-i18n="stageRouting">工艺路线与工站</span></button>
+        <button class="nav-step" type="button" data-stage-nav="baseline"><span>2</span><span data-i18n="stageBaseline">标准 SA 设定</span></button>
+        <button class="nav-step" type="button" data-stage-nav="reality"><span>3</span><span data-i18n="stageReality">现场 R&R 跟踪</span></button>
+        <button class="nav-step" type="button" data-stage-nav="calibration"><span>4</span><span data-i18n="stageCalibration">校准与产能分析</span></button>
+      </nav>
+      <div class="control-card">
+        <label for="languageSelect" data-i18n="languageLabel">界面语言</label>
+        <select id="languageSelect">
+          <option value="zh">中文</option>
+          <option value="en">英文</option>
+        </select>
+      </div>
+      <div class="control-card">
+        <label for="productSelect" data-i18n="productSelectLabel">当前产品</label>
+        <select id="productSelect"><option>正在加载产品数据...</option></select>
+      </div>
+      <div class="control-card">
+        <label for="routeSelect" data-i18n="routeSelectLabel">当前路线</label>
+        <select id="routeSelect"><option>正在加载路线数据...</option></select>
+      </div>
+      <div class="control-card">
+        <label for="stationSelect" data-i18n="stationSelectLabel">当前工站</label>
+        <select id="stationSelect"><option value="">请选择工站</option></select>
+      </div>
+    </aside>
+    <main>
+      <header class="page-head">
+        <div>
+          <h2 data-i18n="pageTitle">产品路线设置</h2>
+          <p data-i18n="pageSubtitle">先确认产品、工艺路线、工站绑定和参数 gate，再进入产能分析。</p>
+        </div>
+        <div class="badge" data-i18n="engineBadge">正式版界面 · 已连接编译后的计算引擎</div>
+      </header>
+      <div id="appLoadWarning" class="load-warning">
+        <span data-i18n="loadWarning">正在加载正式版脚本。如果这里持续显示，说明 dist/ui/formal-app.js 没有成功加载，请先运行 npm run build，并确认通过 npm run serve 从当前项目目录访问页面。</span>
+      </div>
+      <div class="workflow-stage" data-stage="routing">
+        <section id="productPanel" class="panel"><p class="empty">正在加载产品路线设置...</p></section>
+        <section class="setup-grid" style="margin-top:14px;">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" data-i18n="routeOperationEyebrow">路线和工序清单</p>
+              <h2 data-i18n="routeOperationTitle">工艺路线与工序清单</h2>
+            </div>
+            <span id="routeStatus" class="pill">检查中</span>
+          </div>
+          <div id="routingPanel"><p class="empty">正在加载工序清单...</p></div>
+        </section>
+        <section id="operationDetailPanel" class="panel"><p class="empty">正在加载工站分配详情...</p></section>
+      </section>
+        <section id="stationAssignmentPanel" class="panel" style="margin-top:14px;"></section>
+        <div class="stage-footer"><button class="button" type="button" data-stage-next="baseline" data-i18n="nextBaseline">继续：标准 SA 设定</button></div>
+      </div>
+      <div class="workflow-stage" data-stage="baseline" hidden>
+        <section id="plannedSaPanel" class="panel"></section>
+        <div class="stage-footer"><button class="button" type="button" data-stage-next="reality" data-i18n="nextReality">继续：现场 R&R 跟踪</button></div>
+      </div>
+      <div class="workflow-stage" data-stage="reality" hidden>
+        <section id="rnrPanel" class="panel"></section>
+        <div class="stage-footer"><button class="button" type="button" data-stage-next="calibration" data-i18n="nextCalibration">查看参数校准与产能预检</button></div>
+      </div>
+      <div class="workflow-stage" data-stage="calibration" hidden>
+        <section id="calibrationPanel" class="panel"></section>
+        <section id="summaryCards" class="metrics" aria-label="参数检查摘要" style="margin-top:14px;"></section>
+        <section id="preflightPanel" class="panel" style="margin-top:14px;"></section>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="./dist/ui/formal-app.js"></script>
+</body>
+</html>

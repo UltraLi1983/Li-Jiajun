@@ -1,0 +1,15 @@
+{
+  "name": "production-capacity-parameter-tool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsc",
+    "test": "npm run build && node --test",
+    "serve": "python3 -m http.server 8785 --bind 127.0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

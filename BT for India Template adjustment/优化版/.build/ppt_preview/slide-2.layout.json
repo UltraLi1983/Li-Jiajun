@@ -1,0 +1,1030 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/417bs5",
+    "id": "417bs5",
+    "slide": 2,
+    "layoutId": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 794,
+      "height": 1123
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0balo3yp",
+      "id": "1",
+      "name": "top-band",
+      "bbox": [
+        0,
+        0,
+        794,
+        86
+      ],
+      "geometry": "rect",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": ""
+          }
+        ]
+      },
+      "fillColor": "#17365D",
+      "lineColor": "#17365D",
+      "lineWidth": 1
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/za1kfyh4",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        46,
+        17,
+        650,
+        42
+      ],
+      "geometry": "rect",
+      "text": "派遣函｜Dispatch Letter",
+      "textPreview": "派遣函｜Dispatch Letter",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "派遣函｜Dispatch Letter"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "派遣函｜Dispatch Letter",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "派遣函｜Dispatch Letter",
+              "fontSize": 30,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y9s3mtgj",
+      "id": "3",
+      "name": "page",
+      "bbox": [
+        710,
+        22,
+        42,
+        34
+      ],
+      "geometry": "rect",
+      "text": "2",
+      "textPreview": "2",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "2",
+              "fontSize": 16,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9g32l8z6",
+      "id": "4",
+      "name": "subtitle",
+      "bbox": [
+        46,
+        104,
+        702,
+        48
+      ],
+      "geometry": "rect",
+      "text": "公司抬头、签字和公章应在最终 Word/打印件中完成。",
+      "textPreview": "公司抬头、签字和公章应在最终 Word/打印件中完成。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#244062",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "公司抬头、签字和公章应在最终 Word/打印件中完成。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "公司抬头、签字和公章应在最终 Word/打印件中完成。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#244062",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "公司抬头、签字和公章应在最终 Word/打印件中完成。",
+              "fontSize": 16,
+              "color": "#244062",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#D9EAF7",
+      "lineWidth": 1
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8falsnyl",
+      "id": "5",
+      "name": "footer",
+      "bbox": [
+        46,
+        1080,
+        702,
+        22
+      ],
+      "geometry": "rect",
+      "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "textPreview": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#666666",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#666666",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+              "fontSize": 12,
+              "color": "#666666",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ne1kjih0",
+      "id": "6",
+      "name": "label-Date-182",
+      "bbox": [
+        46,
+        182,
+        190,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Date",
+      "textPreview": "Date",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Date"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Date",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Date",
+              "fontSize": 16,
+              "color": "#222222",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mds3qdgf",
+      "id": "7",
+      "name": "input-Date-182",
+      "bbox": [
+        236,
+        182,
+        512,
+        42
+      ],
+      "geometry": "rect",
+      "text": "<<dispatch_date>>",
+      "textPreview": "<<dispatch_date>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<dispatch_date>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<dispatch_date>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<dispatch_date>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pkz29oz2",
+      "id": "8",
+      "name": "label-To-230",
+      "bbox": [
+        46,
+        230,
+        190,
+        42
+      ],
+      "geometry": "rect",
+      "text": "To",
+      "textPreview": "To",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "To"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "To",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "To",
+              "fontSize": 16,
+              "color": "#222222",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ojq1gjyh",
+      "id": "9",
+      "name": "input-To-230",
+      "bbox": [
+        236,
+        230,
+        512,
+        42
+      ],
+      "geometry": "rect",
+      "text": "The Embassy of India, Beijing",
+      "textPreview": "The Embassy of India, Beijing",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The Embassy of India, Beijing"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The Embassy of India, Beijing",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The Embassy of India, Beijing",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6d8zyd4n",
+      "id": "10",
+      "name": "body",
+      "bbox": [
+        46,
+        294,
+        702,
+        430
+      ],
+      "geometry": "rect",
+      "text": "Subject: Dispatch Letter in Support of Business Visa Application\n\nThis is to certify that <<applicant_name>>, passport No. <<passport_no>>, is employed by <<cn_company_name>> as <<job_title>> in <<department>>.\n\nThe applicant will visit <<in_company_name>> in India from <<trip_start>> to <<trip_end>> for <<business_purpose>>. All expenses will be borne by <<cost_bearer>>. The applicant will return to China before the authorized stay expires.",
+      "textPreview": "Subject: Dispatch Letter in Support of Business Visa Application |  | This is to certify that <<applicant_name>>, passport No. <<passport...",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 8,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Subject: Dispatch Letter in Support of Business Visa Application"
+          },
+          {
+            "index": 2,
+            "text": ""
+          },
+          {
+            "index": 3,
+            "text": "This is to certify that <<applicant_name>>, passport No. <<passport_no>>, is employed"
+          },
+          {
+            "index": 4,
+            "text": "by <<cn_company_name>> as <<job_title>> in <<department>>."
+          },
+          {
+            "index": 5,
+            "text": ""
+          },
+          {
+            "index": 6,
+            "text": "The applicant will visit <<in_company_name>> in India from <<trip_start>> to"
+          },
+          {
+            "index": 7,
+            "text": "<<trip_end>> for <<business_purpose>>. All expenses will be borne by <<cost_bearer>>."
+          },
+          {
+            "index": 8,
+            "text": "The applicant will return to China before the authorized stay expires."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Subject: Dispatch Letter in Support of Business Visa Application",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Subject: Dispatch Letter in Support of Business Visa Application",
+              "fontSize": 17,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "This is to certify that <<applicant_name>>, passport No. <<passport_no>>, is employed by <<cn_company_name>> as <<job_title>> in <<department>>.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "This is to certify that <<applicant_name>>, passport No. <<passport_no>>, is employed by <<cn_company_name>> as <<job_title>> in <<department>>.",
+              "fontSize": 17,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "The applicant will visit <<in_company_name>> in India from <<trip_start>> to <<trip_end>> for <<business_purpose>>. All expenses will be borne by <<cost_bearer>>. The applicant will return to China before the authorized stay expires.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "The applicant will visit <<in_company_name>> in India from <<trip_start>> to <<trip_end>> for <<business_purpose>>. All expenses will be borne by <<cost_bearer>>. The applicant will return to China before the authorized stay expires.",
+              "fontSize": 17,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/reh0ri58",
+      "id": "11",
+      "name": "label-Authorized signatory-760",
+      "bbox": [
+        46,
+        760,
+        190,
+        62
+      ],
+      "geometry": "rect",
+      "text": "Authorized signatory",
+      "textPreview": "Authorized signatory",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Authorized signatory"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Authorized signatory",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Authorized signatory",
+              "fontSize": 16,
+              "color": "#222222",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfqh0nmt",
+      "id": "12",
+      "name": "input-Authorized signatory-760",
+      "bbox": [
+        236,
+        760,
+        512,
+        62
+      ],
+      "geometry": "rect",
+      "text": "<<signatory_name / title / email / phone>>",
+      "textPreview": "<<signatory_name / title / email / phone>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<signatory_name / title / email / phone>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<signatory_name / title / email / phone>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<signatory_name / title / email / phone>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tgzit83e",
+      "id": "13",
+      "name": "label-Signature & seal-840",
+      "bbox": [
+        46,
+        840,
+        190,
+        94
+      ],
+      "geometry": "rect",
+      "text": "Signature & seal",
+      "textPreview": "Signature & seal",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Signature & seal"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Signature & seal",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Signature & seal",
+              "fontSize": 16,
+              "color": "#222222",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/eh8z2d4z",
+      "id": "14",
+      "name": "input-Signature & seal-840",
+      "bbox": [
+        236,
+        840,
+        512,
+        94
+      ],
+      "geometry": "rect",
+      "text": "（留白，最终打印后签字盖章）",
+      "textPreview": "（留白，最终打印后签字盖章）",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "（留白，最终打印后签字盖章）"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "（留白，最终打印后签字盖章）",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "（留白，最终打印后签字盖章）",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    }
+  ],
+  "composeRuns": []
+}

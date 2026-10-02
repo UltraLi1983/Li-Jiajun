@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>李嘉俊 · 讲师介绍与课程体系</title>
+<style>
+:root{
+  --t-display:clamp(20px,4vw,28px);
+  --t-title:clamp(13px,2.2vw,15px);
+  --t-body:clamp(11px,1.8vw,12px);
+  --t-note:clamp(9px,1.5vw,10.5px);
+  --space-page:clamp(16px,3vw,24px);
+  --paper:#FAFAF8;
+  --ink:#0f1a2e;
+  --muted:#8a9aa8;
+  --gold:#c8a45c;
+  --line:#e8e4df;
+  --text:#3d4e5e;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f0ede8;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;padding:20px;flex-direction:column;-webkit-font-smoothing:antialiased;color:#2c3e4f}
+.viewer{width:100%;max-width:min(960px,92vw);aspect-ratio:297/210;position:relative;background:var(--paper);border-radius:3px;box-shadow:0 2px 30px rgba(0,0,0,.08);overflow:hidden}
+.progress-bar{position:absolute;top:0;left:0;right:0;height:2px;z-index:10}
+.progress-bar .fill{height:100%;width:0%;background:var(--gold);transition:width .5s ease}
+
+.page{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s cubic-bezier(.25,.46,.45,.94);overflow-y:auto;display:flex;flex-direction:column;transform:scale(.97) translateY(3px);background:var(--paper);scrollbar-width:thin;scrollbar-color:#ddd transparent}
+.page.active{opacity:1;pointer-events:auto;transform:scale(1) translateY(0)}
+.page::-webkit-scrollbar{width:3px}
+.page::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+.page:not(:hover)::-webkit-scrollbar-thumb{background:transparent}
+.s{opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
+.page.active .s{opacity:1;transform:translateY(0)}
+
+.cf{margin:var(--space-page);border:1px solid rgba(0,0,0,.04);border-radius:2px;padding:12px 16px;flex:1;display:flex;flex-direction:column;background:#fff}
+.cf.no-clip{overflow:visible}
+
+.page.cover{align-items:center;justify-content:center;text-align:center;background:linear-gradient(145deg,#0f1a2e,#14263f);color:#fff;padding:48px}
+.cover .brand{font-size:var(--t-note);letter-spacing:4px;opacity:.55;margin-bottom:14px;text-transform:uppercase}
+.cover .sub-brand{font-size:var(--t-note);letter-spacing:3px;opacity:.35;margin-bottom:20px}
+.cover .ai-badge{display:inline-block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(200,164,92,.45);padding:5px 14px;border-radius:20px;margin-bottom:10px;background:rgba(200,164,92,.08)}
+.cover .ai-hint{font-size:var(--t-note);opacity:.45;letter-spacing:1px;margin-bottom:22px;max-width:90%;line-height:1.5}
+.cover .title{font-size:var(--t-display);font-weight:700;letter-spacing:4px;margin-bottom:6px}
+.cover .divider{width:48px;height:2px;background:var(--gold);margin:18px auto;transition:width .6s ease}
+.page.active .cover .divider{width:64px}
+.cover .name{font-size:clamp(17px,3vw,22px);font-weight:600;margin-bottom:4px}
+.cover .subtitle{font-size:var(--t-body);opacity:.7;letter-spacing:2px}
+.cover .tagline{margin-top:24px;font-size:var(--t-note);letter-spacing:3px;opacity:.5;border:1px solid rgba(255,255,255,.2);padding:8px 24px;border-radius:20px;display:inline-block}
+
+h2{font-size:var(--t-title);font-weight:700;color:var(--ink);letter-spacing:1.5px;margin-bottom:0}
+.sub{font-size:var(--t-note);color:var(--muted);margin-bottom:6px;letter-spacing:1px}
+h3{font-size:var(--t-body);font-weight:600;color:var(--ink);margin:2px 0 1px}
+p{line-height:1.5;font-size:var(--t-body);color:var(--text);margin-bottom:0}
+strong{color:var(--ink)}
+.tiny{font-size:var(--t-note);color:var(--muted)}
+.t-display{font-size:var(--t-display)}
+.t-title{font-size:var(--t-title)}
+.t-body{font-size:var(--t-body)}
+.t-note{font-size:var(--t-note)}
+.accent-line{width:32px;height:2px;background:var(--gold);margin:0 0 6px;transition:width .6s ease .2s}
+.page.active .accent-line{width:40px}
+blockquote{border-left:2px solid var(--gold);margin:2px 0;padding:3px 6px;background:#faf8f6;font-size:var(--t-note);line-height:1.5;color:#2c3e4f;border-radius:0 2px 2px 0}
+
+.card{background:#faf8f6;border-radius:3px;padding:4px 8px;margin:2px 0;border-left:2px solid var(--ink);transition:box-shadow .2s ease,transform .2s ease}
+.card.gold{border-left-color:var(--gold)}
+.card .label{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:1px}
+.card .value{font-size:var(--t-body);font-weight:600;color:var(--ink)}
+.card.dark{background:var(--ink);color:#fff;border-left-color:var(--gold)}
+.card.dark p{color:rgba(255,255,255,.85);font-size:var(--t-note)}
+.card:hover{box-shadow:0 1px 6px rgba(0,0,0,.08);transform:translateY(-1px)}
+.two{display:flex;gap:10px;flex:1;min-height:0}
+.two>div{flex:1;display:flex;flex-direction:column;min-width:0}
+.vf.fill > :last-child:not(:only-child){margin-top:auto}
+.row2{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.row2 > .row{flex:1;min-height:0;display:flex;flex-direction:column}
+.row2 > .row.tight{flex:0 0 auto}
+.row2 > .row.loose{flex:1}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:2px 0}
+table{width:100%;border-collapse:collapse;font-size:var(--t-note);margin:0;min-width:240px}
+table th,table td{border:1px solid var(--line);padding:2px 4px;text-align:left;vertical-align:top;line-height:1.4}
+table th{background:var(--ink);color:#fff;font-weight:600;font-size:9.5px;letter-spacing:.5px;padding:2px 4px}
+table tr:nth-child(even){background:#faf8f6}
+table tr:hover td{background:#f3efe8}
+ul,ol{padding-left:14px;margin:1px 0}
+li{font-size:var(--t-body);line-height:1.5;margin-bottom:1px}
+.flow{background:#faf8f6;border-radius:3px;padding:4px 6px;margin:1px 0;font-size:var(--t-note);line-height:1.5;border-left:2px solid var(--gold)}
+.flow .arrow{color:var(--gold);font-weight:700}
+.pp{margin-bottom:1px}.pp .pt{font-weight:700;color:var(--ink);font-size:var(--t-body);display:inline}
+.pp .pd{font-size:var(--t-note);color:#4a5a6a;margin-top:0;padding-left:12px;line-height:1.5}
+.pgrid{display:flex;flex-direction:column;gap:2px;margin:2px 0}
+.prow{display:flex;gap:5px;padding:2px 5px;border-radius:3px;align-items:flex-start;transition:background .2s}
+.prow:hover{background:#faf8f6}
+.prow .pn{font-weight:700;color:var(--ink);font-size:var(--t-body);min-width:36px;flex-shrink:0}
+.prow .pi{font-size:var(--t-note);color:var(--text);flex:1}
+.prow .ptm{font-size:var(--t-note);color:var(--muted);min-width:28px;text-align:right;flex-shrink:0}
+.prow .pnote{font-size:var(--t-note);color:var(--muted);min-width:68px;text-align:right;flex-shrink:0}
+
+.price-box{background:#faf8f6;border-radius:3px;border:1px solid var(--line)}
+.price-box .pbh{background:var(--ink);color:#fff;padding:3px 8px;font-size:var(--t-note);letter-spacing:1px;font-weight:600}
+.l-row{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid var(--line)}
+.l-row:last-child{border-bottom:none}
+.l-row .ln{font-weight:600;color:var(--ink);font-size:var(--t-body)}
+.l-row .lv{font-weight:600;color:var(--ink);font-size:var(--t-body);white-space:nowrap;text-align:right}
+.l-row .lv .sml{font-weight:400;font-size:9px;color:var(--muted);display:block;text-align:right}
+.l-row-sub{padding:1px 8px 1px 22px;border-bottom:1px solid var(--line)}
+.l-row-sub:last-of-type{border-bottom:none}
+.l-row-sub .l-sub{display:flex;justify-content:space-between;align-items:center;font-size:var(--t-body);padding:1px 0}
+.l-row-sub .lsn{color:#4a5a6a}
+.l-row-sub .lsv{font-weight:600;color:var(--ink)}
+
+.omod{border:1px solid var(--line);border-radius:3px;margin-bottom:2px;overflow:hidden;transition:border-color .2s}
+.omod:hover{border-color:var(--gold)}
+.omh{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;min-height:32px;cursor:pointer;user-select:none;background:#faf8f6;font-size:var(--t-note);font-weight:600;color:var(--ink);transition:background .2s}
+.omh:hover{background:#f3efe8}
+.omo{display:inline-block;width:14px;height:14px;line-height:14px;text-align:center;font-size:14px;color:var(--muted);transition:transform .3s ease;flex-shrink:0;margin-left:6px}
+.omod.open .omo{transform:rotate(45deg)}
+.omc{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1) .05s}
+.omod.open .omc{max-height:600px}
+.omci{padding:4px 8px 6px;font-size:var(--t-note);line-height:1.5;color:#4a5a6a;background:#fff}
+.omci .oml{font-size:8.5px;color:var(--muted);letter-spacing:.5px;margin-bottom:0;font-weight:600}
+.omci .omv{margin:0 0 2px 6px;font-size:var(--t-note);color:#4a5a6a;line-height:1.5}
+.omci ul{margin:0 0 2px;padding-left:18px}
+.omci li{font-size:var(--t-note);line-height:1.5;margin-bottom:1px;color:#4a5a6a}
+
+.nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;padding-bottom:env(safe-area-inset-bottom,0)}
+.nav button{background:transparent;border:1px solid #d0ccc7;width:34px;height:34px;border-radius:50%;font-size:16px;color:#4a5a6a;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .25s ease;font-family:inherit}
+.nav button:hover{border-color:var(--ink);color:var(--ink);background:#faf8f6;transform:scale(1.05)}
+.nav button:disabled{border-color:#e0dcd7;color:#c0bcb7;cursor:default;transform:none}
+.nav .info{font-size:13px;color:var(--muted);letter-spacing:1px;min-width:48px;text-align:center}
+.nav .pbtn{width:28px;height:28px;border-radius:50%;font-size:13px;background:#fff;transition:all .3s}
+.nav .pbtn.playing{background:var(--gold);color:#fff;border-color:var(--gold)}
+.dots{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:6px;padding-bottom:env(safe-area-inset-bottom,0)}
+.dots .dot{width:6px;height:6px;border-radius:50%;background:#d0ccc7;border:none;padding:0;cursor:pointer;transition:all .35s ease}
+.dots .dot:hover{background:var(--muted)}
+.dots .dot.active{background:var(--gold);width:18px;border-radius:3px}
+
+.pflow{display:flex;align-items:center;justify-content:center;gap:0;padding:1px 0;margin:0 0 1px;font-size:9px;color:var(--muted);overflow:hidden}
+.pflow .pfnode{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0}
+.pflow .pfdot{width:4px;height:4px;border-radius:50%;background:var(--ink);margin:0 1px}
+.pflow .pflb{font-size:7px;color:var(--muted);white-space:nowrap;letter-spacing:-.3px}
+.pflow .pfarr{display:flex;align-items:center;flex:1;min-width:6px;max-width:14px;position:relative;height:1px}
+.pflow .pfarr .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--gold) 50%,transparent 0);background-size:3px 1px;animation:dashMove .5s linear infinite}
+@keyframes dashMove{to{background-position-x:-6px}}
+.pflow .pfarr .hd{width:0;height:0;border-top:2.5px solid transparent;border-bottom:2.5px solid transparent;border-left:3.5px solid var(--gold);flex-shrink:0}
+
+.ccard{border:1px solid var(--line);border-radius:3px;margin-bottom:2px;overflow:hidden}
+.ccard .cch{display:flex;background:#faf8f6;padding:2px 6px;gap:6px;align-items:center}
+.ccard .cch .cct{font-size:var(--t-note);font-weight:600;color:var(--ink);min-width:52px}
+.ccard .ccb{display:flex;gap:6px;padding:2px 6px 3px}
+.ccard .ccb .ccl{flex:1;font-size:var(--t-note);color:#6a7a8a;padding:2px 4px;background:#f8f6f4;border-radius:2px}
+.ccard .ccb .ccr{flex:1;font-size:var(--t-note);color:var(--ink);padding:2px 4px;border-left:2px solid var(--gold);border-radius:0 2px 2px 0;font-weight:500}
+
+.d1agenda{display:grid;grid-template-columns:42px 1fr;gap:1px 4px;font-size:var(--t-note);margin:1px 0}
+.d1agenda .d1t{color:var(--gold);font-weight:600;font-size:9px;letter-spacing:.5px;padding:1px 0}
+.d1agenda .d1c{color:#4a5a6a;line-height:1.5;padding:1px 0;font-size:var(--t-note)}
+
+.page.back{align-items:center;justify-content:center;text-align:center;background:linear-gradient(145deg,#14263f,#0f1a2e);color:#fff;padding:48px}
+.page.back h2{color:#fff;font-weight:300;font-size:clamp(18px,3.5vw,22px);letter-spacing:6px}
+.page.back .divider{width:32px;height:1px;background:var(--gold);margin:14px auto}
+.page.back .bn{font-size:var(--t-title);font-weight:600;letter-spacing:3px;margin-bottom:4px}
+.page.back .bs{font-size:var(--t-body);opacity:.6}
+.page.back .bt{font-size:var(--t-note);opacity:.4;letter-spacing:2px;margin-top:18px}
+
+.cg2x3{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;margin:1px 0}
+.cg2x3 .cgi{font-size:var(--t-note);line-height:1.4;padding:2px 4px;background:#faf8f6;border-radius:2px;border-left:2px solid var(--gold);color:#4a5a6a}
+.cg2x3 .cgi .cgt{font-weight:600;color:var(--ink)}
+.sdiv{border:none;border-top:1px solid var(--line);margin:1px 0}
+.tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.tag{font-size:9px;background:#faf8f6;border:1px solid var(--line);border-radius:10px;padding:1px 6px;color:#4a5a6a}
+
+@media(hover:none){
+  .card:hover,.prow:hover,.omod:hover{border-color:var(--line)}
+  .card:hover,.prow:hover{box-shadow:none;transform:none;background:inherit}
+  table tr:hover td{background:inherit}
+  table tr:nth-child(even) td{background:#faf8f6}
+}
+
+@media(max-width:768px){
+  body{padding:12px 8px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0))}
+  .viewer{max-width:100%;aspect-ratio:210/297;min-height:70vh}
+  .cf{margin:10px;padding:8px 10px}
+  .page.cover,.page.back{padding:28px 20px}
+  .cover .ai-hint{font-size:9px}
+  .two{flex-direction:column;gap:6px}
+  .l-row{flex-direction:column;align-items:flex-start;gap:2px}
+  .d1agenda{grid-template-columns:36px 1fr}
+  .ccard .ccb{flex-direction:column}
+  .nav{gap:8px}
+  .nav button{width:40px;height:40px;font-size:14px}
+  .nav .pbtn{width:36px;height:36px}
+  .cg2x3{grid-template-columns:1fr}
+  .omh{min-height:44px;padding:8px 10px}
+  .prow{flex-wrap:wrap}
+  .prow .pnote,.prow .ptm{text-align:left;min-width:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="viewer">
+  <div class="progress-bar"><div class="fill" id="progFill"></div></div>
+<div class="page cover" data-i="0">
+  <div class="s brand">供应链课程</div>
+  <div class="s sub-brand">2026 · 企业公开课</div>
+  <div class="s ai-badge">AI 辅助构建 · 业务驱动交付</div>
+  <div class="s ai-hint">内容以业务 MD 为源，可快速迭代 — 拥抱 AI 实战工作流</div>
+  <div class="s title">讲师简介与课程体系</div>
+  <div class="s divider"></div>
+  <div class="s name">李嘉俊</div>
+  <div class="s subtitle">大众集团供应链管理专家 · VDA 6.8 资深审核专家</div>
+  <div class="s"><span class="t-note" style="opacity:.55">VDA 6.8 / 6.3 双证审核员</span></div>
+  <div class="s tagline">从业务中来 · 到业务中去</div>
+</div>
+<div class="page" data-i="1">
+  <div class="cf">
+  <h2 class="s">讲师简介与课程体系</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:1;gap:12px">
+    <div class="s vf">
+      <div>
+        <p class="t-display" style="font-weight:700;color:#0f1a2e;margin-bottom:1px">李嘉俊</p>
+        <p class="tiny" style="margin-bottom:3px">大众集团供应链管理专家 · VDA 6.8 资深审核专家</p>
+        <p class="t-body" style="margin-bottom:3px">大众集团供应链管理专家，20年+大众与奥迪品牌供应链经验，全覆盖&quot;信息流+实物流&quot;。</p>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="label">核心资历</div>
+        <ol style="margin-top:1px" class="t-note"><li><strong>VDA 6.8 / VDA 6.3 双证审核员</strong>，大众集团认证VDA6.8过程审核员，代表奥迪、保时捷、兰博基尼等品牌，对亚太区超过100家供应商进行供应链准入审核</li><li><strong>主导亚太区100+供应商供应链准入审核</strong></li><li><strong>上汽集团培训中心外聘讲师</strong>（2020-2022）</li><li><strong>奥迪中国供应链咨询业务从0到1搭建者</strong>，业务主导者，从流程制定与落地实施</li><li><strong>QPNi 供应商成熟度管理</strong>：PPE中国项目核心成员，成功支持三花集团、敏实集团、蒂森克虏伯、舍弗勒、ZF等30+家供应商从0搭建供应链体系并完成成熟度达标</li></ol>
+      </div>
+    </div>
+    <div class="s vf">
+      <div class="card dark" style="margin-bottom:2px">
+  <div class="label" style="color:rgba(255,255,255,.6)">核心层 · 人人需要</div>
+  <div class="value" style="color:#fff;margin:2px 0">L1：VDA6.8迎审实战<br>把你的供应链业务投影到过程标准</div>
+  <p style="opacity:.7;margin-top:1px">3天 · 从供应链通识到业务流拆解，一次性打通</p>
+</div><div class="card" style="margin-bottom:1px">
+  <div class="label">L2 · 进阶层（需体系基础）</div>
+  <div class="value t-body">VDA 6.8 预审核与问题整改</div>
+  <p class="t-note" style="color:#6a7a8a;margin-top:1px">咨询模式 · 现场预审核 + 整改方案，从审核发现到体系闭环</p>
+</div><div class="card" style="margin-bottom:1px">
+  <div class="label">L3 · 进阶层（需体系基础）</div>
+  <div class="value t-body">供应链端到端降本实战</div>
+  <p class="t-note" style="color:#6a7a8a;margin-top:1px">项目制 · 运营视角降本，非传统压价，从运营视角识别成本空间</p>
+</div>
+      <p class="t-note" style="color:#8a9aa8;text-align:center;letter-spacing:1px">体系越扎实，进阶层收益越大</p>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="2">
+  <div class="cf">
+  <h2 class="s">企业的四个真实痛点 · 角色矛盾与需求差异</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:6;min-height:0;gap:10px">
+    <div><div class="s pp"><strong>① 知与行之间的断层</strong><div class="pd">市面上的 VDA 6.8 培训不缺，条款解读是公开的，乌龟图的画法是可以复印的。大多数供应商的问题是：<strong>条款我都懂，但不知道&quot;紧&quot;在哪里、&quot;松&quot;在哪里。</strong> 抄条款容易，但判断&quot;什么情况下可以灵活、什么情况下必须死守&quot;——这种平衡感只能来自大量实战积累的判断力。</div></div><div class="s pp"><strong>② 体系的&quot;边界&quot;比&quot;深度&quot;更致命</strong><div class="pd">很多企业看似（系统内）物料管得很好，但<strong>大量该在标准要求内的东西根本没进去</strong>——不在帐上的在制品、外协件、试制件、客供料、长期不消的呆滞尾数。 审核的第一步不是打分，而是<strong>划边界</strong>：先确认审核覆盖范围是否完整，再谈在过程标准内做得好不好。</div></div></div>
+    <div><div class="s pp"><strong>③ 单点是业务，连起来才是问题</strong><div class="pd">采购下单了但计划不知道 → 物料到了但质检没排上 → 成品做完了但运输没约好。每个点分开看都没错，连起来就断了。没有&quot;流&quot;的思维，整改永远在打地鼠。 <strong>而比&quot;流&quot;更隐蔽的变量是&quot;量&quot;</strong>——同一套流程，日产量 100 件时运转顺畅，产能翻到 300 件时某个环节可能直接堵死。量不会均匀地放大每个节点，而是精准暴露最薄弱的一环。</div></div><div class="s pp"><strong>④ 时间才是供应链运作的第一参照要素</strong><div class="pd">供应链中的每一次数量执行、每一次物料移动，以及信息流端的全部指令，原则上都以<strong>时间</strong>为第一参照要素。但它在实际运作中恰恰是最容易被忽略的那一个。 生产计划的第一要素不是数量，而是锁定<strong>时间</strong>。&quot;单位时间的产出计划&quot;才是生产计划的根本体现——本质上是在切分一个定义的时间段，规定每个更细致的时间&quot;段落&quot;里要做什么。当时间段落没有被明确定义，计划就是一把没有刻度的尺子。 VDA 6.8 的条款中，时间维度往往是隐含的而非显性的。<strong>审核时要能识别：哪个节点的运作是以时间为锚点的？如果时间刻度模糊了，哪些环节会率先失序？</strong></div></div></div>
+  </div>
+  <hr class="s sdiv">
+  <div class="s two" style="flex:4;min-height:0;gap:10px">
+    <div class="s vf">
+      <h3>企业主与受训者的立场差异</h3>
+      <div class="tbl-wrap"><table><tr><th style="width:18%">维度</th><th style="width:41%">企业主关心</th><th style="width:41%">受训者（供应链从业者）关心</th></tr><tr><td>第一层</td><td>能不能拿项目（潜在分析通过，客户不丢）</td><td>能不能通过审核，不被扣分</td></tr><tr><td>第二层</td><td>能不能建立稳定合理的运营体系</td><td>条款要求什么，我照着做</td></tr><tr><td>第三层</td><td>能不能在体系基础上优化，降低运营成本</td><td>我的日常工作跟这个标准有什么关系</td></tr></table></div>
+      <div class="card" style="padding:3px 6px;margin:1px 0">
+        <div class="label">矛盾点</div>
+        <p class="t-note">企业主花钱派人来培训，想要的是<strong>业务回报</strong>——拿项目、降本提效 受训者坐在教室里，想要的是<strong>明确的操作指令</strong>——告诉我做什么能过</p>
+      </div>
+      <div class="card gold" style="padding:3px 6px">
+        <div class="label">打通方式</div>
+        <p class="t-note">让受训者意识到——<strong>你不是在为审核而工作，你是在为业务而工作，通过审核是自然结果。</strong> 当你真正理解了自己的业务流、理解了评审者怎么看待这条流，通过审核就不再是需要&quot;特意准备&quot;的事。</p>
+      </div>
+    </div>
+    <div class="s vf">
+      <h3>培训机构 / 课程常见交付形态</h3>
+      <div class="card" style="padding:6px 8px;margin:0 0 2px">
+        <div class="label">传统交付</div>
+        <p class="t-note">条款解读 + 方法论模板 + 考试/证书导向。学员回到企业容易变成“知道标准，但不会诊断业务”。</p>
+      </div>
+      <div class="card gold" style="padding:6px 8px">
+        <div class="label">你真正需要的交付</div>
+        <p class="t-note"><strong>以业务流为主线</strong>，把评价标准当成一套“看业务风险”的眼睛。学完能落地、能闭环、能拿到业务结果。</p>
+      </div>
+      <div class="flow t-note" style="margin-top:2px">
+        你不是在为审核而工作，你是在为业务而工作。通过审核只是自然结果。
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="3">
+  <div class="cf">
+  <h2 class="s">传统课程 vs 本课程：差异与解决方案</h2>
+  <div class="s accent-line"></div>
+  <div class="s row2" style="flex:1">
+    <div class="row loose">
+      <div class="s two" style="flex:1;gap:12px">
+        <div class="s vf">
+          <h3>两条完全不同的内容路径</h3>
+          <div class="flow t-note" style="border-left-color:#8a9aa8">
+            <span style="font-size:8.5px;color:#8a9aa8;letter-spacing:.5px">传统路径</span><br>
+            第一天：标准概论 <span class="arrow">→</span> VDA 6.8 背景、在 6.x 体系中的定位、审核员要求、远程审核 <span class="arrow">→</span> 第二天：方法论与评价 <span class="arrow">→</span> 乌龟图/风险分析、10-8-6-4-0 评分、A/B/C 降级规则、潜在供方分析 <span class="arrow">→</span> 第三天：条款逐条讲解 <span class="arrow">→</span> L1 到 L7，168 个提问逐一过 <span class="arrow">→</span> 第四天：练习与考试 <span class="arrow">→</span> 案例练习、笔试
+          </div>
+          <div class="flow t-note">
+            <span style="font-size:8.5px;color:#c8a45c;letter-spacing:.5px">本课程路径</span><br>
+            传统路径：<br>标准条款 → 条款解读 → 逐条对标 → 知道"怎么写" → 考试通过<br><br>本课程路径：<br>你的业务 → 业务流拆解 → 对应条款 → 断点分析 → 知道"评审者怎么判断"<br>                                                         ↓<br>                                             反过来把自己的业务改到位
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;margin:1px 0"><div style="display:flex;gap:4px;align-items:flex-start"><span style="font-weight:600;color:#8a9aa8;min-width:12px" class="t-note">A</span><span class="t-note" style="color:#6a7a8a">传统条款路径：标准组织→逐条对标→考试拿证，学完回到企业不知从何下手</span></div><div style="display:flex;gap:4px;align-items:flex-start"><span style="font-weight:600;color:#c8a45c;min-width:12px" class="t-note">B</span><span class="t-note" style="color:#6a7a8a">本课程路径：业务流拆解→对应条款→断点分析→反向改到位，学完直接落地</span></div><div style="display:flex;gap:4px;align-items:flex-start"><span style="font-weight:600;color:#0f1a2e;min-width:12px" class="t-note">C</span><span class="t-note" style="color:#6a7a8a">融合路径：体系认证+业务优化并行推进，以业务健康度驱动审核通过</span></div></div>
+          <div class="card gold" style="padding:3px 6px">
+            <p class="t-note" style="margin:0"><strong>结论</strong>：如果你要“拿项目/做优化”，就必须从业务流切入，而不是从条款切入。</p>
+          </div>
+        </div>
+        <div class="s vf">
+          <h3>传统培训 vs 本课程（内容对比）</h3>
+          <div class="tbl-wrap"><table><tr><th style="width:18%">内容模块</th><th style="width:41%">传统培训教什么</th><th style="width:41%">本课程教什么</th></tr><tr><td><strong>标准背景</strong></td><td>VDA 6.8 的发布时间、与 6.3 的关系、在 6.x 体系中的位置</td><td><strong>VDA 6.8 的本质是什么</strong>——它不是业务本身，而是业务的风险评价手段</td></tr><tr><td><strong>审核员要求</strong></td><td>逐条列出内部/供方/认证审核员的资格要求（工作年限、培训时长）</td><td><strong>评审者的判断基线从哪里来</strong>——了解评审者的知识结构和关注点，你就知道他会往哪里看</td></tr><tr><td><strong>远程审核</strong></td><td>远程/混合审核的定义、适用条件、要素远程适用性表</td><td><strong>什么情况下远程审核会漏掉关键风险</strong>——哪些业务环节必须现场看才看得出问题</td></tr><tr><td><strong>乌龟图/风险分析</strong></td><td>乌龟图六要素（输入/流程/人力/资源/有效性/输出）的定义与画法</td><td><strong>乌龟图是用来发现问题的，不是用来填表的</strong>——同一张乌龟图，评审者关注的是&quot;你的输入输出之间有没有断裂&quot;，而格子是否填满是基于业务本身</td></tr><tr><td><strong>10-8-6-4-0 评分</strong></td><td>各分数段的定义、A/B/C 分类阈值、降级规则</td><td><strong>4 分和 0 分在实际中是怎么触发的</strong>——什么情况会把一个环节打成 4 分？系统性偏差和偶发偏差怎么区分？降级不是数学题，是风险判断</td></tr><tr><td><strong>潜在供方分析</strong></td><td>潜在分析的定义、适用场景、绿/黄/红分级</td><td><strong>潜在分析时评审者真正在验证什么</strong>——不是在验你的文件，是在验&quot;业务可行性&quot;</td></tr><tr><td><strong>L1-L7 条款逐条</strong></td><td>168 个提问逐一过，告诉你每条的最低要求是什么</td><td><strong>一条业务流串起多个 L</strong>——你做一个决策，在你的业务流中，它会流经哪些条款的评估范围？条款之间的联动关系是什么？</td></tr><tr><td><strong>审核技巧</strong></td><td>提问技巧、审核流程、报告编写</td><td><strong>被审核方视角的应对策略</strong>——评审者问这个问题时，他真正想确认的是什么？你的回答怎么组织才能一次性消除他的疑虑</td></tr></table></div>
+        </div>
+      </div>
+    </div>
+    <div class="row tight">
+      <h3 class="s">学员体验对比（结果层）</h3>
+      <div class="s two" style="gap:12px">
+        <div><div class="s ccard">
+  <div class="cch"><span class="cct"><strong>学员体验</strong></span></div>
+  <div class="ccb"><div class="ccl">听 3 天条款，昏昏欲睡</div><div class="ccr">从自己每天做的事切入，有代入感</div></div>
+</div><div class="s ccard">
+  <div class="cch"><span class="cct"><strong>记忆留存</strong></span></div>
+  <div class="ccb"><div class="ccl">课后一周忘了大半</div><div class="ccr">业务流就是记忆锚点，遇到实际场景能自然调用</div></div>
+</div><div class="s ccard">
+  <div class="cch"><span class="cct"><strong>能力转化</strong></span></div>
+  <div class="ccb"><div class="ccl">知道标准写了什么</div><div class="ccr">知道<strong>评审者怎么看、我怎么提前应对</strong></div></div>
+</div><div class="s ccard">
+  <div class="cch"><span class="cct"><strong>对企业价值</strong></span></div>
+  <div class="ccb"><div class="ccl">有个人拿了证，但企业不一定有改善</div><div class="ccr">每条业务流有明确改进方向，回去可落地</div></div>
+</div><div class="s ccard">
+  <div class="cch"><span class="cct"><strong>讲师定位</strong></span></div>
+  <div class="ccb"><div class="ccl">标准解读员</div><div class="ccr"><strong>经验输出者</strong>——20 年 100+ 供应商审核的判断基线</div></div>
+</div></div>
+        <div class="card gold" style="padding:10px 12px">
+          <div class="label">一句话定位</div>
+          <p class="t-note" style="margin:2px 0"><strong>不是“标准解读员”，而是“经验输出者”。</strong></p>
+          <p class="t-note" style="margin:0">20年+、100+供应商审核积累的判断基线，用来直接解决业务断点。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="4">
+  <div class="cf">
+  <h2 class="s">课程哲学 · 核心理念 · 常见问题（审核量总结）</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:5;min-height:0;gap:12px">
+    <div class="s vf">
+      <h3>把 VDA 6.8 从"天花板"变成"地板"</h3>
+      <div class="flow t-note">绝大多数人认为VDA 6.8是<strong>"一根线，努力够到它"</strong>——逐条对标、临时突击、审核过了松一口气，下次来了重新紧张。</div>
+      <p class="t-note" style="margin:1px 0">但审核本质是评价风险程度。<strong>风险不是靠&quot;够到线&quot;就能消除的。</strong> 你的业务流本身存在断点，评审者总会找到它——可能通过这一条，也可能通过另一条。</p>
+      <div class="card gold" style="padding:3px 6px;margin:1px 0">
+        <div class="label">核心路径</div>
+        <p class="t-note" style="margin:0"><strong>将供应链业务与 VDA 6.8 并轨</strong>——不是用条款去套业务，而是用业务的投影去对应条款。</p>
+      </div>
+      <blockquote class="t-note"><strong>&quot;这是一根线，我努力够到它。&quot;</strong>
+
+于是有了逐条对标、临时突击、审核过了就松一口气，下次来了再重新紧张。
+
+但审核本质是评价风险程度。<strong>风险不是靠&quot;够到线&quot;就能消除的。</strong> 你的业务流本身存在断点，评审者总会找到它——可能通过这一条，也可能通过另一条。
+
+这门课想帮你做的事是：<strong>把 VDA 6.8 从天花板翻过来，变成你的地板。</strong>
+
+核心路径是：<strong>将供应链业务与 VDA 6.8 并轨</strong>——不是用条款去套业务，而是用业务的投影去对应条款。
+
+当你的业务流足够健康，VDA 6.8 就不再是你抬头仰望的及格线，而是你脚下已经踩实的基准。任何一套合理的评价标准（VDA 6.8、MMOG/LE……）站上去都能得出类似的结果——因为<strong>真正健康的业务，经得起多把尺子的测量</strong>。</blockquote>
+    </div>
+    <div class="s vf">
+      <h3>核心理念</h3>
+      <div class="card dark" style="padding:5px 8px;margin-bottom:2px">
+        <div class="label" style="color:rgba(255,255,255,.6);font-size:8.5px">核心认知</div>
+        <p style="font-weight:700;color:#fff;margin:2px 0"><strong>VDA 6.8 不是业务本身，而是业务的评价手段。</strong></p>
+      </div>
+      <p class="t-note">来参加这门课的人，绝大多数不会成为专职审核员，<strong>你们会继续留在业务端</strong>——做采购、做计划、管仓储、管物流。 而另一面，不是每一位评审者都是业务高手，甚至绝大部分在具体的业务领域经验都不充分，但评价却不得不从业务本身出发。所以你不需要成为一个&quot;审核专家&quot;，你需要成为的是：</p>
+      <div class="card gold" style="padding:4px 8px;margin:2px 0">
+        <div class="label">课程目标</div>
+        <p class="t-note" style="font-weight:600;margin:1px 0;color:#0f1a2e">懂审核员如何思考的供应链从业者</p>
+        <p class="t-note" style="margin:0">知道评审者的目光会落在哪里、那条判断基线在哪。然后，反过来把自己的业务做到经得起看。</p>
+      </div>
+    </div>
+  </div>
+  <hr class="s sdiv">
+  <div style="flex:4;display:flex;flex-direction:column;min-height:0">
+    <h3 class="s">六层认知断层（100+供应商审核反复出现）</h3>
+    <div class="s cg2x3"><div class="cgi"><span class="cgt">① 功能边界不清</span> 很多供应链管理者不清楚供应链的功能范围与相关职能设定。采购、计划、物流、仓储各自管什么、接口在哪，边界模糊。没有清晰的职能框架，运营过程就无从搭建。</div><div class="cgi"><span class="cgt">② 职能目标缺失</span> 供应链作为运营核心功能，每个职能人员在运营过程中有明确的业务方向与目标。但多数企业与供应链管理者并不了解这些，导致岗位设定与业务目标脱节。</div><div class="cgi"><span class="cgt">③ 没有绝对绩效 — 风险 × 成本的动态平衡</span> 基于价值流视角，供应链的最佳模型是&quot;消失&quot;（零库存、零等待），但实际不可能。最佳实践不是在某个指标上做到极致，而是在当前结构中寻找<strong>风险 ↔ 成本</strong>的动态平衡。</div><div class="cgi"><span class="cgt">④ &quot;流&quot;怎么落到业务中</span> &quot;流&quot;不是抽象概念，而是核心功能点（位）之间的连接与运作方式。信息怎么传、物料怎么动、异常怎么升级——这才是流的具象化。</div><div class="cgi"><span class="cgt">⑤ 信息流的&quot;颗粒度&quot;</span> 信息流不是&quot;有就行&quot;，关键在颗粒度：什么信息、多细、给谁、什么频率。颗粒度太粗=没用，太细=噪声。这是审核中最容易被忽视的维度。</div><div class="cgi"><span class="cgt">⑥ 系统与业务&quot;两张皮&quot;</span> 很多企业投了 ERP，甚至 SAP，但审核依旧过不了。<strong>系统账与实际业务常年分道扬镳</strong>——系统里的数据是一套，现场做的是另一套，系统无法反映并支持业务执行。但管理者仅关心账实是否一致，而不是业务过程是否与系统同步运行。</div></div>
+    <div class="card" style="padding:6px 8px;margin-top:2px;border-left-color:#c8a45c">
+      <div class="label">你会在审核中不断遇到的本质问题</div>
+      <p class="t-note">不是“条款没背熟”，而是<strong>业务边界不完整、流不连续、时间刻度不清、系统与现场两张皮</strong>。本课程把这些问题变成可诊断、可落地的改进路径。</p>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="5">
+  <div class="cf no-clip">
+  <h2 class="s">课程大纲 — Day 1 认知重塑 · Day 2-3 案例贯穿</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:1;min-height:0;gap:12px">
+    <div style="flex:0 0 34%;min-width:0;display:flex;flex-direction:column">
+      <h3 class="s">Day 1 — 认知重塑 + 供应链概念基础</h3>
+      <div class="s t-note" style="color:#8a9aa8;margin-bottom:1px">目标：建立概念框架，打通认知断层。不涉及具体条款。</div>
+      <div class="s d1agenda">
+        <div class="d1t">上午</div>
+        <div class="d1c">供应链全局观：从订单接收到交付回收的全链路逻辑</div>
+        <div class="d1t">下午</div>
+        <div class="d1c">VDA 6.8本质 · 四个真实痛点 · 业务流思维 · 三条路径 · 引出贯穿案例</div>
+      </div>
+      <div class="s flow t-note" style="text-align:center;margin:0 0 1px">1天概念基础 + 2天案例贯穿——先开一个项目，用这个项目带进所有评价条款</div>
+      <div class="s t-note" style="color:#8a9aa8;text-align:center;letter-spacing:1px;margin:0 0 1px">不同工艺过程和供应链模式的大纲可定向调整</div>
+      <h3 class="s">课程展开方式</h3>
+      <div class="s flow t-note">业务模块 × 负责人 <span class='arrow'>→</span> 业务流（从头到尾串起来）<span class='arrow'>→</span> 对应VDA 6.8条款 <span class='arrow'>→</span> 常见断点分析 <span class='arrow'>→</span> 实战建议（20年判断基线）</div>
+    </div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <h3 class="s">Day 2 — 案例贯穿：L1~L4 多向映射</h3>
+      <div class="s t-note" style="color:#8a9aa8;margin-bottom:1px">点击模块标题展开详情</div>
+      <div class="s omod">
+  <div class="omh">模块① 项目管理（L1）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">项目目标怎么定、供应链端在项目中的角色和职责</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>项目目标是否明确传递到供应链端？</li><li>项目管理中的供应链节点是谁？有没有被纳入项目组织？</li><li>评审者怎么判断项目管理的供应链成熟度？</li></ul><div class="oml">业务牵引</div><div class="omv">项目定了产能目标和时间节点，下一步怎么做？</div>
+  </div></div>
+</div><div class="s omod">
+  <div class="omh">模块② 物流规划（L2）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">规划的依据是什么？规划输出给谁用？</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>规划是否覆盖了项目目标的全部场景（正常量产 + 爬坡 + 应急）？</li><li>规划的输入输出是否有闭环（目标变了规划是否跟着更新）？</li><li>评审者在规划环节最常发现的 4 分触发点</li></ul><div class="oml">业务牵引</div><div class="omv">规划做完了，谁来执行？</div>
+  </div></div>
+</div><div class="s omod">
+  <div class="omh">模块③ 供应商管理（L3）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">选商流程、合同中的供应链条款、绩效管理</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>合同是否约定了物流相关的责任与 KPI？</li><li>供应商的应急计划有没有被评审？</li><li>供应商管理流上最常见的 4 分/0 分触发点</li></ul><div class="oml">业务牵引</div><div class="omv">供应商选定了，日常怎么下单和交付？</div>
+  </div></div>
+</div><div class="s omod">
+  <div class="omh">模块④ 采购物流（L4）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">MRP 逻辑、安全库存设定、需求波动应对</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>需求预测的波动有没有被适当缓冲（安全库存机制）？</li><li>库存数据的准确性（系统 vs 实物）</li><li>当需求变了，计划调整的响应链条通不通？</li><li><strong>时间维度</strong>：交期压缩时，哪个过程节点会先崩？</li></ul>
+  </div></div>
+</div>
+      <div class="s t-note" style="color:#8a9aa8;padding-top:1px;border-top:1px dashed #e8e4df;margin:1px 0">
+        Day2走通"目标→资源→执行"上游闭环。项目目标(L1)同时驱动物流规划(L2)和现场(L6)。
+      </div>
+      <h3 class="s">Day 3 — 案例贯穿：L5~L7 + 综合实战</h3>
+      <div class="s omod">
+  <div class="omh">模块⑤ 入厂运输（L5）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">运输计划怎么排、异常怎么升级</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>运输模式选择是否有依据（成本 vs 时效 vs 风险）？</li><li>在途信息是否可追溯？异常是否有升级路径？</li><li>评审者判断运输环节是否受控的关键信号</li></ul><div class="oml">业务牵引</div><div class="omv">物料到了工厂门口，然后呢？——自然引出<strong>厂内物流</strong></div>
+  </div></div>
+</div><div class="s omod">
+  <div class="omh">模块⑥ 厂内物流（L6）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">仓储规划、物料上线方式、账实一致</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>仓储场地和能力的规划依据是什么（量变时是否重新评估）？</li><li>物料的标识、追溯、FIFO 是否有效执行？</li><li>量变（产能翻倍）时，现场哪个环节会先暴露问题？</li></ul><div class="oml">业务牵引</div><div class="omv">产品做出来了，怎么交付给客户？</div>
+  </div></div>
+</div><div class="s omod">
+  <div class="omh">模块⑦ 客户与交付（L7）<span class="omo">+</span></div>
+  <div class="omc"><div class="omci">
+    <div class="oml">业务核心</div><div class="omv">交付绩效管理、客户需求变化响应</div>
+    <div class="oml">VDA 6.8 评价视角</div><ul><li>客户需求变动时，内部怎么联动调整？</li><li>交付数据是否被用来驱动改善？</li><li>客户反馈是否有闭环机制？</li></ul><div class="oml">反向映射</div><div class="omv">客户端的交付问题和需求变动，会反冲<strong>采购物流（L4）</strong> 的计划调整和<strong>厂内物流（L6）</strong> 的现场承载能力</div>
+  </div></div>
+</div>
+      <div class="s card gold" style="padding:3px 6px;margin:2px 0">
+        <div class="label">综合模拟实战</div>
+        <div class="t-note" style="color:#4a5a6a;line-height:1.5;padding-left:6px">
+          1. 发布综合案例 · 2. 学员分组从L1→L7全流程识别断点与风险<br>
+          3. 每组输出断点/模块/等级 · 4. 讲师逐一反馈 · 5. 回到起点：拿项目、做优化
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="6">
+  <div class="cf">
+  <h2 class="s">L1-L7 串起来：业务流与评审者视角</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:1;gap:12px">
+    <div class="s vf">
+      <h3>一条业务流会穿过多个条款</h3>
+      <div class="flow t-note">供应链不是被拆成 L1-L7 分别管理的，业务是连续流动的。<strong>你做一个决策，它会沿着业务流影响上下游。</strong></div>
+      <div class="s pflow"><div class="pfnode"><div class="pfdot" style="background:#c8a45c"></div><div class="pflb" style="color:#c8a45c">L1</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot"></div><div class="pflb">L2</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot"></div><div class="pflb">L3</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot"></div><div class="pflb">L4</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot"></div><div class="pflb">L5</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot"></div><div class="pflb">L6</div></div><div class="pfarr"><div class="ln"></div><div class="hd"></div></div><div class="pfnode"><div class="pfdot" style="background:#c8a45c"></div><div class="pflb" style="color:#c8a45c">L7</div></div></div>
+      <div class="card gold" style="padding:8px 10px;margin-top:2px">
+        <div class="label">审核员的抓手</div>
+        <p class="t-note" style="margin:2px 0">评审者并不只看“你填没填表”，而是顺着<strong>因果链</strong>追问：你的流哪里会断？量变时哪里先崩？时间刻度模糊时哪里先失序？</p>
+      </div>
+    </div>
+    <div class="s vf">
+      <h3>五条业务流（横跨多个L）</h3>
+      <div class="s"><div class="tbl-wrap"><table><tr><th style="width:22%">业务流</th><th style="width:42%">涉及过程元素</th><th style="width:36%">核心问题</th></tr><tr><td><strong>新项目导入流</strong></td><td>L1 → L2 → L6</td><td>项目目标如何转化为物流规划，又如何落地到现场能力</td></tr><tr><td><strong>供应商（服务商）管理流</strong></td><td>L3 → L4 → L5 → L6</td><td>从选商、合同、下单到交付入库的全链路管理</td></tr><tr><td><strong>物料需求到供应流</strong></td><td>L4 → L5 → L6</td><td>需求波动如何传递，库存如何设定，异常如何升级</td></tr><tr><td><strong>客户需求变动响应流</strong></td><td>L4 → L6 → L7</td><td>当客户需求变了，内部计划、现场、交付怎么联动调整</td></tr><tr><td><strong>异常与中断处理流</strong></td><td>L1 → L3 → L4 → L5 → L6 → L7</td><td>从风险识别到应急响应到恢复，这条链通不通</td></tr></table></div></div>
+      <div class="card" style="padding:6px 8px;margin-top:2px;border-left-color:#c8a45c">
+        <p class="t-note" style="margin:0"><strong>结论</strong>：用“业务流”做记忆锚点，学完能自然调用，不需要临时突击。</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page" data-i="7">
+  <div class="cf">
+  <h2 class="s">价值目标 · 课程组合 · 定价</h2>
+  <div class="s accent-line"></div>
+  <div class="s two" style="flex:1;gap:12px">
+    <div>
+      <h3 class="s">两个价值目标（递进）</h3>
+      <div class="s"><div class="tbl-wrap"><table><tr><th style="width:16%">阶段</th><th style="width:40%">目标</th><th style="width:44%">对应企业价值</th></tr><tr><td><strong>① 拿项目</strong></td><td>掌握潜在分析的逻辑，知道评审者在新供应商准入时看什么，确保一次性通过资格审核；在此基础上搭建覆盖完整业务边界的供应链管理体系，做到&quot;该管的都在体系里&quot;</td><td><strong>增加进向现金流 + 降低风险与合规成本</strong></td></tr><tr><td><strong>② 做优化</strong></td><td>在体系健康运转的基础上，识别成本优化空间，实现端到端降本</td><td><strong>直接降低运营成本</strong></td></tr></table></div></div>
+      <div class="s t-note" style="color:#8a9aa8;text-align:center;letter-spacing:1px;margin:2px 0 3px">没有①的根基，②就是空中楼阁</div>
+      <div style="display:flex;gap:6px;margin-bottom:3px">
+        <div class="s card" style="flex:1;padding:3px 6px;text-align:center">
+          <div class="t-note" style="font-weight:600;color:#0f1a2e">拿项目</div>
+          <div style="font-size:8.5px;color:#8a9aa8">核心课程 + L2 预审核与整改</div>
+        </div>
+        <div class="s card" style="flex:1;padding:3px 6px;text-align:center">
+          <div class="t-note" style="font-weight:600;color:#0f1a2e">做优化</div>
+          <div style="font-size:8.5px;color:#8a9aa8">L3 端到端降本实战<span style="color:#c8a45c">（需前一阶段打底）</span></div>
+        </div>
+      </div>
+      <h3 class="s">课程组合建议</h3>
+      <div class="s pgrid"><div class="s prow"><span class="pn">基础包</span><span class="pi">核心课程 VDA6.8迎审实战</span><span class="ptm">3天</span><span class="pnote">初次导入体系</span></div><div class="s prow"><span class="pn">落地包</span><span class="pi">核心课程 + L2 预审核整改</span><span class="ptm">5-7天</span><span class="pnote">体系搭建+认证</span></div><div class="s prow"><span class="pn">进阶包</span><span class="pi">核心课程 + L3 端到端降本</span><span class="ptm">5-8天</span><span class="pnote">概念+体系+降本</span></div><div class="s prow"><span class="pn">完整包</span><span class="pi">核心课程 + L2 + L3</span><span class="ptm">分阶段</span><span class="pnote">系统全面提升</span></div></div>
+    </div>
+    <div>
+      <h3 class="s">课程定价（人民币）</h3>
+      <div class="s price-box">
+        <div class="pbh">标准授课日：7小时/天（9:00-12:00 + 13:30-17:30）</div>
+        <div class="l-row">
+          <span class="ln">Level 1：VDA6.8迎审实战（3天）</span>
+          <span class="lv">40,000</span>
+        </div>
+        <div class="l-row" style="flex-direction:column;align-items:stretch;padding:2px 8px">
+          <span class="ln t-body" style="margin-bottom:1px">Level 2：预审核与整改方案制定</span>
+          <div class="l-row-sub" style="padding:0;border:none"><div class="l-sub"><span class="lsn">不含整改方案</span><span class="lsv">60,000</span></div><div class="l-sub"><span class="lsn">含整改方案</span><span class="lsv">100,000</span></div></div>
+        </div>
+        <div class="l-row">
+          <span class="ln">Level 3：端到端降本（项目制）</span>
+          <span class="lv">30,000/天 <span class="sml">或15,000/天+提成</span></span>
+        </div>
+      </div>
+      <div class="s t-note" style="color:#8a9aa8;margin-top:3px;text-align:center">企业可根据需求选择不同阶段组合，两层递进——拿项目、做优化</div>
+      <div class="s tags"><span class="tag">▸ 核心课程：L1 VDA6.8迎审实战</span><span class="tag">▸ L2：预审核与问题整改</span><span class="tag">▸ L3：端到端降本实战</span></div>
+      <div class="s card" style="margin-top:2px;border-left-color:#c8a45c">
+        <div class="label">课程信息</div>
+        <div class="tbl-wrap"><table class="t-note" style="margin:1px 0 0"><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">课程名称</td><td style="border:none;padding:1px 3px">L1：《VDA6.8迎审实战 — 把你的供应链业务投影到过程标准》</td></tr><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">时长</td><td style="border:none;padding:1px 3px">3 天（含供应链概念基础 + 业务流拆解全部内容）</td></tr><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">学员对象</td><td style="border:none;padding:1px 3px">供应链/物流/采购/计划/仓储管理人员及从业者</td></tr><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">先修要求</td><td style="border:none;padding:1px 3px">无需 VDA 6.8 基础，需要了解自己的日常业务流程</td></tr><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">证书</td><td style="border:none;padding:1px 3px">本课程提供结课证书（非 VDA 官方审核员证书）</td></tr><tr><td style="width:24%;font-weight:600;border:none;padding:1px 3px">课程形式</td><td style="border:none;padding:1px 3px">理论讲解 + 业务流拆解 + 案例讨论 + 模拟实战</td></tr></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="page back" data-i="8">
+  <div class="s"><h2>感谢聆听</h2></div>
+  <div class="s divider"></div>
+  <div class="s bn">李嘉俊</div>
+  <div class="s bs">大众集团供应链管理专家 · VDA 6.8 资深审核专家</div>
+  <div class="s"><span class="t-note" style="opacity:.45">从业务中来 · 到业务中去</span></div>
+  <div class="s bt">欢迎联系 · 期待与您的企业深入合作</div>
+</div>
+</div><!-- /viewer -->
+
+<div class="nav">
+  <button id="prevBtn" aria-label="上一页">‹</button>
+  <span class="info" id="pageInfo">1 / 8</span>
+  <button id="nextBtn" aria-label="下一页">›</button>
+  <button id="playBtn" class="pbtn" aria-label="自动播放" title="自动播放">▶</button>
+</div>
+<div class="dots" id="dotContainer"></div>
+
+<script>
+(function(){
+  var pages = Array.from(document.querySelectorAll('.page'));
+  var total = pages.length;
+  var current = 0;
+  var isAnimating = false;
+  var autoTimer = null;
+
+  var dotC = document.getElementById('dotContainer');
+  pages.forEach(function(_, i){
+    var d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.setAttribute('aria-label','第'+(i+1)+'页');
+    d.addEventListener('click',function(){ goTo(i); });
+    dotC.appendChild(d);
+  });
+  var dots = dotC.querySelectorAll('.dot');
+
+  function setStagger(idx) {
+    var el = pages[idx];
+    var items = el.querySelectorAll('.s');
+    items.forEach(function(it, i){
+      it.style.setProperty('transition-delay', (i * 0.06) + 's');
+    });
+  }
+
+  function stopAutoPlay() {
+    if (autoTimer) {
+      clearInterval(autoTimer);
+      autoTimer = null;
+      var btn = document.getElementById('playBtn');
+      if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+    }
+  }
+
+  function goTo(idx) {
+    if (idx === current || isAnimating) return;
+    stopAutoPlay();
+    idx = Math.max(0, Math.min(idx, total - 1));
+    isAnimating = true;
+    pages[current].classList.remove('active');
+    current = idx;
+    setStagger(current);
+    pages[current].offsetHeight;
+    pages[current].classList.add('active');
+    updateUI();
+    setTimeout(function(){ isAnimating = false; }, 500);
+  }
+
+  function updateUI() {
+    var num = current + 1;
+    document.getElementById('pageInfo').textContent = num + ' / ' + total;
+    document.getElementById('progFill').style.width = ((current + 1) / total * 100) + '%';
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === total - 1;
+    dots.forEach(function(d, i){ d.classList.toggle('active', i === current); });
+  }
+
+  document.addEventListener('click', function(e) {
+    var header = e.target.closest('.omh');
+    if (!header) return;
+    var parent = header.parentElement;
+    var container = parent.closest('.two') || parent.parentElement;
+    container.querySelectorAll('.omod.open').forEach(function(m) {
+      if (m !== parent) m.classList.remove('open');
+    });
+    parent.classList.toggle('open');
+  });
+
+  var playBtn = document.getElementById('playBtn');
+  playBtn.addEventListener('click', function() {
+    if (autoTimer) {
+      stopAutoPlay();
+    } else {
+      if (current >= total - 1) { goTo(0); }
+      autoTimer = setInterval(function() {
+        if (current < total - 1) {
+          goTo(current + 1);
+        } else {
+          stopAutoPlay();
+        }
+      }, 8000);
+      playBtn.textContent = '⏸';
+      playBtn.classList.add('playing');
+    }
+  });
+
+  document.getElementById('prevBtn').addEventListener('click', function(){ goTo(current - 1); });
+  document.getElementById('nextBtn').addEventListener('click', function(){ goTo(current + 1); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+  });
+  (function(){
+    var startX = 0, startY = 0;
+    document.querySelector('.viewer').addEventListener('touchstart', function(e){
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    }, {passive:true});
+    document.querySelector('.viewer').addEventListener('touchend', function(e){
+      var dx = e.changedTouches[0].clientX - startX;
+      var dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        if (dx < 0) goTo(current + 1); else goTo(current - 1);
+      }
+    }, {passive:true});
+  })();
+  setStagger(0);
+  pages[0].classList.add('active');
+  updateUI();
+})();
+</script>
+</body>
+</html>

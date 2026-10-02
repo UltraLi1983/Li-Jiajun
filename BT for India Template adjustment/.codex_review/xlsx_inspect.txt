@@ -1,0 +1,6 @@
+{"kind":"workbook","id":"wb/su5oj7","sheets":3,"tables":1}
+{"kind":"sheet","id":"ws/p0gzxr","name":"Sheet1","index":0,"range":"A1:D8","address":"A1:D8","tables":1}
+{"kind":"table","sheet":"Sheet1","address":"A1:D8","rows":8,"cols":4,"values":[["Business Itinerary",null,null,null],["Date","City","Activities","Notes (flight/ Hotel information )"],[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,null,null],[null,null,"Signature:                                                       ",null]]}
+{"kind":"region","sheet":"Sheet1","address":"A1:D2","rows":2,"cols":4,"nonEmpty":5,"blank":3,"text":5,"maxTextLength":34,"preview":[["Business Itinerary",null,null,null],["Date","City","Activities","Notes (flight/ Hotel information )"]],"previewAddress":"A1:D2","previewRows":2,"previewCols":4}
+{"kind":"sheet","id":"ws/0sbbal","name":"Sheet2","index":1}
+{"kind":"sheet","id":"ws/vq6ieo","name":"Sheet3","index":2}

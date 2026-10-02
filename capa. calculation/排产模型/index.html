@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>R&R Capacity Parameter Engine Demo</title>
+  <style>
+    :root {
+      --bg: #f4f6f7;
+      --surface: #ffffff;
+      --surface-soft: #f8fafb;
+      --surface-strong: #eef3f5;
+      --text: #17212b;
+      --muted: #63717d;
+      --line: #d8e0e6;
+      --line-strong: #aebac3;
+      --primary: #1f5f68;
+      --primary-dark: #174a51;
+      --setup: #98622a;
+      --production: #2f6f73;
+      --break: #6d7784;
+      --maintenance: #2862a7;
+      --planned: #6750a4;
+      --abnormal: #b42318;
+      --unscheduled: #c3cbd2;
+      --ok: #15734e;
+      --warn: #9a5a00;
+      --danger: #b42318;
+      --shadow: 0 1px 2px rgba(18, 29, 38, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 18px;
+    }
+
+    .topbar-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 18px; line-height: 1.2; }
+    h2 { font-size: 14px; }
+    h3 { font-size: 13px; }
+
+    .subtitle { margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .btn {
+      min-height: 36px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.ghost { background: transparent; }
+    .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .nav-btn:focus-visible { outline: 3px solid rgba(31, 95, 104, .24); outline-offset: 2px; }
+
+    .shell {
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px 18px 28px;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 74px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 44px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-body { padding: 12px; }
+
+    .step-list { padding: 8px; display: grid; gap: 4px; }
+
+    .nav-btn {
+      border: 0;
+      background: transparent;
+      width: 100%;
+      min-height: 42px;
+      border-radius: 6px;
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 9px;
+      align-items: center;
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px 9px;
+    }
+
+    .nav-btn span:first-child {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--surface-strong);
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .nav-btn.active { background: #e6f0f1; color: var(--primary-dark); font-weight: 700; }
+    .nav-btn.active span:first-child { background: var(--primary); color: #fff; }
+
+    .content { min-width: 0; display: grid; gap: 14px; }
+
+    .dashboard {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .dashboard-head {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(190px, .55fr) minmax(190px, .55fr);
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+      align-items: end;
+    }
+    .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(160px, 1fr)); gap: 10px; padding: 12px; }
+    .metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; min-height: 104px; }
+    .metric-label { color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+    .metric-value { font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .metric-split { display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+    .metric-split strong { font-size: 20px; }
+    .metric-note { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .reason-list { margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 12px; }
+    .reason-list li { margin: 2px 0; }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(380px, .9fr); gap: 14px; align-items: start; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .fields.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; min-width: 0; }
+    input, select, textarea {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 6px 8px;
+    }
+    textarea { min-height: 74px; resize: vertical; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .tag.ok { color: var(--ok); background: #eaf6f0; border-color: #b9dece; }
+    .tag.warn { color: var(--warn); background: #fff6e8; border-color: #edcea0; }
+    .tag.danger { color: var(--danger); background: #fff0ed; border-color: #efc3bc; }
+    .tag.blue { color: #2862a7; background: #edf4ff; border-color: #c5d7f1; }
+
+    .view { display: none; gap: 14px; }
+    .view.active { display: grid; }
+
+    .mode-card {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      min-height: 126px;
+    }
+    .mode-card.active { border-color: var(--primary); background: #edf6f7; }
+    .mode-card p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .timeline-wrap { display: grid; gap: 12px; }
+    .time-scale {
+      display: grid;
+      grid-template-columns: 120px repeat(8, minmax(64px, 1fr));
+      gap: 0;
+      color: var(--muted);
+      font-size: 12px;
+      align-items: center;
+    }
+    .time-scale div:not(:first-child) { border-left: 1px solid var(--line); padding-left: 6px; }
+
+    .lane { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+    .lane-label { padding-top: 8px; }
+    .lane-title { font-weight: 700; }
+    .lane-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .lane-track {
+      position: relative;
+      height: 58px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: repeating-linear-gradient(to right, #fff 0, #fff 12.45%, #eef2f4 12.5%, #eef2f4 12.65%);
+    }
+    .event {
+      position: absolute;
+      top: 7px;
+      height: 42px;
+      border-radius: 6px;
+      color: #fff;
+      padding: 5px 7px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,.12);
+      display: grid;
+      align-content: center;
+      gap: 1px;
+      min-width: 32px;
+    }
+    .event strong { font-size: 12px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event span { font-size: 11px; opacity: .94; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event.production { background: var(--production); }
+    .event.setup { background: var(--setup); }
+    .event.break { background: var(--break); }
+    .event.maintenance { background: var(--maintenance); }
+    .event.plannedStop { background: var(--planned); }
+    .event.abnormal { background: var(--abnormal); }
+    .event.unscheduled { background: var(--unscheduled); color: #26323d; }
+    .event { cursor: pointer; }
+    .event.selected { outline: 3px solid rgba(31, 95, 104, .42); outline-offset: -3px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
+    .editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .validation-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12px; }
+    .validation-list li { margin: 3px 0; }
+    .validation-list .error { color: var(--danger); }
+    .validation-list .ok { color: var(--ok); }
+    .timeline-panel:fullscreen {
+      background: var(--bg);
+      padding: 18px;
+      overflow: auto;
+    }
+    .timeline-panel:fullscreen .lane-track {
+      height: 76px;
+    }
+    .timeline-panel:fullscreen .event {
+      top: 10px;
+      height: 54px;
+    }
+    .helper-text { color: var(--muted); font-size: 12px; margin-top: -4px; }
+    .time-pair { display: grid; grid-template-columns: .72fr 1fr; gap: 6px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--muted); font-size: 12px; }
+    .legend-item { display: inline-flex; gap: 6px; align-items: center; }
+    .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+    table { width: 100%; min-width: 820px; border-collapse: collapse; background: #fff; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px 9px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; background: var(--surface-soft); white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .callout { border-left: 4px solid var(--primary); background: #edf6f7; color: #264a4f; padding: 10px 12px; border-radius: 6px; }
+    .callout.warn { border-color: var(--warn); background: #fff7ea; color: #5c3b0c; }
+
+    .formula { font-family: Menlo, Consolas, monospace; font-size: 12px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; padding: 9px; color: #394653; overflow: auto; }
+
+    .record-timeline { display: grid; gap: 10px; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 10px; }
+    .record-timeline-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .record-timeline-head h3 { margin: 0; font-size: 14px; }
+    .record-timeline-scroll { overflow-x: auto; padding-bottom: 8px; scrollbar-color: #9fb0ba #edf2f4; scrollbar-width: thin; }
+    .record-timeline-scroll::-webkit-scrollbar { height: 10px; }
+    .record-timeline-scroll::-webkit-scrollbar-track { background: #edf2f4; border-radius: 999px; }
+    .record-timeline-scroll::-webkit-scrollbar-thumb { background: #9fb0ba; border-radius: 999px; }
+    .record-zoom-inner { min-width: 1880px; display: grid; gap: 10px; }
+    .record-timeline .time-scale { grid-template-columns: 120px repeat(8, minmax(180px, 1fr)); }
+    .record-timeline .lane-track { min-width: 0; }
+    .record-segment.event { appearance: none; text-align: left; font: inherit; }
+    .record-segment.event.selected { outline: 3px solid rgba(31, 95, 104, .42); outline-offset: -3px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
+
+    .timeline-only { display: grid; gap: 14px; }
+    .rr-detail-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .rr-detail-toolbar label { min-width: 260px; }
+    .production-segment-inline { border: 1px solid var(--line); background: #fff; border-radius: 6px; overflow: hidden; }
+    .production-segment-inline > .panel-head { border-bottom: 1px solid var(--line); }
+    .calc-shell { display: grid; gap: 12px; }
+    .calc-toolbar { display: grid; grid-template-columns: minmax(260px, 1.2fr) repeat(3, minmax(160px, 1fr)); gap: 10px; }
+    .calc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .calc-kpi { border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 10px; min-height: 82px; }
+    .calc-kpi span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .calc-kpi strong { display: block; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .calc-kpi small { display: block; color: var(--muted); margin-top: 5px; line-height: 1.35; }
+    .calc-kpi.computed-card { border-color: #2b9ee8; box-shadow: inset 4px 0 0 #2b9ee8; background: #f7fbff; }
+    .calc-kpi.computed-card span::after { content: " calculated"; color: #1f73a8; font-size: 11px; font-weight: 700; margin-left: 6px; }
+    .calc-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .calc-note { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 10px 12px; }
+    .calc-note h3 { margin: 0 0 8px; font-size: 14px; }
+    .calc-note ul { margin: 0; padding-left: 18px; color: var(--muted); }
+    .calc-note li { margin: 4px 0; }
+
+    @media (max-width: 1180px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .step-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dashboard-head { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2, .fields.three { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner { flex-direction: column; align-items: flex-start; }
+      .top-actions { justify-content: flex-start; }
+      .shell { padding: 12px; }
+      .step-list, .metric-grid, .grid-3, .fields { grid-template-columns: 1fr; }
+      .calc-toolbar, .calc-kpis, .calc-split { grid-template-columns: 1fr; }
+      .time-scale { display: none; }
+      .lane { grid-template-columns: 1fr; }
+      .lane-track { min-width: 820px; }
+      .timeline-scroll { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>R&R Capacity Parameter Engine</h1>
+        <div class="subtitle">以一次 24H / 48H 产线跟踪为入口，校准 planned activity、CT、quality 和异常损失来源结构</div>
+      </div>
+      <div class="top-actions">
+        <span class="tag blue">Detailed R&R mode</span>
+        <button class="btn ghost" id="resetBtn" type="button">重置样例</button>
+        <button class="btn primary" id="newRunBtn" type="button">新建 R&R</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="panel-head"><h2>R&R 工作流</h2></div>
+        <div class="step-list">
+          <button class="nav-btn active" data-view="setup" type="button"><span>1</span><span>定义范围</span></button>
+          <button class="nav-btn" data-view="tracking" type="button"><span>2</span><span>现场跟踪</span></button>
+          <button class="nav-btn" data-view="records" type="button"><span>3</span><span>R&R 记录</span></button>
+          <button class="nav-btn" data-view="simulation" type="button"><span>4</span><span>粗略模拟</span></button>
+          <button class="nav-btn" data-view="improvement" type="button"><span>5</span><span>责任视图</span></button>
+          <button class="nav-btn" data-view="result" type="button"><span>6</span><span>结论输出</span></button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>当前 R&R</h2><span class="tag warn">open</span></div>
+        <div class="panel-body fields">
+          <label>时间范围
+            <select id="rangeSelect">
+              <option value="24">24H</option>
+              <option value="48">48H</option>
+            </select>
+          </label>
+          <label>数据来源
+            <select id="sourceSelect">
+              <option value="schedule">从生产/排产计划导入</option>
+              <option value="manual">手工创建时间轴</option>
+              <option value="template">从历史模板复制</option>
+            </select>
+          </label>
+          <label>Actual lookback
+            <select id="lookbackSelect">
+              <option value="48">48H</option>
+              <option value="7">7D</option>
+              <option value="30">30D</option>
+            </select>
+          </label>
+          <label>主时间颗粒度
+            <select id="bucketSelect">
+              <option value="shift">班次</option>
+              <option value="hour">小时</option>
+              <option value="day">自然日</option>
+            </select>
+          </label>
+        </div>
+      </section>
+    </aside>
+
+    <main class="content">
+      <section class="dashboard" aria-label="Context-aware bottleneck dashboard">
+        <div class="dashboard-head">
+          <label>当前选择对象
+            <select id="contextSelect">
+              <option value="productA">产品 / Product A</option>
+              <option value="processAssembly">工序组 / Assembly process</option>
+              <option value="stationOP20">工站 / OP20 Assembly 01</option>
+            </select>
+          </label>
+          <label>判断口径
+            <select id="metricBasisSelect">
+              <option value="mostLikelyWithBreaks">Most likely with breaks</option>
+              <option value="bestCaseWithBreaks">Best case with breaks</option>
+              <option value="bestCaseWithoutBreaks">Best case without breaks</option>
+              <option value="mostLikelyWithoutBreaks">Most likely without breaks</option>
+              <option value="actual">Actual</option>
+            </select>
+          </label>
+          <label>异常历史窗口
+            <select id="dashboardLookbackSelect">
+              <option value="48H">48H</option>
+              <option value="7D">7D</option>
+              <option value="30D">30D</option>
+            </select>
+          </label>
+        </div>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">当前对象 -> 展示对象</div>
+            <div class="metric-value" id="dashTarget">OP20</div>
+            <div class="metric-note" id="dashContext">Product A 路径中的瓶颈工站</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Capacity gap / Utilization</div>
+            <div class="metric-split"><strong id="dashGap">-45 min</strong><span id="dashUtil">utilization 103.9%</span></div>
+            <div class="metric-note" id="dashBasis">Most likely with breaks</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">SA</div>
+            <div class="metric-split"><strong id="dashSa">83.5%</strong><span id="dashSaAlt">Best case 88.7%</span></div>
+            <div class="metric-note" id="dashLookback">abnormal lookback: 48H</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">CT / WIP risk</div>
+            <div class="metric-value" id="dashCt">31.6s</div>
+            <div class="metric-note" id="dashWip">OP20 buffer 64 pcs, falling</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">为什么它是瓶颈</div>
+            <ul class="reason-list" id="dashReasons"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="view active" id="view-setup">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>启动一次 R&R / 类 R&R 跟踪</h2><span class="tag blue">step 1</span></div>
+            <div class="panel-body">
+              <div class="fields three">
+                <label>R&R 名称
+                  <input value="RR-2026-001 / Machining to Assembly validation">
+                </label>
+                <label>产线范围
+                  <select>
+                    <option>Line A / OP10-OP30</option>
+                    <option>Machining only / OP10</option>
+                    <option>Assembly only / OP20</option>
+                  </select>
+                </label>
+                <label>产品 / 项目
+                  <select>
+                    <option>Product A + Product B</option>
+                    <option>Product A</option>
+                    <option>Product B</option>
+                  </select>
+                </label>
+                <label>开始时间
+                  <input type="datetime-local" value="2026-09-14T08:00">
+                </label>
+                <label>结束时间
+                  <input type="datetime-local" value="2026-09-15T08:00">
+                </label>
+                <label>跟踪目标
+                  <select>
+                    <option>planned activity + CT + output + abnormal loss</option>
+                    <option>setup / changeover calibration only</option>
+                    <option>cycle time and output only</option>
+                  </select>
+                </label>
+              </div>
+              <div style="height:12px"></div>
+              <div class="grid-3">
+                <div class="mode-card active"><h3>从当前排产计划导入</h3><p>系统读取已经安排的 station / product / order / setup / break / planned stop，生成 24H 或 48H 时间轴。</p><span class="tag ok">recommended</span></div>
+                <div class="mode-card"><h3>手工创建 R&R 时间轴</h3><p>当没有 APS / MES 排产环境时，用时间轴编辑器手工添加 production、setup、break、maintenance。</p><span class="tag">manual</span></div>
+                <div class="mode-card"><h3>从历史模板复制</h3><p>复用类似产品、类似产线或上一次 R&R 的计划动作，再调整具体时间。</p><span class="tag">template</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h2>边界规则</h2><span class="tag warn">important</span></div>
+            <div class="panel-body" style="display:grid;gap:10px">
+              <div class="callout">Detailed R&R mode 的界面不应超过 48H。超过 48H 后，不再逐块跟踪每个事件，而是切换到周/月级粗略模拟。</div>
+              <div class="formula">Detailed mode = station timeline + planned event + actual event + cycle check + output tracking</div>
+              <div class="formula">Rough simulation = breaks per shift/day + setup per week/month + maintenance frequency + average abnormal profile</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-tracking">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>计划动作 vs 实际动作</h2><span class="tag blue">event tracking</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>工站</th><th>动作</th><th>计划时间</th><th>实际时间</th><th class="num">偏差</th><th>是否校准标准</th></tr></thead>
+                <tbody id="eventTrackingRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Abnormal interruption</h2><span class="tag warn">source structure</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>类别</th><th>工站</th><th>时间</th><th class="num">分钟</th><th>物理场景</th><th>改善责任</th></tr></thead>
+                <tbody id="abnormalRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-records">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>Cycle check</h2><span class="tag">Capacity record style</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>工站</th><th>产品</th><th>样本组</th><th>样本 CT</th><th class="num">Avg CT</th><th class="num">Std CT</th><th class="num">Performance</th></tr></thead>
+                <tbody id="cycleRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Output tracking</h2><span class="tag">production record</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>工站</th><th>产品</th><th class="num">Plan Qty</th><th class="num">Actual Qty</th><th class="num">OK</th><th class="num">NOK</th><th class="num">Quality</th></tr></thead>
+                <tbody id="outputRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel rr-overview" id="rrOverviewPanel">
+          <div class="panel-head"><h2>R&R overview 时间轴</h2><div class="top-actions"><span class="tag blue">from schedule</span><button class="btn" id="fullscreenRrOverviewBtn" type="button">全屏查看</button></div></div>
+          <div class="panel-body timeline-wrap">
+            <div class="legend">
+              <span class="legend-item"><span class="swatch" style="background:var(--setup)"></span>setup / changeover</span>
+              <span class="legend-item"><span class="swatch" style="background:var(--production)"></span>production</span>
+              <span class="legend-item"><span class="swatch" style="background:var(--break)"></span>break</span>
+              <span class="legend-item"><span class="swatch" style="background:var(--maintenance)"></span>maintenance</span>
+              <span class="legend-item"><span class="swatch" style="background:var(--planned)"></span>planned stop</span>
+              <span class="legend-item"><span class="swatch" style="background:var(--unscheduled)"></span>unscheduled / not planned</span>
+            </div>
+            <div class="time-scale"><div></div><div>08:00</div><div>11:00</div><div>14:00</div><div>17:00</div><div>20:00</div><div>23:00</div><div>02:00</div><div>05:00</div></div>
+            <div id="rrOverviewRows"></div>
+            <div class="callout warn">这里不使用 open capacity。未排产时间在 R&R 视角下是 unscheduled / not planned，代表不开机、不来人、无能源和物料消耗，不应被默认为可随时调用产能。</div>
+          </div>
+        </section>
+
+          <section class="panel">
+            <div class="panel-head"><h2>事件编辑器</h2><span class="tag warn" id="editorModeTag">editing selected block</span></div>
+            <div class="panel-body" style="display:grid;gap:12px">
+              <div class="fields">
+                <label>工站
+                  <select id="editStation"></select>
+                </label>
+                <label>事件类型
+                  <select id="editKind">
+                    <option value="production">production</option>
+                    <option value="setup">setup / changeover</option>
+                    <option value="break">break</option>
+                    <option value="maintenance">maintenance</option>
+                    <option value="plannedStop">planned stop</option>
+                    <option value="unscheduled">unscheduled / not planned</option>
+                  </select>
+                </label>
+                <label>Start day / time
+                  <div class="time-pair">
+                    <select id="editStartDay">
+                      <option value="1">Day 1</option>
+                      <option value="2">Day 2</option>
+                    </select>
+                    <input id="editStart" type="time" step="60">
+                  </div>
+                </label>
+                <label>End day / time
+                  <div class="time-pair">
+                    <select id="editEndDay">
+                      <option value="1">Day 1</option>
+                      <option value="2">Day 2</option>
+                      <option value="3">Day 3 boundary</option>
+                    </select>
+                    <input id="editEnd" type="time" step="60">
+                  </div>
+                </label>
+                <label>生产产品 / 订单
+                  <select id="editProduct">
+                    <option value="">不适用 / 由系统推导</option>
+                    <option value="Product A / O-001">Product A / O-001</option>
+                    <option value="Product B / O-002">Product B / O-002</option>
+                    <option value="Product C / O-003">Product C / O-003</option>
+                    <option value="Prototype X / RR batch">Prototype X / RR batch</option>
+                  </select>
+                </label>
+                <label>Pieces / cycle
+                  <input class="segment-input" id="segmentCavity" type="number" min="1" step="1">
+                </label>
+                <label>换型方向，仅 setup/changeover 使用
+                  <select id="editChangeover">
+                    <option value="">不适用 / 从前后生产块推导</option>
+                    <option value="A -> B">A -> B</option>
+                    <option value="B -> A">B -> A</option>
+                    <option value="A -> C">A -> C</option>
+                    <option value="C -> A">C -> A</option>
+                    <option value="start-up">开班 / start-up</option>
+                  </select>
+                </label>
+              </div>
+              <div class="helper-text">Start day/time 与 End day/time 共同定义事件边界。新增事件默认从同工站上一事件的结束点开始；若两事件中间存在 gap，需显式填充 unscheduled / not planned。</div>
+              <label>显示名称 / 备注
+                <textarea id="editLabel"></textarea>
+              </label>
+        <section class="production-segment-inline" id="productionSegmentPanel" hidden>
+          <div class="panel-head"><h2>Production segment 记录</h2><span class="tag warn" id="lossStatusTag">hidden loss check</span></div>
+          <div class="panel-body calc-shell">
+            <div class="record-timeline">
+              <div class="record-timeline-head rr-detail-toolbar">
+                <div>
+                  <h3>分段记录时间轴</h3>
+                  <span class="tag blue">zoom detail = selected process only</span>
+                </div>
+                <label>当前记录工序 / 工站
+                  <select id="recordProcessSelect"></select>
+                </label>
+              </div>
+              <div class="record-timeline-scroll">
+                <div class="record-zoom-inner">
+                  <div class="time-scale" id="recordSegmentScale"></div>
+                  <div id="recordSegmentRows"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-toolbar">
+              <label>Output segment
+                <select id="segmentSelect"></select>
+              </label>
+              <label>Linked production block
+                <input id="segmentBlock" readonly>
+              </label>
+              <label>Segment window
+                <input id="segmentWindow" readonly>
+              </label>
+              <label>Evidence source
+                <input id="segmentSource" readonly>
+              </label>
+            </div>
+
+            <div class="fields three">
+              <label>Start time
+                <input class="segment-input" id="segmentStart" type="time" step="60">
+              </label>
+              <label>End time
+                <input class="segment-input" id="segmentEnd" type="time" step="60">
+              </label>
+              <label>Standard CT sec
+                <input class="segment-input" id="segmentStandardCt" type="number" min="1" step="0.1">
+              </label>
+              <label>OK qty
+                <input class="segment-input" id="segmentOkQty" type="number" min="0" step="1">
+              </label>
+              <label>NOK qty
+                <input class="segment-input" id="segmentNokQty" type="number" min="0" step="1">
+              </label>
+              <label>Order
+                <input id="segmentOrder" readonly>
+              </label>
+            </div>
+
+            <div class="calc-kpis">
+              <div class="calc-kpi computed-card"><span>Elapsed min</span><strong id="segmentElapsedMin">-</strong><small>from start / end time</small></div>
+              <div class="calc-kpi computed-card"><span>Recorded production min</span><strong id="segmentRecordedMin">-</strong><small>from segment time; loss deduction comes from state ledger</small></div>
+              <div class="calc-kpi computed-card"><span>Actual qty</span><strong id="segmentActualQty">-</strong><small>OK + NOK</small></div>
+              <div class="calc-kpi computed-card"><span>Observed CT sec</span><strong id="segmentObservedCt">-</strong><small>duration / actual qty</small></div>
+              <div class="calc-kpi computed-card"><span>Segment avg pace</span><strong id="segmentPace">-</strong><small id="segmentPaceHint">elapsed time / actual qty</small></div>
+              <div class="calc-kpi computed-card"><span>Expected vs actual</span><strong id="segmentQtyGap">-</strong><small id="segmentQtyHint">based on recorded production minutes</small></div>
+              <div class="calc-kpi computed-card"><span>Estimated hidden loss</span><strong id="segmentHiddenLoss">-</strong><small id="segmentLossHint">candidate Actual SA loss</small></div>
+            </div>
+
+            <div class="calc-split">
+              <div class="calc-note">
+                <h3>System judgement</h3>
+                <ul id="segmentJudgement"></ul>
+              </div>
+              <div class="formula" id="segmentFormula"></div>
+            </div>
+          </div>
+        </section>
+
+              <div class="editor-actions">
+                <button class="btn primary" id="applyEventBtn" type="button">应用修改</button>
+                <button class="btn" id="addEventBtn" type="button">添加事件</button>
+                <button class="btn" id="copyEventBtn" type="button">复制事件</button>
+                <button class="btn" id="deleteEventBtn" type="button">删除事件</button>
+              </div>
+              <div class="callout">正式版可继续加入拖拽、吸附到小时刻度、批量复制班次、从排产计划导入后人工调整。当前 demo 先验证编辑字段和校验逻辑。</div>
+              <div>
+                <h3>校验结果</h3>
+                <ul class="validation-list" id="timelineValidation"></ul>
+              </div>
+            </div>
+          </section>
+
+
+      </section>
+
+      <section class="view" id="view-simulation">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>周 / 月级粗略模拟</h2><span class="tag blue">over 48H</span></div>
+            <div class="panel-body" style="display:grid;gap:12px">
+              <div class="fields three">
+                <label>剩余时间处理方式
+                  <select>
+                    <option>复制本次 R&R pattern</option>
+                    <option>使用粗略参数模拟</option>
+                    <option>planned actions 复制，abnormal 使用历史 most likely</option>
+                  </select>
+                </label>
+                <label>班制模板
+                  <select>
+                    <option>2 shifts / 12H + 12H</option>
+                    <option>3 shifts / 8H + 8H + 8H</option>
+                    <option>2 shifts / custom duration</option>
+                    <option>custom</option>
+                  </select>
+                </label>
+                <label>模拟周期
+                  <select>
+                    <option>本周 6 个工作日</option>
+                    <option>本月</option>
+                    <option>自定义</option>
+                  </select>
+                </label>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Shift</th><th>Start hour</th><th class="num">Duration</th><th class="num">Break count</th><th class="num">Break minutes / each</th><th>说明</th></tr></thead>
+                  <tbody>
+                    <tr><td>Day</td><td>08:00</td><td class="num">12H</td><td class="num">2</td><td class="num">30</td><td>用开始时间和持续时长定义班次</td></tr>
+                    <tr><td>Night</td><td>20:00</td><td class="num">12H</td><td class="num">2</td><td class="num">30</td><td>2 班制也可以覆盖完整 24H</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="fields three">
+                <label>每周换型次数<input type="number" value="8"></label>
+                <label>平均 setup / changeover 分钟<input type="number" value="55"></label>
+                <label>每月 maintenance 次数<input type="number" value="4"></label>
+                <label>单次 maintenance 分钟<input type="number" value="120"></label>
+                <label>planned stop 次数<input type="number" value="2"></label>
+                <label>单次 planned stop 分钟<input type="number" value="45"></label>
+              </div>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>适用边界</h2><span class="tag warn">not detailed R&R</span></div>
+            <div class="panel-body" style="display:grid;gap:10px">
+              <div class="callout">当时间窗口超过 48H，系统先询问剩余时间处理方式：复制本次 R&R pattern、使用粗略参数模拟，或混合使用 planned actions 与历史 most likely abnormal profile。</div>
+              <div class="callout warn">班制只定义开始时间和持续时长。计划运行分钟由班制、排产计划和未排产窗口推导，不让使用者重复手工输入。</div>
+              <div class="formula">shift_end = shift_start + shift_duration</div>
+              <div class="formula">weekly_planned_loss = break_count * break_min + setup_count * setup_min + maintenance_count * maintenance_min + planned_stop_min</div>
+              <div class="formula">shift handover / line recovery loss -> setup / changeover or related planned event</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+
+      <section class="view" id="view-improvement">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>责任部门视图</h2><span class="tag blue">auto translated from R&R records</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>部门</th><th>系统解释</th><th>来源数据</th><th>量化影响</th><th>建议动作</th><th>进入口径</th></tr></thead>
+                <tbody id="improvementRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>改善优先级</h2><span class="tag warn">actionable</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>优先级</th><th>Owner</th><th>问题</th><th>为什么优先</th><th>下一步</th></tr></thead>
+                <tbody id="priorityRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-result">
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-head"><h2>R&R 结论</h2><span class="tag ok">simulation result</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>工站</th><th class="num">Best case with breaks</th><th class="num">Best case without breaks</th><th class="num">Most likely with breaks</th><th class="num">Actual SA</th><th>结论</th></tr></thead>
+                <tbody id="resultRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>参数校准建议</h2><span class="tag warn">approval needed</span></div>
+            <div class="panel-body table-wrap">
+              <table>
+                <thead><tr><th>对象</th><th class="num">Current</th><th class="num">Observed</th><th>建议</th><th>影响</th></tr></thead>
+                <tbody id="calibrationRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let selectedEvent = { lane: 0, event: 0 };
+
+    const makeEvent = (start, end, kind, label, product = "Product A / O-001", changeover = "") => ({ start, end, kind, label, product, changeover });
+
+    const timeline24 = [
+      {
+        station: "机加工 01", sub: "OP10 / Product A to B", events: [
+          makeEvent(0, 30, "setup", "开班 setup", "Product A / O-001", "start-up"),
+          makeEvent(30, 180, "production", "生产 A"),
+          makeEvent(180, 210, "break", "break"),
+          makeEvent(210, 540, "production", "生产 A"),
+          makeEvent(540, 570, "break", "break"),
+          makeEvent(570, 660, "production", "生产 A"),
+          makeEvent(660, 780, "setup", "changeover A->B", "Product B / O-002", "A -> B"),
+          makeEvent(780, 1440, "production", "生产 B", "Product B / O-002")
+        ]
+      },
+      {
+        station: "装配 01", sub: "OP20 / Product A", events: [
+          makeEvent(0, 45, "setup", "开班 setup", "Product A / O-001", "start-up"),
+          makeEvent(45, 180, "production", "生产 A"),
+          makeEvent(180, 210, "break", "break"),
+          makeEvent(210, 515, "production", "生产 A"),
+          makeEvent(515, 545, "plannedStop", "质量放行"),
+          makeEvent(545, 575, "break", "break"),
+          makeEvent(575, 1260, "production", "生产 A"),
+          makeEvent(1260, 1440, "unscheduled", "未计划运行")
+        ]
+      },
+      {
+        station: "测试 01", sub: "OP30 / End-of-line", events: [
+          makeEvent(0, 25, "maintenance", "点检"),
+          makeEvent(25, 180, "production", "测试 A"),
+          makeEvent(180, 210, "break", "break"),
+          makeEvent(210, 600, "production", "测试 A"),
+          makeEvent(600, 1440, "production", "测试 B", "Product B / O-002")
+        ]
+      }
+    ];
+
+
+    const dashboardContexts = {
+      productA: {
+        target: "OP20 Assembly",
+        context: "Product A 路径中最紧张的工站",
+        gap: "-45 min",
+        util: "utilization 103.9%",
+        sa: "83.5%",
+        saAlt: "Best case 88.7%",
+        ct: "31.6s",
+        wip: "OP20 buffer 64 pcs, falling",
+        reasons: ["required 1190 min > most likely available 1145 min", "quality hold 16 min", "logistics waiting 18 min", "CT performance 94.9%"]
+      },
+      processAssembly: {
+        target: "装配 01 / OP20",
+        context: "Assembly 工序组中最紧张的工站",
+        gap: "-45 min",
+        util: "utilization 103.9%",
+        sa: "83.5%",
+        saAlt: "Best case 88.7%",
+        ct: "31.6s",
+        wip: "parallel balance risk: high",
+        reasons: ["OP20 actual output below plan", "quality release over planned stop", "line-side material delay"]
+      },
+      stationOP20: {
+        target: "OP20 Assembly 01",
+        context: "当前选择工站的实际状态",
+        gap: "-45 min",
+        util: "utilization 103.9%",
+        sa: "80.8%",
+        saAlt: "Most likely 83.5%",
+        ct: "31.6s",
+        wip: "downstream risk: high",
+        reasons: ["actual SA lower than most likely", "OK/NOK quality rate 98.0%", "break + planned stop exceeded plan"]
+      },
+    };
+
+    const data = {
+      tracking: [
+        ["机加工 01", "开班 setup", "08:00-08:30", "08:02-08:39", "+9 min", "yes"],
+        ["装配 01", "质量放行", "16:35-17:05", "16:42-17:28", "+16 min", "planned stop review"],
+        ["测试 01", "点检", "08:00-08:25", "08:00-08:22", "-3 min", "no"]
+      ],
+      abnormal: [
+        ["logisticsWaiting", "装配 01", "13:20-13:38", 18, "线边物料配送延迟", "logistics"],
+        ["qualityHold", "装配 01", "16:42-17:28", 16, "样件放行等待超出计划", "quality"],
+        ["equipmentFailure", "机加工 01", "22:10-22:24", 14, "主轴报警短停", "maintenance"]
+      ],
+      cycle: [
+        ["机加工 01", "Product A", "G1", "24.8 / 25.1 / 24.6 / 25.0", 24.9, 24.0, "96.4%"],
+        ["装配 01", "Product A", "G1", "31.2 / 32.0 / 31.7 / 31.5", 31.6, 30.0, "94.9%"],
+        ["测试 01", "Product B", "G2", "18.9 / 19.2 / 19.1 / 19.0", 19.1, 19.0, "99.5%"]
+      ],
+      output: [
+        ["机加工 01", "Product A", 1180, 1138, 1132, 6, "99.5%"],
+        ["装配 01", "Product A", 960, 902, 884, 18, "98.0%"],
+        ["测试 01", "Product B", 780, 768, 765, 3, "99.6%"]
+      ],
+      outputSegments: [
+        { id: "seg-op10-day", station: "机加工 01", product: "Product A", order: "WO-A-2406", block: "Day 1 08:30-16:30 production", startTime: "08:30", endTime: "16:30", window: "08:30-16:30", elapsedMin: 480, breakMin: 0, plannedLossMin: 0, capturedLossMin: 5, okQty: 1132, nokQty: 6, cycleSamplesSec: [24.8, 25.1, 24.6, 25.0], standardCycleSec: 24.0, cavity: 1, totalAveragePaceSec: 25.3, source: "counter + manual OK/NOK" },
+        { id: "seg-op20-core", station: "装配 01", product: "Product A", order: "WO-A-2406", block: "Day 1 11:30-20:10 production", startTime: "11:30", endTime: "20:10", window: "11:30-20:10", elapsedMin: 520, breakMin: 30, plannedLossMin: 16, capturedLossMin: 18, okQty: 884, nokQty: 18, cycleSamplesSec: [31.2, 32.0, 31.7, 31.5], standardCycleSec: 30.0, cavity: 1, totalAveragePaceSec: 34.1, source: "manual record + R&R cycle check" },
+        { id: "seg-op30-evening", station: "测试 01", product: "Product B", order: "WO-B-1180", block: "Day 1 13:20-17:25 production", startTime: "13:20", endTime: "17:25", window: "13:20-17:25", elapsedMin: 245, breakMin: 0, plannedLossMin: 0, capturedLossMin: 1, okQty: 765, nokQty: 3, cycleSamplesSec: [18.9, 19.2, 19.1, 19.0], standardCycleSec: 19.0, cavity: 1, totalAveragePaceSec: 19.3, source: "MES output + cycle samples" }
+      ],
+      result: [
+        ["机加工 01", "91.4%", "96.9%", "88.8%", "85.9%", "setup + spindle alarm need review"],
+        ["装配 01", "88.7%", "94.2%", "83.5%", "80.8%", "logistics and quality hold risk"],
+        ["测试 01", "92.2%", "97.7%", "91.0%", "90.4%", "stable"]
+      ],
+      calibration: [
+        ["OP10 A->B setup", 90, 120, "提高 setup standard 或拆分验证时间", "Best case -30 min"],
+        ["OP20 quality release planned stop", 30, 46, "重新定义 planned stop standard", "Best case -16 min"],
+        ["OP20 logistics waiting", 0, 18, "进入 Most likely source，不写入 Best case", "Most likely -18 min"]
+      ],
+      improvement: [
+        ["生产", "装配 01 产出低于计划，且实际动作超出计划窗口", "OP20 output 902 / plan 960; actual SA 80.8%", "产出缺口 58 pcs; Actual SA -7.9pt vs Best case", "复盘班组执行节奏与计划动作衔接", "Actual"],
+        ["工艺 / 制造工程", "OP10 A->B changeover 实测 120 min，高于当前标准 90 min", "R&R event tracking: 19:00-21:00 setup", "Best case capacity -30 min if approved", "拆分 setup 与验证动作，更新 setup matrix", "Best case after approval"],
+        ["设备 / 维修", "机加工 01 主轴报警造成短停", "equipmentFailure 22:10-22:24", "Actual loss 14 min; bottleneck risk indirect", "检查报警原因，确认是否需要 PM 项目", "Actual / Most likely source"],
+        ["物流", "装配 01 线边物料配送延迟", "logisticsWaiting 13:20-13:38", "Most likely SA -18 min; buffer dropped to 64 pcs", "调整线边配送窗口和触发阈值", "Most likely only"],
+        ["质量", "质量放行实际 46 min，高于计划 30 min", "qualityHold / planned stop 16:42-17:28", "Actual loss +16 min; may affect planned stop standard", "确认放行流程是否应进入 planned stop 标准", "Actual; possible Best case after approval"],
+        ["计划 / APS", "OP20 在 most likely with breaks 口径下成为瓶颈", "required 1190 min > available 1145 min", "capacity gap -45 min; utilization 103.9%", "生成风险缓冲或局部 replan 建议", "Planning risk"],
+        ["管理层", "本次 R&R 未完全达产，主要损失来自物流等待、质量放行和 setup 偏差", "R&R summary + improvement items", "OP20 Actual SA 80.8%; Product A path bottleneck", "按影响分钟和瓶颈关联度推进改善", "Decision summary"]
+      ],
+      priorities: [
+        ["P1", "物流", "OP20 logistics waiting 18 min", "直接影响瓶颈工站，并触发下游 buffer 风险", "定义线边配送到达窗口与预警阈值"],
+        ["P1", "质量", "OP20 quality release overrun 16 min", "发生在瓶颈工站，且可能变成计划标准问题", "确认 planned stop 标准是否更新"],
+        ["P2", "工艺 / 制造工程", "OP10 A->B setup observed 120 min", "影响 Best case 参数，但需审批后写入", "拆分 setup / validation 并更新矩阵"],
+        ["P2", "设备 / 维修", "OP10 spindle alarm 14 min", "当前不是主瓶颈，但会进入 most likely 风险来源", "检查报警频次和 PM 项"],
+        ["P3", "生产", "OP20 actual output below plan", "结果性指标，需要结合质量和物流原因处理", "复盘班次执行节奏"]
+      ]
+    };
+
+    function minuteLabel(minute) {
+      const normalized = (minute + 480) % 1440;
+      const h = Math.floor(normalized / 60).toString().padStart(2, "0");
+      const m = (normalized % 60).toString().padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    function clockToTimelineMinute(value, day = 1) {
+      const [hour, minute] = value.split(":").map(Number);
+      let total = (Number(day) - 1) * 1440 + hour * 60 + minute - 480;
+      if (total < 0) total += 1440;
+      return total;
+    }
+
+    function timelineMinuteToDay(minute) {
+      return Math.floor(minute / 1440) + 1;
+    }
+
+    function timelineMinuteToClock(minute) {
+      return minuteLabel(minute % 1440);
+    }
+
+    function eventTimeLabel(event) {
+      const startDay = timelineMinuteToDay(event.start);
+      const endDay = timelineMinuteToDay(Math.max(event.end - 1, event.start));
+      const prefix = startDay === endDay ? `D${startDay}` : `D${startDay}->D${endDay}`;
+      return `${prefix} ${minuteLabel(event.start)}-${minuteLabel(event.end)}`;
+    }
+
+    function eventDurationMinutes(event) {
+      return event.end - event.start;
+    }
+
+    function selectedTimelineEvent() {
+      const lane = timeline24[selectedEvent.lane];
+      if (!lane) return null;
+      return lane.events[selectedEvent.event] || null;
+    }
+
+    function renderTimeline() {
+      const range = Number(document.getElementById("rangeSelect").value);
+      const rows = timeline24.map((lane, laneIndex) => {
+        const events = lane.events.map((event, eventIndex) => {
+          const left = event.start / 1440 * 100;
+          const width = Math.max((event.end - event.start) / 1440 * 100, 1.5);
+          const selected = selectedEvent.lane === laneIndex && selectedEvent.event === eventIndex ? " selected" : "";
+          return `<button class="event ${event.kind}${selected}" type="button" data-lane="${laneIndex}" data-event="${eventIndex}" style="left:${left}%;width:${width}%"><strong>${event.label}</strong><span>${eventTimeLabel(event)}</span></button>`;
+        }).join("");
+        return `<div class="lane"><div class="lane-label"><div class="lane-title">${lane.station}</div><div class="lane-sub">${lane.sub}</div></div><div class="lane-track">${events}</div></div>`;
+      }).join("");
+      const secondDay = range === 48 ? `<div class="callout">第 2 个 24H 使用同样的详细时间轴结构。正式产品中会支持复制第一天、从排产计划继续导入，或手工续排。</div>` : "";
+      const timelineRows = document.getElementById("timelineRows");
+      if (timelineRows) {
+        timelineRows.innerHTML = rows + secondDay;
+        timelineRows.querySelectorAll(".event[data-lane]").forEach(button => {
+          button.addEventListener("click", () => {
+            selectedEvent = { lane: Number(button.dataset.lane), event: Number(button.dataset.event) };
+            renderTimeline();
+            renderTimelineEditor();
+          });
+        });
+      }
+      renderTimelineEditor();
+      validateTimeline();
+    }
+
+    function updateProductionSegmentVisibility() {
+      const panel = document.getElementById("productionSegmentPanel");
+      const kind = document.getElementById("editKind")?.value;
+      if (!panel) return;
+      const visible = kind === "production";
+      panel.hidden = !visible;
+      if (!visible) return;
+
+      const lane = timeline24[Number(document.getElementById("editStation")?.value || selectedEvent.lane)];
+      renderRecordProcessOptions();
+      const processSelect = document.getElementById("recordProcessSelect");
+      if (lane && processSelect) processSelect.value = lane.station;
+      renderSegmentOptions();
+      const firstVisible = data.outputSegments.find(segment => !lane || segment.station === lane.station);
+      const segmentSelect = document.getElementById("segmentSelect");
+      if (segmentSelect && firstVisible && ![...segmentSelect.options].some(option => option.value === segmentSelect.value)) {
+        segmentSelect.value = firstVisible.id;
+      }
+      renderSegmentCalculation();
+    }
+
+    function renderTimelineEditor() {
+      const stationSelect = document.getElementById("editStation");
+      if (!stationSelect) return;
+      stationSelect.innerHTML = timeline24.map((lane, index) => `<option value="${index}">${lane.station}</option>`).join("");
+      const event = selectedTimelineEvent();
+      if (!event) return;
+      stationSelect.value = String(selectedEvent.lane);
+      document.getElementById("editKind").value = event.kind;
+      document.getElementById("editStartDay").value = String(Math.min(timelineMinuteToDay(event.start), 2));
+      document.getElementById("editEndDay").value = String(Math.min(Math.max(timelineMinuteToDay(Math.max(event.end - 1, event.start)), timelineMinuteToDay(event.start)), 3));
+      document.getElementById("editStart").value = timelineMinuteToClock(event.start);
+      document.getElementById("editEnd").value = timelineMinuteToClock(event.end);
+      document.getElementById("editProduct").value = event.product || "";
+      document.getElementById("editChangeover").value = event.changeover || "";
+      document.getElementById("editLabel").value = event.label || "";
+      updateProductionSegmentVisibility();
+    }
+
+    function showTimelineMessages(messages) {
+      const target = document.getElementById("timelineValidation");
+      if (target) target.innerHTML = messages.map(([kind, text]) => `<li class="${kind}">${text}</li>`).join("");
+    }
+
+    function eventOverlaps(candidate, other) {
+      return candidate.start < other.end && candidate.end > other.start;
+    }
+
+    function findOverlap(laneIndex, candidate, ignore = null) {
+      const lane = timeline24[laneIndex];
+      return lane.events.find((event, eventIndex) => {
+        if (ignore && ignore.lane === laneIndex && ignore.event === eventIndex) return false;
+        return eventOverlaps(candidate, event);
+      });
+    }
+
+    function candidateRangeError(candidate) {
+      const rangeMinutes = Number(document.getElementById("rangeSelect").value) * 60;
+      if (candidate.end <= candidate.start) return "结束时间必须晚于开始时间，请检查 Start day/time 与 End day/time";
+      if (candidate.start < 0 || candidate.end > rangeMinutes) return "事件超出当前 R&R 时间范围";
+      return "";
+    }
+
+    function canSaveCandidate(laneIndex, candidate, ignore = null) {
+      const rangeError = candidateRangeError(candidate);
+      if (rangeError) {
+        showTimelineMessages([["error", rangeError]]);
+        return false;
+      }
+      const overlap = findOverlap(laneIndex, candidate, ignore);
+      if (overlap) {
+        showTimelineMessages([["error", `${timeline24[laneIndex].station}: ${candidate.label} 与 ${overlap.label} 时间重叠，不能保存。同一工站同一时间只能有一个状态。`]]);
+        return false;
+      }
+      return true;
+    }
+
+    function validateTimeline() {
+      const messages = [];
+      const rangeHours = Number(document.getElementById("rangeSelect").value);
+      for (const lane of timeline24) {
+        const sorted = [...lane.events].sort((a, b) => a.start - b.start);
+        for (const event of sorted) {
+          if (event.start < 0 || event.end > rangeHours * 60) messages.push(["error", `${lane.station}: ${event.label} 超出 R&R 时间范围`]);
+          if (event.end <= event.start) messages.push(["error", `${lane.station}: ${event.label} 持续时间无效，请检查 Start day/time 与 End day/time`]);
+          if (timelineMinuteToDay(event.end) > timelineMinuteToDay(event.start)) messages.push(["ok", `${lane.station}: ${event.label} 跨天事件，duration = ${eventDurationMinutes(event)} min`]);
+          if (eventDurationMinutes(event) % 60 !== 0) messages.push(["ok", `${lane.station}: ${event.label} duration = ${eventDurationMinutes(event)} min，由系统计算`]);
+        }
+        for (let i = 1; i < sorted.length; i++) {
+          if (sorted[i].start < sorted[i - 1].end) messages.push(["error", `${lane.station}: ${sorted[i - 1].label} 与 ${sorted[i].label} 时间重叠`]);
+          if (sorted[i].start > sorted[i - 1].end) messages.push(["error", `${lane.station}: ${sorted[i - 1].label} 与 ${sorted[i].label} 之间存在 ${sorted[i].start - sorted[i - 1].end} min gap，请调整后一事件起点或显式填充 unscheduled / not planned`]);
+        }
+      }
+      if (!messages.length) messages.push(["ok", "当前时间轴无重叠，且未超出 R&R 时间范围。若存在空档，应显式填充为 unscheduled / not planned"]);
+      showTimelineMessages(messages);
+    }
+
+    function applyTimelineEditor() {
+      const oldEvent = selectedTimelineEvent();
+      if (!oldEvent) return;
+      const nextLane = Number(document.getElementById("editStation").value);
+      const start = clockToTimelineMinute(document.getElementById("editStart").value || "08:00", document.getElementById("editStartDay").value);
+      const end = clockToTimelineMinute(document.getElementById("editEnd").value || "09:00", document.getElementById("editEndDay").value);
+      const updated = {
+        start,
+        end,
+        kind: document.getElementById("editKind").value,
+        label: document.getElementById("editLabel").value || document.getElementById("editKind").value,
+        product: document.getElementById("editProduct").value,
+        changeover: document.getElementById("editChangeover").value
+      };
+      if (!canSaveCandidate(nextLane, updated, { lane: selectedEvent.lane, event: selectedEvent.event })) return;
+      timeline24[selectedEvent.lane].events.splice(selectedEvent.event, 1);
+      timeline24[nextLane].events.push(updated);
+      timeline24[nextLane].events.sort((a, b) => a.start - b.start);
+      selectedEvent = { lane: nextLane, event: timeline24[nextLane].events.indexOf(updated) };
+      renderTimeline();
+    }
+
+    function nextDefaultEventWindow(laneIndex) {
+      const lane = timeline24[laneIndex];
+      const sorted = [...lane.events].sort((a, b) => a.start - b.start);
+      const selected = selectedEvent.lane === laneIndex ? selectedTimelineEvent() : null;
+      const start = selected ? selected.end : (sorted.at(-1)?.end || 0);
+      const nextEvent = sorted.find(event => event.start >= start && event !== selected);
+      const boundary = Math.min(nextEvent ? nextEvent.start : Number(document.getElementById("rangeSelect").value) * 60, Number(document.getElementById("rangeSelect").value) * 60);
+      return { start, end: Math.min(start + 60, boundary), boundary };
+    }
+
+    function addTimelineEvent() {
+      const laneIndex = Number(document.getElementById("editStation").value || selectedEvent.lane);
+      const next = nextDefaultEventWindow(laneIndex);
+      if (next.end <= next.start) {
+        showTimelineMessages([["error", `${timeline24[laneIndex].station}: 当前事件后没有可插入空间，请先调整后续事件或选择一个 gap`]]);
+        return;
+      }
+      const event = makeEvent(next.start, next.end, "production", "新增 production", "Product A / O-001", "");
+      if (!canSaveCandidate(laneIndex, event)) return;
+      timeline24[laneIndex].events.push(event);
+      timeline24[laneIndex].events.sort((a, b) => a.start - b.start);
+      selectedEvent = { lane: laneIndex, event: timeline24[laneIndex].events.indexOf(event) };
+      renderTimeline();
+    }
+
+    function copyTimelineEvent() {
+      const event = selectedTimelineEvent();
+      if (!event) return;
+      const next = nextDefaultEventWindow(selectedEvent.lane);
+      const duration = event.end - event.start;
+      if (next.end <= next.start) {
+        showTimelineMessages([["error", `${timeline24[selectedEvent.lane].station}: 当前事件后没有可复制空间，请先调整后续事件或选择一个 gap`]]);
+        return;
+      }
+      const copy = { ...event, start: next.start, end: Math.min(next.start + duration, next.boundary), label: `${event.label} copy` };
+      if (!canSaveCandidate(selectedEvent.lane, copy)) return;
+      timeline24[selectedEvent.lane].events.push(copy);
+      timeline24[selectedEvent.lane].events.sort((a, b) => a.start - b.start);
+      selectedEvent = { lane: selectedEvent.lane, event: timeline24[selectedEvent.lane].events.indexOf(copy) };
+      renderTimeline();
+    }
+
+    function deleteTimelineEvent() {
+      const lane = timeline24[selectedEvent.lane];
+      if (!lane || lane.events.length <= 1) return;
+      lane.events.splice(selectedEvent.event, 1);
+      selectedEvent = { lane: selectedEvent.lane, event: Math.max(0, selectedEvent.event - 1) };
+      renderTimeline();
+    }
+
+    function fillRows(id, rows, mapper) {
+      document.getElementById(id).innerHTML = rows.map(mapper).join("");
+    }
+
+    function formatSec(value) {
+      return `${value.toFixed(1)}s`;
+    }
+
+    function timeToMinutes(value) {
+      const [hour, minute] = value.split(":").map(Number);
+      return hour * 60 + minute;
+    }
+
+    function durationFromClock(start, end) {
+      const startMin = timeToMinutes(start);
+      let endMin = timeToMinutes(end);
+      if (endMin <= startMin) endMin += 24 * 60;
+      return endMin - startMin;
+    }
+
+    function activeSegment() {
+      const selectedId = document.getElementById("segmentSelect").value || data.outputSegments[0].id;
+      return data.outputSegments.find(item => item.id === selectedId) || data.outputSegments[0];
+    }
+
+    function renderSegmentOptions() {
+      const select = document.getElementById("segmentSelect");
+      const processSelect = document.getElementById("recordProcessSelect");
+      const selectedStation = processSelect?.value;
+      const segments = selectedStation ? data.outputSegments.filter(segment => segment.station === selectedStation) : data.outputSegments;
+      select.innerHTML = segments.map(segment => `<option value="${segment.id}">${segment.station} / ${segment.product} / ${segment.window}</option>`).join("");
+    }
+
+    function loadSegmentForm() {
+      const segment = activeSegment();
+      const processSelect = document.getElementById("recordProcessSelect");
+      if (processSelect && processSelect.value !== segment.station) processSelect.value = segment.station;
+      document.getElementById("segmentStart").value = segment.startTime;
+      document.getElementById("segmentEnd").value = segment.endTime;
+      document.getElementById("segmentOkQty").value = segment.okQty;
+      document.getElementById("segmentNokQty").value = segment.nokQty;
+      document.getElementById("segmentStandardCt").value = segment.standardCycleSec;
+      document.getElementById("segmentCavity").value = segment.cavity;
+      renderSegmentCalculation();
+    }
+
+    function readSegmentForm(segment) {
+      const startTime = document.getElementById("segmentStart").value || segment.startTime;
+      const endTime = document.getElementById("segmentEnd").value || segment.endTime;
+      segment.startTime = startTime;
+      segment.endTime = endTime;
+      segment.window = `${startTime}-${endTime}${timeToMinutes(endTime) <= timeToMinutes(startTime) ? " (+1d)" : ""}`;
+      segment.elapsedMin = durationFromClock(startTime, endTime);
+      segment.breakMin = 0;
+      segment.plannedLossMin = 0;
+      segment.capturedLossMin = 0;
+      segment.recordedProductionMin = segment.elapsedMin;
+      segment.okQty = Math.max(0, Number(document.getElementById("segmentOkQty").value || 0));
+      segment.nokQty = Math.max(0, Number(document.getElementById("segmentNokQty").value || 0));
+      segment.actualQty = Math.max(1, segment.okQty + segment.nokQty);
+      segment.observedCycleSec = segment.elapsedMin * 60 / segment.actualQty;
+      segment.standardCycleSec = Math.max(1, Number(document.getElementById("segmentStandardCt").value || 1));
+      segment.cavity = Math.max(1, Number(document.getElementById("segmentCavity").value || 1));
+      return segment;
+    }
+
+    function segmentCalculation(segment) {
+      const segmentPaceSec = segment.elapsedMin * 60 / segment.actualQty;
+      const expectedQty = segment.recordedProductionMin * 60 / segment.observedCycleSec * segment.cavity;
+      const missingQty = Math.max(0, expectedQty - segment.actualQty);
+      const hiddenLossMin = missingQty * segment.observedCycleSec / 60 / segment.cavity;
+      const performanceRate = segment.standardCycleSec / segment.observedCycleSec;
+      const paceGapPct = (segmentPaceSec / segment.observedCycleSec - 1) * 100;
+      return { segmentPaceSec, expectedQty, missingQty, hiddenLossMin, performanceRate, paceGapPct };
+    }
+
+    function segmentStartMinute(segment) {
+      return timeToMinutes(segment.startTime);
+    }
+
+    function segmentEndMinute(segment) {
+      const start = segmentStartMinute(segment);
+      let end = timeToMinutes(segment.endTime);
+      if (end <= start) end += 24 * 60;
+      return end;
+    }
+
+    function minuteToClockLabel(minute) {
+      const normalized = ((minute % 1440) + 1440) % 1440;
+      const hour = String(Math.floor(normalized / 60)).padStart(2, "0");
+      const min = String(normalized % 60).padStart(2, "0");
+      return `${hour}:${min}`;
+    }
+
+    function recordTimelineBounds(segments = data.outputSegments) {
+      if (!segments.length) segments = data.outputSegments;
+      const starts = segments.map(segmentStartMinute);
+      const ends = segments.map(segmentEndMinute);
+      const minStart = Math.max(0, Math.floor((Math.min(...starts) - 30) / 60) * 60);
+      const maxEnd = Math.ceil((Math.max(...ends) + 30) / 60) * 60;
+      return { start: minStart, end: Math.max(maxEnd, minStart + 360) };
+    }
+
+    function renderRecordProcessOptions() {
+      const select = document.getElementById("recordProcessSelect");
+      if (!select) return;
+      const stations = timeline24.map(lane => lane.station);
+      const current = select.value || timeline24[selectedEvent.lane]?.station || activeSegment().station || stations[0];
+      select.innerHTML = stations.map(station => `<option value="${station}">${station}</option>`).join("");
+      select.value = stations.includes(current) ? current : stations[0];
+    }
+
+    function mergeSegments(segments) {
+      const sorted = [...segments].sort((a, b) => segmentStartMinute(a) - segmentStartMinute(b));
+      const merged = [];
+      for (const segment of sorted) {
+        const start = segmentStartMinute(segment);
+        const end = segmentEndMinute(segment);
+        const last = merged[merged.length - 1];
+        if (last && start <= last.end) {
+          last.end = Math.max(last.end, end);
+          last.qty += segment.actualQty || segment.okQty + segment.nokQty || 0;
+          last.count += 1;
+        } else {
+          merged.push({ station: segment.station, product: segment.product, start, end, qty: segment.actualQty || segment.okQty + segment.nokQty || 0, count: 1 });
+        }
+      }
+      return merged;
+    }
+
+    function renderRrOverviewTimeline() {
+      const rows = timeline24.map((lane, laneIndex) => {
+        const events = lane.events.map((event, eventIndex) => {
+          const left = event.start / 1440 * 100;
+          const width = Math.max((event.end - event.start) / 1440 * 100, 1.5);
+          const selected = selectedEvent.lane === laneIndex && selectedEvent.event === eventIndex ? " selected" : "";
+          return `<button class="event ${event.kind}${selected}" type="button" data-rr-lane="${laneIndex}" data-rr-event="${eventIndex}" style="left:${left}%;width:${width}%"><strong>${event.label}</strong><span>${eventTimeLabel(event)}</span></button>`;
+        }).join("");
+        return `<div class="lane"><div class="lane-label"><div class="lane-title">${lane.station}</div><div class="lane-sub">${lane.sub}</div></div><div class="lane-track">${events}</div></div>`;
+      }).join("");
+      const target = document.getElementById("rrOverviewRows");
+      if (!target) return;
+      target.innerHTML = rows;
+      target.querySelectorAll(".event[data-rr-lane]").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedEvent = { lane: Number(button.dataset.rrLane), event: Number(button.dataset.rrEvent) };
+          renderTimeline();
+          renderRrOverviewTimeline();
+          renderTimelineEditor();
+        });
+      });
+    }
+
+    function renderRecordSegmentTimeline(selectedId = activeSegment().id) {
+      renderRecordProcessOptions();
+      const processSelect = document.getElementById("recordProcessSelect");
+      const selectedStation = processSelect?.value || timeline24[selectedEvent.lane]?.station || activeSegment().station;
+      const laneIndex = Math.max(0, timeline24.findIndex(lane => lane.station === selectedStation));
+      const lane = timeline24[laneIndex] || timeline24[0];
+      const selectedSegment = data.outputSegments.find(segment => segment.id === selectedId) || activeSegment();
+
+      document.getElementById("recordSegmentScale").innerHTML = `<div></div><div>08:00</div><div>11:00</div><div>14:00</div><div>17:00</div><div>20:00</div><div>23:00</div><div>02:00</div><div>05:00</div>`;
+
+      const events = lane.events.map((event, eventIndex) => {
+        const left = event.start / 1440 * 100;
+        const width = Math.max((event.end - event.start) / 1440 * 100, 1.5);
+        const eventSelected = selectedEvent.lane === laneIndex && selectedEvent.event === eventIndex ? " selected" : "";
+        const segmentSelected = event.kind === "production" && selectedSegment.station === lane.station && selectedSegment.block === eventTimeLabel(event) + " production" ? " selected" : "";
+        return `<button class="event ${event.kind} record-segment${eventSelected || segmentSelected}" type="button" data-record-lane="${laneIndex}" data-record-event="${eventIndex}" style="left:${left}%;width:${width}%"><strong>${event.label}</strong><span>${eventTimeLabel(event)}</span></button>`;
+      }).join("");
+
+      document.getElementById("recordSegmentRows").innerHTML = `<div class="lane"><div class="lane-label"><div class="lane-title">${lane.station}</div><div class="lane-sub">${lane.sub}</div></div><div class="lane-track">${events}</div></div>`;
+
+      document.querySelectorAll(".record-segment[data-record-lane]").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedEvent = { lane: Number(button.dataset.recordLane), event: Number(button.dataset.recordEvent) };
+          renderTimeline();
+          renderRrOverviewTimeline();
+          renderTimelineEditor();
+        });
+      });
+      renderRrOverviewTimeline();
+    }
+
+    function renderSegmentCalculation() {
+      const segment = readSegmentForm(activeSegment());
+      const calc = segmentCalculation(segment);
+      const cycleLooksNormal = calc.performanceRate >= 0.94;
+      const hiddenLossLikely = cycleLooksNormal && calc.hiddenLossMin >= 8 && calc.paceGapPct > 3;
+      const statusTag = document.getElementById("lossStatusTag");
+
+      document.getElementById("segmentBlock").value = segment.block;
+      document.getElementById("segmentWindow").value = `${segment.window} / ${segment.elapsedMin} min`;
+      document.getElementById("segmentSource").value = segment.source;
+      document.getElementById("segmentOrder").value = segment.order;
+      document.getElementById("segmentElapsedMin").textContent = `${segment.elapsedMin} min`;
+      document.getElementById("segmentRecordedMin").textContent = `${segment.recordedProductionMin} min`;
+      document.getElementById("segmentActualQty").textContent = segment.actualQty;
+      document.getElementById("segmentObservedCt").textContent = segment.observedCycleSec.toFixed(1);
+      document.getElementById("segmentPace").textContent = formatSec(calc.segmentPaceSec);
+      document.getElementById("segmentPaceHint").textContent = `${segment.elapsedMin} min / ${segment.actualQty} pcs`;
+      document.getElementById("segmentQtyGap").textContent = `${Math.round(calc.expectedQty)} / ${segment.actualQty}`;
+      document.getElementById("segmentQtyHint").textContent = `actual = OK + NOK, missing ${calc.missingQty.toFixed(1)} pcs`;
+      document.getElementById("segmentHiddenLoss").textContent = `${calc.hiddenLossMin.toFixed(1)} min`;
+      document.getElementById("segmentLossHint").textContent = hiddenLossLikely ? "suspected unrecorded SA loss" : "no major hidden loss signal";
+
+      statusTag.className = hiddenLossLikely ? "tag danger" : cycleLooksNormal ? "tag ok" : "tag warn";
+      statusTag.textContent = hiddenLossLikely ? "suspected SA leak" : cycleLooksNormal ? "cycle stable" : "check performance";
+
+      const judgement = [
+        `Observed CT from this segment is ${formatSec(segment.observedCycleSec)} against standard ${formatSec(segment.standardCycleSec)}; performance ${(calc.performanceRate * 100).toFixed(1)}%.`,
+        `Observed CT is calculated by segment duration / actual qty. Compare it with standard CT and expected quantity to locate hidden loss.`,
+        hiddenLossLikely
+          ? `The gap should first create a HiddenLossFinding, then be confirmed into logistics waiting, quality hold, equipment failure or another abnormal category.`
+          : `The segment does not need an automatic abnormal loss finding unless现场记录补充了具体异常。`
+      ];
+      document.getElementById("segmentJudgement").innerHTML = judgement.map(item => `<li>${item}</li>`).join("");
+      document.getElementById("segmentFormula").textContent = [
+        `observed_CT = ${segment.elapsedMin} * 60 / ${segment.actualQty} = ${formatSec(calc.segmentPaceSec)}`,
+        `expected_qty = production_min ${segment.recordedProductionMin} * 60 / observed_CT ${segment.observedCycleSec.toFixed(1)} * ${segment.cavity} = ${calc.expectedQty.toFixed(1)} pcs`,
+        `missing_qty = max(0, expected_qty - actual_qty) = ${calc.missingQty.toFixed(1)} pcs`,
+        `hidden_loss = missing_qty * observed_CT / 60 / pieces_per_cycle = ${calc.hiddenLossMin.toFixed(1)} min`
+      ].join("\n");
+      renderSegmentOptions();
+      document.getElementById("segmentSelect").value = segment.id;
+      renderRecordSegmentTimeline(segment.id);
+    }
+
+    function renderTables() {
+      fillRows("eventTrackingRows", data.tracking, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td class="num">${r[4]}</td><td>${r[5]}</td></tr>`);
+      fillRows("abnormalRows", data.abnormal, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="num">${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td></tr>`);
+      fillRows("cycleRows", data.cycle, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td><td class="num">${r[6]}</td></tr>`);
+      fillRows("outputRows", data.output, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td><td class="num">${r[6]}</td></tr>`);
+      fillRows("resultRows", data.result, r => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td><td>${r[5]}</td></tr>`);
+      fillRows("calibrationRows", data.calibration, r => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`);
+      fillRows("improvementRows", data.improvement, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td></tr>`);
+      fillRows("priorityRows", data.priorities, r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`);
+    }
+
+    function updateDashboard() {
+      const context = dashboardContexts[document.getElementById("contextSelect").value];
+      const basis = document.getElementById("metricBasisSelect").selectedOptions[0].textContent;
+      const lookback = document.getElementById("dashboardLookbackSelect").value;
+      document.getElementById("dashTarget").textContent = context.target;
+      document.getElementById("dashContext").textContent = context.context;
+      document.getElementById("dashGap").textContent = context.gap;
+      document.getElementById("dashUtil").textContent = context.util;
+      document.getElementById("dashBasis").textContent = basis;
+      document.getElementById("dashSa").textContent = context.sa;
+      document.getElementById("dashSaAlt").textContent = context.saAlt;
+      document.getElementById("dashLookback").textContent = `abnormal lookback: ${lookback}`;
+      document.getElementById("dashCt").textContent = context.ct;
+      document.getElementById("dashWip").textContent = context.wip;
+      document.getElementById("dashReasons").innerHTML = context.reasons.map(reason => `<li>${reason}</li>`).join("");
+    }
+
+    function updateControls() {
+      const source = document.getElementById("sourceSelect").value;
+      renderTimeline();
+      updateDashboard();
+    }
+
+    document.getElementById("fullscreenRrOverviewBtn").addEventListener("click", () => {
+      const panel = document.getElementById("rrOverviewPanel");
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (panel.requestFullscreen) panel.requestFullscreen();
+    });
+
+    document.getElementById("applyEventBtn").addEventListener("click", applyTimelineEditor);
+    document.getElementById("addEventBtn").addEventListener("click", addTimelineEvent);
+    document.getElementById("copyEventBtn").addEventListener("click", copyTimelineEvent);
+    document.getElementById("deleteEventBtn").addEventListener("click", deleteTimelineEvent);
+    ["editKind", "editStation", "editStart", "editEnd", "editProduct"].forEach(id => {
+      document.getElementById(id).addEventListener("change", updateProductionSegmentVisibility);
+    });
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`view-${btn.dataset.view}`).classList.add("active");
+      });
+    });
+
+    ["rangeSelect", "sourceSelect", "lookbackSelect", "bucketSelect", "contextSelect", "metricBasisSelect", "dashboardLookbackSelect"].forEach(id => {
+      document.getElementById(id).addEventListener("change", updateControls);
+    });
+
+    document.getElementById("newRunBtn").addEventListener("click", () => document.querySelector('[data-view="setup"]').click());
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      document.getElementById("rangeSelect").value = "24";
+      document.getElementById("sourceSelect").value = "schedule";
+      document.getElementById("lookbackSelect").value = "48";
+      document.getElementById("bucketSelect").value = "shift";
+      updateControls();
+      document.querySelector('[data-view="setup"]').click();
+    });
+
+    renderTimeline();
+    renderTables();
+    renderSegmentOptions();
+    loadSegmentForm();
+    document.getElementById("segmentSelect").addEventListener("change", loadSegmentForm);
+    document.querySelectorAll(".segment-input").forEach(input => input.addEventListener("input", renderSegmentCalculation));
+    document.getElementById("recordProcessSelect").addEventListener("change", () => {
+      const station = document.getElementById("recordProcessSelect").value;
+      const laneIndex = timeline24.findIndex(lane => lane.station === station);
+      if (laneIndex >= 0) {
+        const firstProduction = timeline24[laneIndex].events.findIndex(event => event.kind === "production");
+        selectedEvent = { lane: laneIndex, event: firstProduction >= 0 ? firstProduction : 0 };
+      }
+      const first = data.outputSegments.find(segment => segment.station === station);
+      renderSegmentOptions();
+      if (first) document.getElementById("segmentSelect").value = first.id;
+      renderTimeline();
+      renderRrOverviewTimeline();
+      renderTimelineEditor();
+      loadSegmentForm();
+    });
+    updateControls();
+  </script>
+</body>
+</html>

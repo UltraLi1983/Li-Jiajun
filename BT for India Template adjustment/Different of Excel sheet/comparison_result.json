@@ -1,0 +1,598 @@
+{
+  "old_sheets": {
+    "Link list": 0,
+    "Datasheet": 4,
+    "Evaluationsheet": 140,
+    "Remarks": 58,
+    "Source": 114,
+    "L1 - Project management": 11,
+    "L2 - Planning": 7,
+    "L3 - Suppliermgt.": 9,
+    "L4 - Procurement logistics": 11,
+    "L5 - Transport logistics": 7,
+    "L6 -  In-house logistics": 21,
+    "L7 - Customer management": 6,
+    "Radar chart": 8,
+    "LOP": 1
+  },
+  "new_sheets": {
+    "Source": 114,
+    "Datasheet": 4,
+    "Evaluationsheet": 139,
+    "L1 - Project management": 11,
+    "L2 - Planning": 7,
+    "L3 - Suppliermgt.": 9,
+    "L4 - Procurement logistics": 11,
+    "L5 - Transport logistics": 7,
+    "L6 -  In-house logistics": 21,
+    "L7 - Customer management": 6,
+    "Remarks": 58,
+    "LOP": 1
+  },
+  "formula_differences": [
+    {
+      "sheet": "Datasheet",
+      "cell": "E35",
+      "old": "=IF(OR(Source!C29=\"C\",Source!C32=\"C\",Source!C35=\"C\"),\"-\",Source!B39)",
+      "new": "=Source!B39"
+    },
+    {
+      "sheet": "Evaluationsheet",
+      "cell": "F75",
+      "old": "=IF(Source!F33=\"C\", \"Downgrading rule applies\",\"\")",
+      "new": null
+    },
+    {
+      "sheet": "Evaluationsheet",
+      "cell": "G74",
+      "old": "=IF(Source!F33=\"C\",\"-\",Source!B39)",
+      "new": "=Source!B39"
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "B2",
+      "old": "=IF(SUMIF(D3:D9,\"0\",C3:C9)>0,\"Warning - not all modules have been assessed!\",\"\")",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D3",
+      "old": "=Evaluationsheet!G4",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D4",
+      "old": "=Evaluationsheet!G14",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D5",
+      "old": "=Evaluationsheet!G21",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D6",
+      "old": "=Evaluationsheet!G29",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D7",
+      "old": "=Evaluationsheet!G39",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D8",
+      "old": "=Evaluationsheet!G46",
+      "new": null
+    },
+    {
+      "sheet": "Radar chart",
+      "cell": "D9",
+      "old": "=Evaluationsheet!G67",
+      "new": null
+    },
+    {
+      "sheet": "LOP",
+      "cell": "C2",
+      "old": "=CONCATENATE(Datasheet!C8,\" of \",TEXT(Datasheet!C6,\"dd. MM yyyy\"))",
+      "new": "=CONCATENATE(Datasheet!C8,\" of \",TEXT(Datasheet!C6,\"TT. MM JJJJ\"))"
+    }
+  ],
+  "old_macro_modules": {
+    "DieseArbeitsmappe.cls": [],
+    "Tabelle1.cls": [],
+    "Tabelle2.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle3.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle4.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle5.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle6.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle7.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle8.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle9.cls": [],
+    "Modul1.bas": [
+      "ZähleNichtErfüllt"
+    ],
+    "Modul2.bas": [
+      "LOP_Litze_ausfüllen"
+    ],
+    "Tabelle10.cls": [],
+    "Tabelle11.cls": [],
+    "Tabelle12.cls": [],
+    "Modul3.bas": [
+      "Schaltfläche1_Klicken",
+      "ExportToPDF"
+    ],
+    "Modul4.bas": [
+      "Export_And_Save_Automated"
+    ],
+    "Modul5.bas": [
+      "LOP_as_Excel"
+    ],
+    "Modul6.bas": [
+      "LOPneu"
+    ],
+    "Modul7.bas": [
+      "Create_LOP_Fixed"
+    ],
+    "Sheet1.cls": [],
+    "Sheet2.cls": []
+  },
+  "new_macro_modules": {
+    "DieseArbeitsmappe.cls": [],
+    "Tabelle1.cls": [],
+    "Tabelle2.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle3.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle4.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle5.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle6.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle7.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle8.cls": [
+      "Worksheet_SelectionChange"
+    ],
+    "Tabelle9.cls": [],
+    "Modul1.bas": [
+      "ZähleNichtErfüllt"
+    ],
+    "Modul2.bas": [
+      "LOP_Litze_ausfüllen"
+    ],
+    "Tabelle10.cls": [],
+    "Tabelle11.cls": [],
+    "Tabelle12.cls": [],
+    "Modul3.bas": [
+      "Schaltfläche1_Klicken",
+      "ExportToPDF"
+    ],
+    "Modul4.bas": [
+      "Als_PDF_Exportieren"
+    ],
+    "Modul5.bas": [
+      "LOP_as_Excel"
+    ],
+    "Modul6.bas": [
+      "LOPneu"
+    ],
+    "Modul7.bas": [
+      "erstelle_LOP"
+    ]
+  },
+  "macro_differences": [
+    {
+      "module": "Modul4.bas",
+      "status": "changed",
+      "old_procedures": [
+        "Export_And_Save_Automated"
+      ],
+      "new_procedures": [
+        "Als_PDF_Exportieren"
+      ],
+      "diff": [
+        "--- ",
+        "+++ ",
+        "@@ -1,80 +1,54 @@",
+        " Attribute VB_Name = \"Modul4\"",
+        "-Sub Export_And_Save_Automated()",
+        "+",
+        "+Sub Als_PDF_Exportieren()",
+        "+Attribute Als_PDF_Exportieren.VB_ProcData.VB_Invoke_Func = \" \\n14\"",
+        "+'",
+        "+' Als_PDF_Exportieren Makro",
+        " '",
+        " ",
+        "-    Dim sDate As String",
+        "-    Dim sProject As String",
+        "-    Dim sBaseName As String",
+        "-    Dim sFolder As String",
+        "-    Dim pdfPath As String",
+        "-    Dim excelPath As String",
+        "-    Dim wbSource As Workbook",
+        "-    Dim wbNew As Workbook",
+        "+'",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=-1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=-1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=-1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=-1",
+        "+    Sheets(Array(\"Datasheet\", \"Evaluationsheet\", \"LOP\")).Select",
+        "+    'Sheets(\"Datasheet\").Activate",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=1",
+        "+    'ActiveWindow.ScrollWorkbookTabs Sheets:=1",
+        "+    'Sheets(Array(\"Datasheet\", \"Evaluationsheet\", \"LOP\")).Select",
+        "+    'Sheets(\"Datasheet\").Activate",
+        "+  ",
+        "+",
+        "+       ",
+        "+",
+        "+' Öffnet den Dialog, um den Speicherort auszuwählen",
+        "+With Application.FileDialog(msoFileDialogSaveAs)",
+        "+.Title = \"Speichern als PDF\"",
+        "+.FilterIndex = 26 ' PDF-Filter auswählen",
+        "+",
+        "+If .Show = -1 Then ' Wenn der Benutzer einen Speicherort wählt",
+        "+SpeicherOrt = .SelectedItems(1)",
+        "+' Optional: Den Dateinamen anpassen, falls er nicht angegeben wurde",
+        "+If InStr(1, SpeicherOrt, \".pdf\") = 0 Then",
+        "+pdfPath = SpeicherOrt & \".pdf\"",
+        "+Else",
+        "+pdfPath = SpeicherOrt",
+        "+End If",
+        "+        ",
+        "+ ' PDF speichern",
+        "+  ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:= _",
+        "+      pdfPath, Quality:= _",
+        "+        xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas:=False, _",
+        "+        OpenAfterPublish:=True",
+        "+        ",
+        "+End If",
+        "+End With",
+        "+",
+        "+ ' LOP_as_Excel Makro",
+        "+  ",
+        "+      Sheets(\"LOP\").Select",
+        "+    Sheets(\"LOP\").Copy",
+        "     ",
+        "-    ' 1. Get Naming Information from \"Datasheet\"",
+        "-    ' Ensure \"Datasheet\" is the source of truth",
+        "-    Set wbSource = ThisWorkbook",
+        "-    ",
+        "-    ' Get Date from C6 (Format as YYYY-MM-DD to avoid file naming errors with slashes)",
+        "-    ' If C6 is text, it takes it as is. If it's a date, it formats it.",
+        "-    If IsDate(wbSource.Sheets(\"Datasheet\").Range(\"C6\").Value) Then",
+        "-        sDate = Format(wbSource.Sheets(\"Datasheet\").Range(\"C6\").Value, \"yyyy-mm-dd\")",
+        "-    Else",
+        "-        sDate = wbSource.Sheets(\"Datasheet\").Range(\"C6\").Value",
+        "-    End If",
+        "-    ",
+        "-    ' Get Project Name from C14",
+        "-    sProject = wbSource.Sheets(\"Datasheet\").Range(\"C14\").Value",
+        "-    ",
+        "-    ' Construct Base Name: Date_Project_Supply Chain Audit_VDA6.8_",
+        "-    sBaseName = sDate & \"_\" & sProject & \"_Supply Chain Audit_VDA6.8_\"",
+        "-    ",
+        "-    ' 2. Select Folder",
+        "-    With Application.FileDialog(msoFileDialogFolderPicker)",
+        "-        .Title = \"Select Folder to Save Files\"",
+        "-        .InitialFileName = \"C:\\\" ' Default start folder",
+        "-        ",
+        "-        If .Show = -1 Then ' User clicked OK",
+        "-            sFolder = .SelectedItems(1) & \"\\\"",
+        "-        Else",
+        "-            ' User cancelled",
+        "-            MsgBox \"Operation cancelled. No files saved.\", vbExclamation",
+        "-            Exit Sub",
+        "-        End If",
+        "-    End With",
+        "-    ",
+        "-    ' 3. Define Full Paths",
+        "-    pdfPath = sFolder & sBaseName & \"report.pdf\"",
+        "-    excelPath = sFolder & sBaseName & \"LOP.xlsx\"",
+        "-    ",
+        "-    ' 4. Export PDF",
+        "-    ' Select the sheets to be included in the PDF",
+        "-    Sheets(Array(\"Datasheet\", \"Evaluationsheet\", \"LOP\")).Select",
+        "-    ",
+        "-    ' Export the selection as one PDF",
+        "-    On Error Resume Next ' Handle potential permission errors (e.g., file open)",
+        "-    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdfPath, _",
+        "-        Quality:=xlQualityStandard, IncludeDocProperties:=True, _",
+        "-        IgnorePrintAreas:=False, OpenAfterPublish:=False",
+        "-    On Error GoTo 0",
+        "-    ",
+        "-    ' Deselect and go back to Datasheet (Cleanup selection)",
+        "-    wbSource.Sheets(\"Datasheet\").Select",
+        "-    MsgBox \"PDF Report saved successfully:\" & vbCrLf & pdfPath, vbInformation",
+        "-",
+        "-    ' 5. Save LOP as Excel",
+        "-    ' Copy the LOP sheet to a new workbook",
+        "-    wbSource.Sheets(\"LOP\").Copy",
+        "-    Set wbNew = ActiveWorkbook",
+        "-    ",
+        "-    ' Save the new workbook with the specific name",
+        "-    Application.DisplayAlerts = False ' Prevent overwrite warnings if file exists",
+        "-    wbNew.SaveAs Filename:=excelPath, FileFormat:=xlOpenXMLWorkbook",
+        "-    Application.DisplayAlerts = True",
+        "-    ",
+        "-    ' Close the new workbook (Optional: set to True if you don't want it open)",
+        "-    ' wbNew.Close SaveChanges:=False",
+        "-    ",
+        "-    MsgBox \"LOP Excel file saved successfully:\" & vbCrLf & excelPath, vbInformation",
+        "-",
+        " End Sub"
+      ]
+    },
+    {
+      "module": "Modul7.bas",
+      "status": "changed",
+      "old_procedures": [
+        "Create_LOP_Fixed"
+      ],
+      "new_procedures": [
+        "erstelle_LOP"
+      ],
+      "diff": [
+        "--- ",
+        "+++ ",
+        "@@ -1,102 +1,96 @@",
+        " Attribute VB_Name = \"Modul7\"",
+        "+",
+        " Option Explicit",
+        " ",
+        "-Sub Create_LOP_Fixed()",
+        "+Sub erstelle_LOP()",
+        "+'@Date: 26.06.2014",
+        "+'@Author: Philipp Flößer (N/PL-72)",
+        "+'",
+        "+'Erstellt die LOP basierend auf den Anmerkungen (Blatt \"Anmerkungen\")",
+        "+'Aufgelistet werden alle Kommentare aus Fragen mit einer Bewertung <= '+'",
+        "+Application.ScreenUpdating = False",
+        " ",
+        "+'Variablen definieren",
+        "+Dim quellBlatt As String",
+        "+Dim zielBlatt As String",
+        "+Dim ende As Integer",
+        "+Dim endeListe As Integer",
+        "+Dim i As Integer",
+        "+Dim neueZeile As Integer",
+        "+",
+        "+'Variablen befüllen",
+        "+quellBlatt = \"Remarks\"",
+        "+zielBlatt = \"LOP\"",
+        "+ende = Worksheets(quellBlatt).Cells(Rows.Count, 2).End(xlUp).Row",
+        "+endeListe = Worksheets(zielBlatt).Cells(Rows.Count, 2).End(xlUp).Row - 3",
+        "+neueZeile = 7",
+        "+",
+        "+'===========================================================",
+        "+'===== Lösche LOP ==========================================",
+        "+'endeListe sollte = 24 sein - ansonsten: überflüssige Zeilen löschen",
+        "+If endeListe > 24 Then",
+        "+    'Lösche: Zeile 25 - Endeliste; danach: benenne Zeile 25 = Nr. 20",
+        "+    Worksheets(zielBlatt).Rows(\"25:\" & endeListe).Delete Shift:=xlUp",
+        "+    Worksheets(zielBlatt).Cells(25, 2) = \"20\"",
+        "+End If",
+        "+'Bereich leeren",
+        "+Range(\"C7:CI25\").ClearContents",
+        "+",
+        "+'endeListe neu setzen",
+        "+endeListe = Worksheets(zielBlatt).Cells(Rows.Count, 2).End(xlUp).Row - 3",
+        "+",
+        "+'===========================================================",
+        "+'===== Befülle LOP =========================================",
+        "+'Quellblatt durchsuchen",
+        "+For i = 5 To ende",
+        "+    'Befüllen wenn schlechter als \"voll erfüllt\" bewertet",
+        "+    If Not (InStr(Worksheets(quellBlatt).Cells(i, 6), \"10\") <> 0) And _",
+        "+       Not (InStr(Worksheets(quellBlatt).Cells(i, 6), \"n.e.\") <> 0) And _",
+        "+       Worksheets(quellBlatt).Cells(i, 6) <> \"\" Then",
+        "+",
+        "+        'Frage Nr. eintragen",
+        "+        Worksheets(zielBlatt).Cells(neueZeile, 3) = Worksheets(quellBlatt).Cells(i, 3)",
+        "+        ",
+        "+        'Wenn Frage schlecht bewertet aber kein Kommentar eingefügt",
+        "+        If Worksheets(quellBlatt).Cells(i, 7) = \"\" Then",
+        "+            Worksheets(zielBlatt).Cells(neueZeile, 4) = \"Full points were not given.\"",
+        "+        'Ansonsten kopiere Kommentar",
+        "+        Else",
+        "+        ",
+        "+        With Worksheets(zielBlatt).Cells(neueZeile, 4)",
+        "+    Dim text1 As String, text2 As String",
+        "+    text1 = CStr(Worksheets(quellBlatt).Cells(i, 5).Value)",
+        "+    text2 = CStr(Worksheets(quellBlatt).Cells(i, 7).Value)",
+        "     ",
+        "-    Application.ScreenUpdating = False",
+        "+    ' Text einfügen",
+        "+    .Value = text1 & vbCrLf & text2",
+        "+    ",
+        "+    ' Nur Schriftformatierung zurücksetzen (nicht Rahmen/Ausrichtung)",
+        "+    .Font.Bold = False",
+        "+    .Font.Italic = False",
+        "+    .Font.Color = RGB(0, 0, 0) ' optional: Standardfarbe",
+        "+    ",
+        "+    ' Erste Zeile fett und kursiv",
+        "+    With .Characters(1, Len(text1)).Font",
+        "+        .Bold = True",
+        "+        .Italic = True",
+        "+    End With",
+        "+End With",
+        " ",
+        "-    ' Define variables",
+        "-    Dim sourceSheet As String      ' formerly: quellBlatt",
+        "-    Dim targetSheet As String      ' formerly: zielBlatt",
+        "-    Dim endRow As Long             ' formerly: ende",
+        "-    Dim endList As Long            ' formerly: endeListe",
+        "-    Dim i As Long",
+        "-    Dim newRow As Long             ' formerly: neueZeile",
+        "-    Dim wsSource As Worksheet",
+        "-    Dim wsTarget As Worksheet",
+        "-    Dim text1 As String, text2 As String",
+        "+            'Worksheets(zielBlatt).Cells(neueZeile, 4) = Worksheets(quellBlatt).Cells(i, 7)",
+        "+        'Worksheets(quellBlatt).Cells(i, 5) & \":\" vbCrLf & _",
+        " ",
+        "-    ' Populate variables",
+        "-    sourceSheet = \"Remarks\"",
+        "-    targetSheet = \"LOP\"",
+        "-    ",
+        "-    Set wsSource = Worksheets(sourceSheet)",
+        "-    Set wsTarget = Worksheets(targetSheet)",
+        "+        End If",
+        "+        ",
+        "+        If neueZeile >= endeListe Then",
+        "+        'Neue Zeile unter aktueller einfügen",
+        "+            Worksheets(zielBlatt).Rows(neueZeile + 1).Insert",
+        "+            'Nummerierung anpassen",
+        "+            Worksheets(zielBlatt).Cells(neueZeile + 1, 2) = Worksheets(zielBlatt).Cells(neueZeile + 2, 2)",
+        "+            Worksheets(zielBlatt).Cells(neueZeile + 2, 2) = Worksheets(zielBlatt).Cells(neueZeile + 2, 2) + 1",
+        "+        End If",
+        "+        neueZeile = neueZeile + 1",
+        "+    End If",
+        "+Next i",
+        " ",
+        "-    endRow = wsSource.Cells(wsSource.Rows.Count, 2).End(xlUp).Row",
+        "-    ",
+        "-    ' Calculate list end position (original logic: last cell in col B - 3)",
+        "-    endList = wsTarget.Cells(wsTarget.Rows.Count, 2).End(xlUp).Row - 3",
+        "-    ",
+        "-    newRow = 7",
+        "-",
+        "-    '===========================================================",
+        "-    '===== Delete LOP contents =================================",
+        "-    If endList > 24 Then",
+        "-        ' Delete superfluous rows",
+        "-        wsTarget.Rows(\"25:\" & endList).Delete Shift:=xlUp",
+        "-        ' Reset the end-row marker",
+        "-        wsTarget.Cells(25, 2) = \"20\"",
+        "-    End If",
+        "-",
+        "-    ' Clear contents range",
+        "-    wsTarget.Range(\"C7:CI25\").ClearContents",
+        "-",
+        "-    ' Reset endList (since rows might have been deleted above)",
+        "-    endList = wsTarget.Cells(wsTarget.Rows.Count, 2).End(xlUp).Row - 3",
+        "-",
+        "-    '===========================================================",
+        "-    '===== Fill LOP ============================================",
+        "-    For i = 5 To endRow",
+        "-        ' Filter logic: If does NOT contain \"10\" AND does NOT contain \"n.e.\" AND is NOT empty",
+        "-        If InStr(wsSource.Cells(i, 6).Value, \"10\") = 0 And _",
+        "-           InStr(wsSource.Cells(i, 6).Value, \"n.e.\") = 0 And _",
+        "-           wsSource.Cells(i, 6).Value <> \"\" Then",
+        "-",
+        "-            ' 1. Enter Question No. (Col C)",
+        "-            wsTarget.Cells(newRow, 3) = wsSource.Cells(i, 3)",
+        "-            ",
+        "-            ' 2. Enter Content (Col D)",
+        "-            If wsSource.Cells(i, 7) = \"\" Then",
+        "-                wsTarget.Cells(newRow, 4) = \"Full points were not given.\"",
+        "-            Else",
+        "-                text1 = CStr(wsSource.Cells(i, 5).Value)",
+        "-                text2 = CStr(wsSource.Cells(i, 7).Value)",
+        "-                ",
+        "-                With wsTarget.Cells(newRow, 4)",
+        "-                    .Value = text1 & vbCrLf & text2",
+        "-                    ' Reset font formatting",
+        "-                    .Font.Bold = False",
+        "-                    .Font.Italic = False",
+        "-                    .Font.Color = RGB(0, 0, 0)",
+        "-                    ",
+        "-                    ' First line bold and italic",
+        "-                    With .Characters(1, Len(text1)).Font",
+        "-                        .Bold = True",
+        "-                        .Italic = True",
+        "-                    End With",
+        "-                End With",
+        "-            End If",
+        "-            ",
+        "-            ' 3. Enter Sequence Number (Col B) - CORE FIX",
+        "-            ' Logic: If first row (row 7), set to 1, otherwise Previous Row + 1",
+        "-            If newRow = 7 Then",
+        "-                wsTarget.Cells(newRow, 2) = 1",
+        "-            Else",
+        "-                wsTarget.Cells(newRow, 2) = wsTarget.Cells(newRow - 1, 2) + 1",
+        "-            End If",
+        "-",
+        "-            ' 4. Check if new row needs to be inserted (Dynamic List Expansion)",
+        "-            ' If current row reached the predefined list bottom, insert a row",
+        "-            If newRow >= endList Then",
+        "-                ' Insert a row below the current one",
+        "-                wsTarget.Rows(newRow + 1).Insert Shift:=xlDown",
+        "-            End If",
+        "-            ",
+        "-            newRow = newRow + 1",
+        "-        End If",
+        "-    Next i",
+        "-",
+        "-    Application.ScreenUpdating = True",
+        " End Sub"
+      ]
+    },
+    {
+      "module": "Sheet1.cls",
+      "status": "removed",
+      "old_procedures": [],
+      "new_procedures": [],
+      "diff": [
+        "--- ",
+        "+++ ",
+        "@@ -1,8 +0,0 @@",
+        "-Attribute VB_Name = \"Sheet1\"",
+        "-Attribute VB_Base = \"0{00020820-0000-0000-C000-000000000046}\"",
+        "-Attribute VB_GlobalNameSpace = False",
+        "-Attribute VB_Creatable = False",
+        "-Attribute VB_PredeclaredId = True",
+        "-Attribute VB_Exposed = True",
+        "-Attribute VB_TemplateDerived = False",
+        "-Attribute VB_Customizable = True"
+      ]
+    },
+    {
+      "module": "Sheet2.cls",
+      "status": "removed",
+      "old_procedures": [],
+      "new_procedures": [],
+      "diff": [
+        "--- ",
+        "+++ ",
+        "@@ -1,8 +0,0 @@",
+        "-Attribute VB_Name = \"Sheet2\"",
+        "-Attribute VB_Base = \"0{00020820-0000-0000-C000-000000000046}\"",
+        "-Attribute VB_GlobalNameSpace = False",
+        "-Attribute VB_Creatable = False",
+        "-Attribute VB_PredeclaredId = True",
+        "-Attribute VB_Exposed = True",
+        "-Attribute VB_TemplateDerived = False",
+        "-Attribute VB_Customizable = True"
+      ]
+    }
+  ]
+}

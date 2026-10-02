@@ -1,0 +1,320 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L8,3 z" fill="#6B7280"/></marker></defs>
+<rect width="100%" height="100%" fill="#FAFAFA"/>
+<text x="900" y="38" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="30" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="900" dy="0">知识中台思维导图</tspan></text>
+<rect x="690" y="58" width="420" height="58" rx="18" fill="#111827" stroke="#111827" stroke-width="2"/>
+<text x="900" y="95" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle"><tspan x="900" dy="0">知识中台</tspan></text>
+<path d="M900 116 C900 160 230.0 150 230.0 210" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="80" y="210" width="300" height="226" rx="12" fill="#FFFFFF" stroke="#3D7DD8" stroke-width="2"/>
+<rect x="80" y="210" width="300" height="54" rx="12" fill="#D9E8FF" stroke="#3D7DD8" stroke-width="2"/>
+<rect x="81" y="252" width="298" height="12" fill="#D9E8FF"/>
+<text x="230.0" y="244" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="230.0" dy="0">服务边界</tspan></text>
+<circle cx="102" cy="272" r="4" fill="#3D7DD8"/>
+<text x="118" y="278" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">9000 OpenAI Compa</tspan>
+<tspan x="118" dy="18">tible 网关</tspan>
+</text>
+<circle cx="102" cy="308" r="4" fill="#3D7DD8"/>
+<text x="118" y="314" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">9002 文件审核网站和 API</tspan>
+</text>
+<circle cx="102" cy="344" r="4" fill="#3D7DD8"/>
+<text x="118" y="350" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">前端只上传、查询、展示</tspan>
+</text>
+<circle cx="102" cy="380" r="4" fill="#3D7DD8"/>
+<text x="118" y="386" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">前端不直接调用 Dify</tspan>
+</text>
+<path d="M900 116 C900 160 580.0 150 580.0 210" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="430" y="210" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#2D9A5B" stroke-width="2"/>
+<rect x="430" y="210" width="300" height="54" rx="12" fill="#DDF7E8" stroke="#2D9A5B" stroke-width="2"/>
+<rect x="431" y="252" width="298" height="12" fill="#DDF7E8"/>
+<text x="580.0" y="244" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="580.0" dy="0">审核主流程</tspan></text>
+<circle cx="452" cy="272" r="4" fill="#2D9A5B"/>
+<text x="468" y="278" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">上传 ZIP 或多文件</tspan>
+</text>
+<circle cx="452" cy="308" r="4" fill="#2D9A5B"/>
+<text x="468" y="314" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">创建 task_id 和 owne</tspan>
+<tspan x="468" dy="18">r_id</tspan>
+</text>
+<circle cx="452" cy="344" r="4" fill="#2D9A5B"/>
+<text x="468" y="350" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">写入 Redis 队列</tspan>
+</text>
+<circle cx="452" cy="380" r="4" fill="#2D9A5B"/>
+<text x="468" y="386" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">Worker 异步处理</tspan>
+</text>
+<circle cx="452" cy="416" r="4" fill="#2D9A5B"/>
+<text x="468" y="422" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">生成 result.json</tspan>
+</text>
+<circle cx="452" cy="452" r="4" fill="#2D9A5B"/>
+<text x="468" y="458" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">下载 JSON 报告</tspan>
+</text>
+<path d="M900 116 C900 160 930.0 150 930.0 210" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="780" y="210" width="300" height="262" rx="12" fill="#FFFFFF" stroke="#C58B00" stroke-width="2"/>
+<rect x="780" y="210" width="300" height="54" rx="12" fill="#FFF1C7" stroke="#C58B00" stroke-width="2"/>
+<rect x="781" y="252" width="298" height="12" fill="#FFF1C7"/>
+<text x="930.0" y="244" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="930.0" dy="0">文件处理</tspan></text>
+<circle cx="802" cy="272" r="4" fill="#C58B00"/>
+<text x="818" y="278" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">ZIP 安全解压</tspan>
+</text>
+<circle cx="802" cy="308" r="4" fill="#C58B00"/>
+<text x="818" y="314" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">TXT / DOCX / XLSX</tspan>
+<tspan x="818" dy="18"> / PDF 抽取</tspan>
+</text>
+<circle cx="802" cy="344" r="4" fill="#C58B00"/>
+<text x="818" y="350" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">图片和扫描 PDF 标记 need</tspan>
+<tspan x="818" dy="18">s_ocr</tspan>
+</text>
+<circle cx="802" cy="380" r="4" fill="#C58B00"/>
+<text x="818" y="386" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">记录 unsupported_fi</tspan>
+<tspan x="818" dy="18">les / failed_file</tspan>
+</text>
+<circle cx="802" cy="416" r="4" fill="#C58B00"/>
+<text x="818" y="422" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">大小、数量、深度限制</tspan>
+</text>
+<path d="M900 116 C900 160 1330.0 150 1330.0 210" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1180" y="210" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#9552C7" stroke-width="2"/>
+<rect x="1180" y="210" width="300" height="54" rx="12" fill="#F3DFFF" stroke="#9552C7" stroke-width="2"/>
+<rect x="1181" y="252" width="298" height="12" fill="#F3DFFF"/>
+<text x="1330.0" y="244" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="1330.0" dy="0">证据切片</tspan></text>
+<circle cx="1202" cy="272" r="4" fill="#9552C7"/>
+<text x="1218" y="278" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">完整 chunk metadata</tspan>
+</text>
+<circle cx="1202" cy="308" r="4" fill="#9552C7"/>
+<text x="1218" y="314" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">PDF 按页和段落</tspan>
+</text>
+<circle cx="1202" cy="344" r="4" fill="#9552C7"/>
+<text x="1218" y="350" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">DOCX 按标题和段落</tspan>
+</text>
+<circle cx="1202" cy="380" r="4" fill="#9552C7"/>
+<text x="1218" y="386" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">XLSX 按 Sheet 和表格区</tspan>
+<tspan x="1218" dy="18">域</tspan>
+</text>
+<circle cx="1202" cy="416" r="4" fill="#9552C7"/>
+<text x="1218" y="422" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">证据可追溯</tspan>
+</text>
+<circle cx="1202" cy="452" r="4" fill="#9552C7"/>
+<text x="1218" y="458" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">第二阶段向量化和摘要</tspan>
+</text>
+<path d="M900 116 C900 160 230.0 150 230.0 560" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="80" y="560" width="300" height="226" rx="12" fill="#FFFFFF" stroke="#D85B4A" stroke-width="2"/>
+<rect x="80" y="560" width="300" height="54" rx="12" fill="#FFE1DD" stroke="#D85B4A" stroke-width="2"/>
+<rect x="81" y="602" width="298" height="12" fill="#FFE1DD"/>
+<text x="230.0" y="594" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="230.0" dy="0">第一阶段队列</tspan></text>
+<circle cx="102" cy="622" r="4" fill="#D85B4A"/>
+<text x="118" y="628" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">Redis + RQ 或 Cele</tspan>
+<tspan x="118" dy="18">ry</tspan>
+</text>
+<circle cx="102" cy="658" r="4" fill="#D85B4A"/>
+<text x="118" y="664" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">任务状态流转</tspan>
+</text>
+<circle cx="102" cy="694" r="4" fill="#D85B4A"/>
+<text x="118" y="700" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">任务超时和 Dify 超时</tspan>
+</text>
+<circle cx="102" cy="730" r="4" fill="#D85B4A"/>
+<text x="118" y="736" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">失败记录和人工重试入口</tspan>
+</text>
+<path d="M900 116 C900 160 580.0 150 580.0 560" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="430" y="560" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#208C99" stroke-width="2"/>
+<rect x="430" y="560" width="300" height="54" rx="12" fill="#E2F4F7" stroke="#208C99" stroke-width="2"/>
+<rect x="431" y="602" width="298" height="12" fill="#E2F4F7"/>
+<text x="580.0" y="594" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="580.0" dy="0">Dify 工作流</tspan></text>
+<circle cx="452" cy="622" r="4" fill="#208C99"/>
+<text x="468" y="628" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">长期 VDA 6.8 知识库</tspan>
+</text>
+<circle cx="452" cy="658" r="4" fill="#208C99"/>
+<text x="468" y="664" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">结构化执行动作卡</tspan>
+</text>
+<circle cx="452" cy="694" r="4" fill="#208C99"/>
+<text x="468" y="700" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">Workflow 1 单检查项审核</tspan>
+</text>
+<circle cx="452" cy="730" r="4" fill="#208C99"/>
+<text x="468" y="736" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">Workflow 2 任务汇总审核</tspan>
+</text>
+<circle cx="452" cy="766" r="4" fill="#208C99"/>
+<text x="468" y="772" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">Workflow 3 证据增强和初</tspan>
+<tspan x="468" dy="18">筛</tspan>
+</text>
+<circle cx="452" cy="802" r="4" fill="#208C99"/>
+<text x="468" y="808" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="468" dy="0">9002 校验 JSON Sche</tspan>
+<tspan x="468" dy="18">ma</tspan>
+</text>
+<path d="M900 116 C900 160 930.0 150 930.0 560" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="780" y="560" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#6C54C7" stroke-width="2"/>
+<rect x="780" y="560" width="300" height="54" rx="12" fill="#EDE7FF" stroke="#6C54C7" stroke-width="2"/>
+<rect x="781" y="602" width="298" height="12" fill="#EDE7FF"/>
+<text x="930.0" y="594" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="930.0" dy="0">AutoDL 算力服务</tspan></text>
+<circle cx="802" cy="622" r="4" fill="#6C54C7"/>
+<text x="818" y="628" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">POST /ocr</tspan>
+</text>
+<circle cx="802" cy="658" r="4" fill="#6C54C7"/>
+<text x="818" y="664" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">POST /embed</tspan>
+</text>
+<circle cx="802" cy="694" r="4" fill="#6C54C7"/>
+<text x="818" y="700" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">POST /rerank</tspan>
+</text>
+<circle cx="802" cy="730" r="4" fill="#6C54C7"/>
+<text x="818" y="736" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">POST /vision-anal</tspan>
+<tspan x="818" dy="18">yze</tspan>
+</text>
+<circle cx="802" cy="766" r="4" fill="#6C54C7"/>
+<text x="818" y="772" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">POST /llm</tspan>
+</text>
+<circle cx="802" cy="802" r="4" fill="#6C54C7"/>
+<text x="818" y="808" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="818" dy="0">第一阶段只做配置占位</tspan>
+</text>
+<path d="M900 116 C900 160 1330.0 150 1330.0 560" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1180" y="560" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#6F9228" stroke-width="2"/>
+<rect x="1180" y="560" width="300" height="54" rx="12" fill="#EAF2D7" stroke="#6F9228" stroke-width="2"/>
+<rect x="1181" y="602" width="298" height="12" fill="#EAF2D7"/>
+<text x="1330.0" y="594" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="1330.0" dy="0">存储与数据</tspan></text>
+<circle cx="1202" cy="622" r="4" fill="#6F9228"/>
+<text x="1218" y="628" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">SQLite 或 PostgreS</tspan>
+<tspan x="1218" dy="18">QL</tspan>
+</text>
+<circle cx="1202" cy="658" r="4" fill="#6F9228"/>
+<text x="1218" y="664" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">review_tasks</tspan>
+</text>
+<circle cx="1202" cy="694" r="4" fill="#6F9228"/>
+<text x="1218" y="700" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">review_files</tspan>
+</text>
+<circle cx="1202" cy="730" r="4" fill="#6F9228"/>
+<text x="1218" y="736" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">review_chunks</tspan>
+</text>
+<circle cx="1202" cy="766" r="4" fill="#6F9228"/>
+<text x="1218" y="772" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">review_results</tspan>
+</text>
+<circle cx="1202" cy="802" r="4" fill="#6F9228"/>
+<text x="1218" y="808" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1218" dy="0">成功保留 30 天，失败保留 7 </tspan>
+<tspan x="1218" dy="18">天</tspan>
+</text>
+<path d="M900 116 C900 160 230.0 150 230.0 910" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="80" y="910" width="300" height="262" rx="12" fill="#FFFFFF" stroke="#C77A16" stroke-width="2"/>
+<rect x="80" y="910" width="300" height="54" rx="12" fill="#FFE8C9" stroke="#C77A16" stroke-width="2"/>
+<rect x="81" y="952" width="298" height="12" fill="#FFE8C9"/>
+<text x="230.0" y="944" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="230.0" dy="0">鉴权与安全</tspan></text>
+<circle cx="102" cy="972" r="4" fill="#C77A16"/>
+<text x="118" y="978" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">Authorization Bea</tspan>
+<tspan x="118" dy="18">rer API_AUTH_KEY</tspan>
+</text>
+<circle cx="102" cy="1008" r="4" fill="#C77A16"/>
+<text x="118" y="1014" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">X-User-Id 用户标识</tspan>
+</text>
+<circle cx="102" cy="1044" r="4" fill="#C77A16"/>
+<text x="118" y="1050" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">task_id owner 校验</tspan>
+</text>
+<circle cx="102" cy="1080" r="4" fill="#C77A16"/>
+<text x="118" y="1086" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">不支持匿名任务</tspan>
+</text>
+<circle cx="102" cy="1116" r="4" fill="#C77A16"/>
+<text x="118" y="1122" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="118" dy="0">防 Zip Slip 和危险文件</tspan>
+</text>
+<path d="M900 116 C900 160 730.0 150 730.0 910" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="580" y="910" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#607D8B" stroke-width="2"/>
+<rect x="580" y="910" width="300" height="54" rx="12" fill="#E4ECF0" stroke="#607D8B" stroke-width="2"/>
+<rect x="581" y="952" width="298" height="12" fill="#E4ECF0"/>
+<text x="730.0" y="944" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="730.0" dy="0">部署与运维</tspan></text>
+<circle cx="602" cy="972" r="4" fill="#607D8B"/>
+<text x="618" y="978" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">api-9002</tspan>
+</text>
+<circle cx="602" cy="1008" r="4" fill="#607D8B"/>
+<text x="618" y="1014" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">worker-9002</tspan>
+</text>
+<circle cx="602" cy="1044" r="4" fill="#607D8B"/>
+<text x="618" y="1050" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">redis</tspan>
+</text>
+<circle cx="602" cy="1080" r="4" fill="#607D8B"/>
+<text x="618" y="1086" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">sqlite 或 postgres</tspan>
+</text>
+<circle cx="602" cy="1116" r="4" fill="#607D8B"/>
+<text x="618" y="1122" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">GET /health 和 /re</tspan>
+<tspan x="618" dy="18">ady</tspan>
+</text>
+<circle cx="602" cy="1152" r="4" fill="#607D8B"/>
+<text x="618" y="1158" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="618" dy="0">日志包含 task_id 和 er</tspan>
+<tspan x="618" dy="18">ror_code</tspan>
+</text>
+<path d="M900 116 C900 160 1230.0 150 1230.0 910" fill="none" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1080" y="910" width="300" height="298" rx="12" fill="#FFFFFF" stroke="#B24E76" stroke-width="2"/>
+<rect x="1080" y="910" width="300" height="54" rx="12" fill="#F7E2EA" stroke="#B24E76" stroke-width="2"/>
+<rect x="1081" y="952" width="298" height="12" fill="#F7E2EA"/>
+<text x="1230.0" y="944" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700" fill="#111827" text-anchor="middle"><tspan x="1230.0" dy="0">验收标准</tspan></text>
+<circle cx="1102" cy="972" r="4" fill="#B24E76"/>
+<text x="1118" y="978" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">上传后立即返回 task_id</tspan>
+</text>
+<circle cx="1102" cy="1008" r="4" fill="#B24E76"/>
+<text x="1118" y="1014" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">状态可查询</tspan>
+</text>
+<circle cx="1102" cy="1044" r="4" fill="#B24E76"/>
+<text x="1118" y="1050" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">不同用户不能互访任务</tspan>
+</text>
+<circle cx="1102" cy="1080" r="4" fill="#B24E76"/>
+<text x="1118" y="1086" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">异常 ZIP 被拒绝</tspan>
+</text>
+<circle cx="1102" cy="1116" r="4" fill="#B24E76"/>
+<text x="1118" y="1122" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">Dify 异常有 error_co</tspan>
+<tspan x="1118" dy="18">de</tspan>
+</text>
+<circle cx="1102" cy="1152" r="4" fill="#B24E76"/>
+<text x="1118" y="1158" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#1F2937" text-anchor="start">
+<tspan x="1118" dy="0">completed 后可下载 JS</tspan>
+<tspan x="1118" dy="18">ON 报告</tspan>
+</text>
+<text x="30" y="1150" font-family="Arial, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="14" fill="#6B7280">来源：docs/vda68-review-service.md。第一阶段重点：9002、队列、可追溯 chunk、Dify 三方比对、工程验收。</text>
+</svg>

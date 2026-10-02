@@ -1,0 +1,942 @@
+<div id="visa-gantt-app">
+  <style>
+    #visa-gantt-app {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --line: #d8e0ea;
+      --blue: #1f4e78;
+      --blue-soft: #d9eaf7;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --green: #15803d;
+      --purple: #7c3aed;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      padding: 22px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    #visa-gantt-app * {
+      box-sizing: border-box;
+    }
+
+    .vg-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .vg-title h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      line-height: 1.2;
+      color: var(--blue);
+    }
+
+    .vg-title h1 .en {
+      display: block;
+      margin-top: 3px;
+      font-size: 28px;
+    }
+
+    .vg-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .vg-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .vg-actions button {
+      border: 1px solid #b7c9d8;
+      background: #fff;
+      color: var(--blue);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .vg-actions button.primary {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    .vg-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .vg-chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      overflow: auto;
+    }
+
+    .vg-grid {
+      display: grid;
+      grid-template-columns: 330px 1260px;
+      min-width: 1590px;
+    }
+
+    .vg-left-head,
+    .vg-axis {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--blue);
+      color: #fff;
+      min-height: 54px;
+      border-bottom: 1px solid #123755;
+    }
+
+    .vg-left-head {
+      left: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      font-weight: 800;
+    }
+
+    .vg-axis {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+    }
+
+    .vg-axis div {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 12px;
+      border-left: 1px solid rgba(255, 255, 255, 0.22);
+      line-height: 1.25;
+    }
+
+    .vg-task {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      min-height: 58px;
+      cursor: pointer;
+    }
+
+    .vg-task.selected {
+      background: #fff7ed;
+    }
+
+    .vg-task strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.25;
+      margin-bottom: 3px;
+    }
+
+    .vg-task span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .vg-task small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    .vg-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      margin: 0 7px 3px 0;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #fff;
+      vertical-align: 1px;
+    }
+
+    .vg-status.not-started { background: #64748b; }
+    .vg-status.in-progress { background: #2563eb; }
+    .vg-status.blocked { background: #dc2626; }
+    .vg-status.completed { background: #15803d; }
+
+    .vg-stage,
+    .vg-stage-band {
+      min-height: 38px;
+      background: #e7eef5;
+      border-top: 2px solid #9fb3c8;
+      border-bottom: 1px solid #c9d5e2;
+    }
+
+    .vg-stage {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      padding: 7px 12px;
+      color: var(--blue);
+    }
+
+    .vg-stage .zh {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .vg-stage .en {
+      display: block;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .vg-lane {
+      position: relative;
+      min-height: 58px;
+      border-bottom: 1px solid var(--line);
+      background:
+        repeating-linear-gradient(to right, transparent 0, transparent calc(100% / 14 - 1px), #edf2f7 calc(100% / 14 - 1px), #edf2f7 calc(100% / 14));
+    }
+
+    .vg-bar {
+      position: absolute;
+      top: 13px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      overflow: hidden;
+      white-space: nowrap;
+      cursor: grab;
+      box-shadow: 0 4px 10px rgba(31, 78, 120, 0.2);
+      min-width: 18px;
+    }
+
+    .vg-bar:active {
+      cursor: grabbing;
+    }
+
+    .vg-bar.high {
+      background: var(--red);
+      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.18);
+    }
+
+    .vg-bar.parallel {
+      background: var(--green);
+      box-shadow: 0 4px 10px rgba(21, 128, 61, 0.18);
+    }
+
+    .vg-bar.review {
+      background: var(--purple);
+    }
+
+    .vg-bar.selected {
+      outline: 3px solid rgba(245, 158, 11, 0.35);
+      outline-offset: 2px;
+    }
+
+    .vg-today {
+      position: absolute;
+      top: 54px;
+      bottom: 0;
+      width: 2px;
+      background: var(--amber);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .vg-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 14px;
+      position: static;
+    }
+
+    .vg-panel h2 {
+      margin: 0 0 10px;
+      color: var(--blue);
+    }
+
+    .vg-panel h2 .zh {
+      display: block;
+      font-size: 12px;
+    }
+
+    .vg-panel h2 .en {
+      display: block;
+      font-size: 20px;
+    }
+
+    #vg-detail {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr 1.2fr 1.2fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .vg-detail-title {
+      font-weight: 700;
+      font-size: 12px;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .vg-detail-title span {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .vg-detail-section {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin-top: 0;
+    }
+
+    .vg-detail-section strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #334155;
+      font-size: 13px;
+    }
+
+    .vg-detail-section p,
+    .vg-detail-section li {
+      color: #475569;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .vg-detail-section p,
+    .vg-detail-section ul {
+      margin: 0;
+    }
+
+    .vg-detail-section ul {
+      padding-left: 18px;
+    }
+
+    .vg-date-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .vg-date-grid label {
+      display: grid;
+      gap: 4px;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .vg-date-grid input,
+    .vg-date-grid select,
+    .vg-detail-section > select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 7px 8px;
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .vg-legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    .vg-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 7px;
+      vertical-align: -1px;
+      background: var(--blue);
+    }
+
+    .vg-legend span:nth-child(2)::before {
+      background: var(--red);
+    }
+
+    .vg-legend span:nth-child(3)::before {
+      background: var(--green);
+    }
+
+    .vg-legend span:nth-child(4)::before {
+      background: var(--purple);
+    }
+
+    .vg-note {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 12px;
+      line-height: 1.45;
+      border: 1px solid #fed7aa;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 5mm;
+      }
+      #visa-gantt-app,
+      #visa-gantt-app * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html,
+      body {
+        width: 287mm;
+        height: 200mm;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      #visa-gantt-app {
+        padding: 0;
+        background: #fff;
+        width: 287mm;
+        height: 200mm;
+        min-height: 0;
+        overflow: hidden;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .vg-header {
+        margin-bottom: 4px;
+        min-height: 0;
+      }
+      .vg-title h1 {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.05;
+      }
+      .vg-title h1 .en {
+        display: inline;
+        margin-left: 8px;
+        font-size: 16px;
+      }
+      .vg-title p {
+        display: none;
+      }
+      .vg-actions {
+        display: none;
+      }
+      .vg-layout {
+        display: block;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .vg-chart-wrap {
+        box-shadow: none;
+        border: none;
+        overflow: visible;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .vg-grid {
+        grid-template-columns: 235px 850px;
+        min-width: 1085px;
+      }
+      .vg-left-head,
+      .vg-axis {
+        position: static;
+        min-height: 26px;
+        height: 26px;
+      }
+      .vg-left-head {
+        padding: 2px 7px;
+        font-size: 9px;
+        line-height: 1.05;
+      }
+      .vg-left-head small {
+        font-size: 7px;
+      }
+      .vg-axis div {
+        padding: 7px 2px 2px;
+        font-size: 9px;
+        line-height: 1;
+      }
+      .vg-stage,
+      .vg-stage-band {
+        min-height: 17px;
+        height: 17px;
+      }
+      .vg-stage {
+        position: static;
+        padding: 1px 7px;
+        line-height: 1;
+      }
+      .vg-stage .zh {
+        display: inline;
+        margin-right: 5px;
+        font-size: 6.5px;
+      }
+      .vg-stage .en {
+        display: inline;
+        font-size: 9px;
+      }
+      .vg-task,
+      .vg-lane {
+        min-height: 20px;
+        height: 20px;
+      }
+      .vg-task {
+        position: static;
+        padding: 1px 6px;
+        overflow: hidden;
+      }
+      .vg-task strong {
+        display: inline;
+        margin: 0 5px 0 0;
+        font-size: 6.5px;
+        line-height: 1;
+      }
+      .vg-status {
+        min-width: 34px;
+        margin: 0 3px 0 0;
+        padding: 1px 3px;
+        font-size: 5.5px;
+        line-height: 1;
+      }
+      .vg-task span {
+        display: inline;
+        font-size: 8.5px;
+        line-height: 1;
+      }
+      .vg-task small {
+        display: none;
+      }
+      .vg-bar {
+        top: 2px;
+        height: 16px;
+        min-width: 12px;
+        padding: 0 4px;
+        border-radius: 3px;
+        font-size: 7.5px;
+        box-shadow: none;
+      }
+      .vg-panel {
+        display: none;
+      }
+      .vg-panel h2 {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 5px;
+        margin: 0 0 3px;
+      }
+      .vg-panel h2 .zh {
+        font-size: 7px;
+      }
+      .vg-panel h2 .en {
+        font-size: 10px;
+      }
+      #vg-detail {
+        grid-template-columns: 1.2fr 0.8fr 0.8fr 1.2fr 1.2fr;
+        gap: 3px 7px;
+      }
+      .vg-detail-title {
+        margin: 0;
+        font-size: 6.5px;
+        line-height: 1.1;
+      }
+      .vg-detail-title span {
+        font-size: 9px;
+      }
+      .vg-detail-section {
+        padding-top: 2px;
+        margin: 0;
+      }
+      .vg-detail-section strong {
+        margin-bottom: 1px;
+        font-size: 6.5px;
+      }
+      .vg-detail-section p,
+      .vg-detail-section li,
+      .vg-date-grid label,
+      .vg-date-grid select,
+      .vg-detail-section > select {
+        font-size: 6.5px;
+        line-height: 1.15;
+      }
+      .vg-detail-section ul {
+        padding-left: 10px;
+      }
+      .vg-date-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3px;
+        margin-top: 1px;
+      }
+      .vg-date-grid select {
+        padding: 1px 2px;
+        height: 15px;
+      }
+      .vg-legend {
+        display: flex;
+        gap: 8px;
+        margin-top: 3px;
+        font-size: 6.5px;
+      }
+      .vg-legend span::before {
+        width: 6px;
+        height: 6px;
+        margin-right: 2px;
+      }
+      .vg-note {
+        margin-top: 3px;
+        padding: 2px 4px;
+        font-size: 6.5px;
+        line-height: 1.1;
+      }
+    }
+  </style>
+
+  <div class="vg-header">
+    <div class="vg-title">
+      <h1>赴印商务签计划<span class="en">India Business Visa Plan</span></h1>
+      <p>横向为周次，纵向为材料/动作；同一大类先按结束周从早到晚，再按“无法办理、完成、进行中、尚未开始”自动排序。</p>
+    </div>
+    <div class="vg-actions">
+      <button type="button" id="vg-reset">恢复默认时间</button>
+      <button type="button" id="vg-pdf" class="primary">导出 PDF / Export PDF</button>
+    </div>
+  </div>
+
+  <div class="vg-layout">
+    <div class="vg-chart-wrap">
+      <div class="vg-grid" id="vg-grid"></div>
+    </div>
+    <aside class="vg-panel" aria-live="polite">
+      <h2><span class="zh">任务详情</span><span class="en">Task Detail</span></h2>
+      <div id="vg-detail"></div>
+      <div class="vg-legend">
+        <span>普通任务</span>
+        <span>高风险卡点</span>
+        <span>可并行</span>
+        <span>复核/提交</span>
+      </div>
+      <div class="vg-note">条形图为可编辑计划，不代表官方审理承诺。PDF 按钮当前调用浏览器打印预览。</div>
+    </aside>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById("visa-gantt-app");
+      const grid = root.querySelector("#vg-grid");
+      const detail = root.querySelector("#vg-detail");
+      const resetButton = root.querySelector("#vg-reset");
+      const pdfButton = root.querySelector("#vg-pdf");
+      const weeks = [
+        "CW32", "CW33", "CW34", "CW35", "CW36",
+        "CW37", "CW38", "CW39", "CW40", "CW41",
+        "CW42", "CW43", "CW44", "CW45"
+      ];
+
+      const statuses = [
+        { id: "not-started", label: "尚未开始" },
+        { id: "in-progress", label: "进行中" },
+        { id: "blocked", label: "无法办理" },
+        { id: "completed", label: "完成" }
+      ];
+
+      const stages = [
+        { id: "consultation", zh: "信息咨询", en: "Information & Consultation" },
+        { id: "india-company", zh: "印方公司准备", en: "Indian Company Documents" },
+        { id: "personal", zh: "个人准备", en: "Applicant Documents" },
+        { id: "cn-company", zh: "公司准备", en: "Company Documents" },
+        { id: "appointment", zh: "预约面签", en: "Appointment & Interview" },
+        { id: "release", zh: "签证释放", en: "Visa Release" }
+      ];
+
+      const defaultTasks = [
+        { id: "agency-checklist", group: "书面确认", startWeek: "CW32", endWeek: "CW32", title: "确认签证要求", en: "Confirm visa requirements with agency", owner: "agency / 申请人", type: "high", depends: ["无"], unlocks: ["CW33 启动材料准备", "确认材料版本与递交流程"], blocker: "须取得 agency 的书面清单和口径；北京居住证按 agency 要求列为必要材料。" },
+        { id: "invitation", group: "印方材料", startWeek: "CW33", endWeek: "CW34", title: "邀请信原件", en: "Original invitation letter", owner: "印度公司", type: "normal", depends: ["签证要求确认"], unlocks: ["派遣信", "英文行程单", "在线申请表访问目的"], blocker: "CW34 前收齐原件；日期、访问目的、印方地址变化会导致后续文件重开。" },
+        { id: "india-reg", group: "印方材料", startWeek: "CW33", endWeek: "CW34", title: "印方公司注册证明", en: "Indian company registration proof", owner: "印度公司", type: "normal", depends: ["签证要求确认"], unlocks: ["递交材料完整性"], blocker: "与邀请信一并在 CW34 前收齐，并确认是否必须提交原件。" },
+        { id: "passport", group: "个人并行材料", startWeek: "CW33", endWeek: "CW34", title: "护照原件及复印件", en: "Original passport and copies", owner: "申请人", type: "parallel", depends: ["材料准备启动"], unlocks: ["在线表", "面签递交"], blocker: "递交后护照会被占用；旧护照要求需确认。" },
+        { id: "photo", group: "个人并行材料", startWeek: "CW33", endWeek: "CW34", title: "白底彩照 2 张", en: "Two white-background color photos", owner: "申请人", type: "parallel", depends: ["材料准备启动"], unlocks: ["在线照片上传", "纸质材料包"], blocker: "50×50mm，不能戴眼镜、不能露牙。" },
+        { id: "resume", group: "个人并行材料", startWeek: "CW33", endWeek: "CW34", title: "英文简历", en: "English resume", owner: "申请人", type: "parallel", depends: ["个人经历信息"], unlocks: ["申请人材料包"], blocker: "需与在线表、在职证明经历一致。" },
+        { id: "id-copy", group: "个人并行材料", startWeek: "CW33", endWeek: "CW34", title: "身份证正反面复印件", en: "Chinese ID card copy", owner: "申请人", type: "parallel", depends: ["材料准备启动"], unlocks: ["申请人材料包"], blocker: "正反面同页，按彩色单面打印。" },
+        { id: "hukou", group: "个人并行材料", startWeek: "CW33", endWeek: "CW34", title: "户口本原件、英文翻译及全本复印件", en: "Hukou, English translation and full copy", owner: "申请人", type: "high", depends: ["中国籍申请人"], unlocks: ["B-1 商务签材料包"], blocker: "CW34 前收齐原件及翻译件；北京居住证不能直接替代户口本。" },
+        { id: "diploma-notary", group: "个人并行材料", startWeek: "CW33", endWeek: "CW36", title: "最高学历毕业证公证书", en: "Notarial certificate of highest diploma", owner: "申请人 / 公证处", type: "high", depends: ["学历原件", "agency checklist"], unlocks: ["最终材料包"], blocker: "若 agency 坚持要求，应在 CW36 定稿前取得公证书原件及复印件。" },
+        { id: "itinerary", group: "最终复核", startWeek: "CW33", endWeek: "CW36", title: "英文行程单", en: "English itinerary", owner: "申请人", type: "review", depends: ["邀请信", "访问城市", "访问日期"], unlocks: ["最终材料包"], blocker: "CW36 定稿；城市、公司名称、商务活动需与其他材料一致。" },
+        { id: "note-slip", group: "个人并行材料", startWeek: "CW33", endWeek: "CW36", title: "信息便签条", en: "Information note slip", owner: "申请人", type: "parallel", depends: ["印度公司名", "中方公司名"], unlocks: ["递交材料包"], blocker: "CW36 前确认打印格式并完成。" },
+        { id: "bank", group: "高风险材料", startWeek: "CW33", endWeek: "CW36", title: "个人银行流水 / 余额证明", en: "Personal bank statement / balance certificate", owner: "申请人 / 银行", type: "high", depends: ["BLS 书面确认口径", "预计递交周"], unlocks: ["面签材料包"], blocker: "CW36 前按 agency 最终口径备齐；官方页面对周期和余额标准存在不同表述。" },
+        { id: "beijing-residence-permit", group: "高风险材料", startWeek: "CW35", endWeek: "CW35", status: "blocked", title: "北京居住证（当前无法取得）", en: "Beijing Residence Permit — currently unavailable", owner: "申请人 / agency", type: "high", depends: ["agency 明确要求", "实际申领资格及办理周期"], unlocks: ["agency 材料预审", "替代方案或豁免确认"], blocker: "CW35 已识别为当前无法取得的必要材料；继续与 agency 讨论替代材料、豁免或调整出差安排。" },
+        { id: "no-criminal", group: "高风险材料", startWeek: "CW35", endWeek: "CW35", status: "blocked", title: "工作地无犯罪记录证明（当前无法取得）", en: "Police Clearance Certificate for place of employment — unavailable", owner: "申请人 / agency", type: "high", depends: ["北京居住证", "工作地公安机关申领资格"], unlocks: ["agency 材料预审", "替代方案或豁免确认"], blocker: "CW35 已识别为当前无法取得；与 agency 继续讨论可接受的签发地、替代证明或豁免。" },
+        { id: "license", group: "中方公司材料", startWeek: "CW33", endWeek: "CW34", title: "营业执照复印件及翻译件", en: "Business license copy and translation", owner: "中方公司", type: "normal", depends: ["签证要求确认"], unlocks: ["公司材料包"], blocker: "CW34 前完成内部审批，并确认翻译件盖章要求。" },
+        { id: "dispatch", group: "中方公司材料", startWeek: "CW33", endWeek: "CW34", title: "派遣信", en: "Dispatch letter", owner: "中方公司", type: "normal", depends: ["邀请信", "访问日期", "印方公司地址"], unlocks: ["在线表复核", "面签材料包"], blocker: "CW34 前完成内部审批；须与邀请函、行程单、在线表完全一致。" },
+        { id: "proforma", group: "中方公司材料", startWeek: "CW33", endWeek: "CW34", title: "Proforma 信息详情表", en: "Proforma information form", owner: "中方公司", type: "normal", depends: ["邀请信", "访问目的", "访问日期"], unlocks: ["公司材料包"], blocker: "CW34 前完成内部审批；不适用项填 N/A。" },
+        { id: "employment", group: "中方公司材料", startWeek: "CW33", endWeek: "CW34", title: "在职证明", en: "Employment certificate", owner: "中方公司", type: "high", depends: ["agency checklist", "公司薪资口径"], unlocks: ["申请人材料包"], blocker: "CW34 前完成内部审批，并确认公司可采用的薪资口径。" },
+        { id: "online-form", group: "最终复核", startWeek: "CW34", endWeek: "CW36", title: "在线申请表最终提交", en: "Final online application submission", owner: "申请人 / agency", type: "review", depends: ["关键材料字段确认", "护照信息", "邀请函/派遣函一致"], unlocks: ["打印申请表", "预约/递交流程"], blocker: "CW36 定稿后提交；正式提交后通常不可修改。" },
+        { id: "checklist", group: "最终复核", startWeek: "CW34", endWeek: "CW36", title: "商务材料清单", en: "Business document checklist", owner: "申请人 / agency", type: "review", depends: ["所有材料项"], unlocks: ["递交包整理"], blocker: "CW36 完成终审，明确两项受阻材料的处理意见。" },
+        { id: "upload-book", group: "预约面签", startWeek: "CW36", endWeek: "CW36", title: "预约面签", en: "Book Interview Appointment", owner: "申请人 / agency", type: "high", depends: ["材料定稿", "在线申请表提交", "可预约名额"], unlocks: ["确定 CW37–38 递交时间"], blocker: "CW36 完成预约；Regular/Paper B-1 正常流程不要求在线上传整套 supporting documents。" },
+        { id: "print", group: "递交面签", startWeek: "CW36", endWeek: "CW37", title: "所有材料彩色单面打印", en: "Color single-sided printing", owner: "申请人 / agency", type: "normal", depends: ["所有最终版材料"], unlocks: ["面签递交"], blocker: "打印版本必须与最终在线表、邀请函、派遣函一致。" },
+        { id: "interview", group: "递交面签", startWeek: "CW37", endWeek: "CW38", title: "递交申请及生物信息采集", en: "Application submission & biometric enrolment", owner: "申请人", type: "high", depends: ["预约", "打印材料包", "护照原件"], unlocks: ["使馆签证审理"], blocker: "CW37–38 完成现场递交及生物信息采集；纸质材料可能到现场才完整审验。" },
+        { id: "visa-release", group: "签证释放", startWeek: "CW38", endWeek: "CW43", title: "使馆签证审理", en: "Embassy visa processing", owner: "印度使领馆 / BLS", type: "review", depends: ["面签递交完成", "材料获受理"], unlocks: ["签证签发与护照返还"], blocker: "预计 CW38–42/43；审理时间不构成官方承诺，补件或核查会延长周期。" },
+        { id: "passport-return", group: "签证释放", startWeek: "CW43", endWeek: "CW44", title: "预计签证及护照返还", en: "Expected visa and passport return", owner: "印度使领馆 / BLS", type: "review", depends: ["签证审理完成"], unlocks: ["确认实际可出差日期"], blocker: "仅为预计窗口；以护照实际返还且签证信息核对无误为准。" },
+        { id: "travel-window", group: "签证释放", startWeek: "CW44", endWeek: "CW45", title: "现实可行的出差窗口", en: "Realistic travel window", owner: "申请人 / 公司", type: "parallel", depends: ["护照返还", "签证信息核验", "航班酒店确认"], unlocks: ["赴印出差"], blocker: "仅在签证和护照实际返还后安排不可退改的航班与酒店。" }
+      ];
+
+      const stageTaskIds = {
+        consultation: new Set(["agency-checklist"]),
+        appointment: new Set(["upload-book"]),
+        printing: new Set(["print"]),
+        interview: new Set(["interview"]),
+        release: new Set(["visa-release", "passport-return", "travel-window"]),
+        cnCompany: new Set(["license", "dispatch", "proforma", "employment"]),
+        indiaCompany: new Set(["invitation", "india-reg"])
+      };
+
+      function taskStage(task) {
+        if (stageTaskIds.consultation.has(task.id)) return "consultation";
+        if (stageTaskIds.indiaCompany.has(task.id)) return "india-company";
+        if (stageTaskIds.cnCompany.has(task.id)) return "cn-company";
+        if (stageTaskIds.appointment.has(task.id) || stageTaskIds.printing.has(task.id) || stageTaskIds.interview.has(task.id)) return "appointment";
+        if (stageTaskIds.release.has(task.id)) return "release";
+        return "personal";
+      }
+
+      const scheduleVersion = "cw32-cw45-key-activity-rhythm-v3";
+      const storedTasks = JSON.parse(localStorage.getItem("indiaVisaGanttTasks") || "null");
+      const storedVersion = localStorage.getItem("indiaVisaGanttScheduleVersion");
+      const sourceTasks = storedTasks
+        ? [...storedTasks, ...defaultTasks.filter(item => !storedTasks.some(stored => stored.id === item.id))]
+        : defaultTasks;
+      let tasks = storedTasks && storedVersion === scheduleVersion
+        ? normalize(sourceTasks)
+        : migrateToWeeks(JSON.parse(JSON.stringify(defaultTasks)));
+      let selectedId = tasks[0].id;
+
+      function migrateToWeeks(items, datesAlreadyFitted = false) {
+        const dayMs = 24 * 60 * 60 * 1000;
+        const oldMin = new Date("2026-09-01T00:00:00");
+        const oldMax = new Date("2026-11-30T00:00:00");
+        const oldSpan = oldMax - oldMin;
+        const toWeek = value => {
+          if (datesAlreadyFitted) {
+            const date = new Date(`${value}T00:00:00`);
+            const cw32Start = new Date("2026-08-03T00:00:00");
+            const index = Math.floor((date - cw32Start) / dayMs / 7);
+            return weeks[Math.max(0, Math.min(weeks.length - 1, index))];
+          }
+          const ratio = Math.max(0, Math.min(1, (new Date(`${value}T00:00:00`) - oldMin) / oldSpan));
+          return weeks[Math.round(ratio * (weeks.length - 1))];
+        };
+        const migrated = normalize(items.map(item => ({
+          ...item,
+          startWeek: item.startWeek || toWeek(item.start),
+          endWeek: item.endWeek || toWeek(item.end || item.due || item.start)
+        })));
+        localStorage.setItem("indiaVisaGanttScheduleVersion", scheduleVersion);
+        localStorage.setItem("indiaVisaGanttTasks", JSON.stringify(migrated));
+        return migrated;
+      }
+
+      function normalize(items) {
+        return items.map(item => {
+          const startIndex = Math.max(0, weeks.indexOf(item.startWeek));
+          const endIndex = Math.max(startIndex, weeks.indexOf(item.endWeek));
+          const { start, end, due, ...weekTask } = item;
+          return {
+            ...weekTask,
+            ...(item.id === "upload-book" ? {
+              group: "预约面签",
+              title: "预约面签",
+              en: "Book Interview Appointment",
+              owner: "申请人 / agency",
+              depends: ["在线申请表提交", "可预约名额"],
+              unlocks: ["确定面签递交周"],
+              blocker: "Regular/Paper B-1 正常流程不要求在线上传整套 supporting documents；如 agency 另有预审，应与官网递交流程分开管理。"
+            } : {}),
+            startWeek: weeks[startIndex],
+            endWeek: weeks[endIndex],
+            status: statuses.some(status => status.id === item.status) ? item.status : "not-started",
+            type: item.type || item.risk || "normal"
+          };
+        });
+      }
+
+      function offsetPercent(startWeek) {
+        return weeks.indexOf(startWeek) / weeks.length * 100;
+      }
+
+      function widthPercent(startWeek, endWeek) {
+        return (weeks.indexOf(endWeek) - weeks.indexOf(startWeek) + 1) / weeks.length * 100;
+      }
+
+      function persist() {
+        localStorage.setItem("indiaVisaGanttTasks", JSON.stringify(tasks));
+        localStorage.setItem("indiaVisaGanttScheduleVersion", scheduleVersion);
+      }
+
+      function renderTaskRows() {
+        const statusPriority = {
+          blocked: 0,
+          completed: 1,
+          "in-progress": 2,
+          "not-started": 3
+        };
+        return stages.map(stage => {
+          const stageTasks = tasks
+            .filter(task => taskStage(task) === stage.id)
+            .sort((a, b) => {
+              const endDifference = weeks.indexOf(a.endWeek) - weeks.indexOf(b.endWeek);
+              if (endDifference !== 0) return endDifference;
+              const statusDifference = statusPriority[a.status] - statusPriority[b.status];
+              if (statusDifference !== 0) return statusDifference;
+              const startDifference = weeks.indexOf(a.startWeek) - weeks.indexOf(b.startWeek);
+              if (startDifference !== 0) return startDifference;
+              return a.title.localeCompare(b.title, "zh-CN");
+            });
+          return `
+            <div class="vg-stage"><span class="zh">${stage.zh}</span><span class="en">${stage.en}</span></div>
+            <div class="vg-stage-band"></div>
+            ${stageTasks.map(task => `
+              <div class="vg-task ${task.id === selectedId ? "selected" : ""}" data-id="${task.id}">
+                <b class="vg-status ${task.status}">${statuses.find(status => status.id === task.status).label}</b>
+                <strong>${task.title}</strong>
+                <span>${task.en}</span>
+                <small>${task.owner}</small>
+              </div>
+              <div class="vg-lane">
+                <div class="vg-bar ${task.type} ${task.id === selectedId ? "selected" : ""}" draggable="true" data-id="${task.id}" style="left:${offsetPercent(task.startWeek)}%;width:${widthPercent(task.startWeek, task.endWeek)}%">
+                  ${task.startWeek} → ${task.endWeek}
+                </div>
+              </div>
+            `).join("")}
+          `;
+        }).join("");
+      }
+
+      function render() {
+        grid.innerHTML = `
+          <div class="vg-left-head"><span><small>状态 · 材料/动作</small><br>Status · Document or Action</span></div>
+          <div class="vg-axis">${weeks.map(week => `<div>${week}</div>`).join("")}</div>
+          ${renderTaskRows()}
+        `;
+        attachHandlers();
+        renderDetail();
+      }
+
+      function renderDetail() {
+        const task = tasks.find(item => item.id === selectedId) || tasks[0];
+        detail.innerHTML = `
+          <div class="vg-detail-title">${task.title}<br><span>${task.en}</span></div>
+          <div class="vg-detail-section"><strong>阶段 / Group</strong><p>${task.group}</p></div>
+          <div class="vg-detail-section"><strong>责任方 / Owner</strong><p>${task.owner}</p></div>
+          <div class="vg-detail-section"><strong>状态 / Status</strong><select data-status-field="status">${statuses.map(status => `<option value="${status.id}" ${status.id === task.status ? "selected" : ""}>${status.label}</option>`).join("")}</select></div>
+          <div class="vg-detail-section">
+            <strong>时间 / Timing</strong>
+            <div class="vg-date-grid">
+              <label>开始周 / Start week <select data-week-field="startWeek">${weeks.map(week => `<option value="${week}" ${week === task.startWeek ? "selected" : ""}>${week}</option>`).join("")}</select></label>
+              <label>结束周 / End week <select data-week-field="endWeek">${weeks.map(week => `<option value="${week}" ${week === task.endWeek ? "selected" : ""}>${week}</option>`).join("")}</select></label>
+            </div>
+          </div>
+          <div class="vg-detail-section"><strong>前置依赖 / Depends on</strong><ul>${task.depends.map(item => `<li>${item}</li>`).join("")}</ul></div>
+          <div class="vg-detail-section"><strong>完成后触发 / Unlocks</strong><ul>${task.unlocks.map(item => `<li>${item}</li>`).join("")}</ul></div>
+          <div class="vg-detail-section"><strong>卡点 / Blocker</strong><p>${task.blocker}</p></div>
+        `;
+        detail.querySelectorAll("select[data-week-field]").forEach(select => {
+          select.addEventListener("change", () => {
+            task[select.dataset.weekField] = select.value;
+            if (weeks.indexOf(task.endWeek) < weeks.indexOf(task.startWeek)) task.endWeek = task.startWeek;
+            persist();
+            render();
+          });
+        });
+        detail.querySelector("select[data-status-field]").addEventListener("change", event => {
+          task.status = event.target.value;
+          persist();
+          render();
+        });
+      }
+
+      function attachHandlers() {
+        root.querySelectorAll("[data-id]").forEach(element => {
+          element.addEventListener("click", () => {
+            selectedId = element.dataset.id;
+            render();
+          });
+        });
+
+        root.querySelectorAll(".vg-bar").forEach(bar => {
+          bar.addEventListener("dragstart", event => {
+            event.dataTransfer.setData("text/plain", bar.dataset.id);
+          });
+        });
+
+        root.querySelectorAll(".vg-lane").forEach(lane => {
+          lane.addEventListener("dragover", event => event.preventDefault());
+          lane.addEventListener("drop", event => {
+            event.preventDefault();
+            const id = event.dataTransfer.getData("text/plain");
+            const task = tasks.find(item => item.id === id);
+            if (!task) return;
+            const rect = lane.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(0.9999, (event.clientX - rect.left) / rect.width));
+            const duration = weeks.indexOf(task.endWeek) - weeks.indexOf(task.startWeek);
+            const startIndex = Math.floor(ratio * weeks.length);
+            const endIndex = Math.min(weeks.length - 1, startIndex + duration);
+            task.startWeek = weeks[startIndex];
+            task.endWeek = weeks[endIndex];
+            selectedId = id;
+            persist();
+            render();
+          });
+        });
+      }
+
+      resetButton.addEventListener("click", () => {
+        tasks = migrateToWeeks(JSON.parse(JSON.stringify(defaultTasks)));
+        selectedId = tasks[0].id;
+        persist();
+        render();
+      });
+
+      pdfButton.addEventListener("click", () => window.print());
+
+      render();
+    })();
+  </script>
+</div>

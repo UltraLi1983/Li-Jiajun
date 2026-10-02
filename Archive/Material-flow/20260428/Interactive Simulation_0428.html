@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式循环配送模拟系统</title>
+    <link rel="stylesheet" href="styles_0428.css">
+    <style>
+        .hint-box h4 {
+            display: none; /* 隐藏重复标题 */
+        }
+        
+        /* 为面板中的高亮节点添加样式 */
+        .route-badge.panel-highlight {
+            background-color: #FFEB3B !important;  /* 黄色背景 */
+            color: #000 !important;                 /* 黑色文字 */
+            border: 2px solid #FF9800 !important;   /* 橙色边框 */
+            transform: scale(1.1);                  /* 略微放大 */
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.6); /* 发光效果 */
+        }
+        
+        /* 修改按钮颜色 */
+        .btn-success {
+            background-color: rgb(245, 5, 55) !important; /* 红色 - 使用您定义的仓库颜色 */
+        }
+        
+        .btn-warning {
+            background-color: rgb(0, 0, 0) !important; /* 黑色 - 使用您定义的OperationPoint颜色 */
+        }
+        
+        .data-source-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .data-source-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .data-source-info li {
+            margin-bottom: 5px;
+        }
+        
+        .panel-note {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .panel-note strong {
+            color: #856404;
+        }
+
+
+        
+        /* ===== 通过点连接选择器 ===== */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            padding: 3px 8px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checkbox-group label:hover {
+            background: #e3f2fd;
+            border-color: #90caf9;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚚 交互式循环配送模拟系统</h1>
+
+        <div class="main-layout">
+            <!-- 1. 交互说明 -->
+            <div class="panel">
+                <h2>💡 交互说明</h2>
+                <div class="hint-box">
+                    <!-- 删除了重复的标题 -->
+                    <ul>
+                        <li><strong>拖拽点位</strong>：鼠标按住工站拖动调整位置</li>
+                        <li><strong>编辑点位</strong>：双击工站打开编辑面板，可修改装载时间</li>
+                        <li><strong>查看信息</strong>：鼠标悬停在工站上查看详细信息</li>
+                        <li><strong>运行模拟</strong>：点击右侧"运行模拟"按钮查看配送路线</li>
+                        <li><strong>坐标显示</strong>：在布局区域移动鼠标可查看当前坐标</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 2. 模拟参数 和 操作 和 点位编辑 -->
+            <div class="controls-row">
+                <!-- 模拟参数 -->
+                <div class="panel params-panel">
+                    <h2>⚙️ 模拟参数</h2>
+                    <div class="config-section">
+                        <div class="config-item">
+                            <label>AGV车辆数</label>
+                            <input type="number" id="numVehicles" value="3" min="1" max="10">
+                        </div>
+                        <div class="config-item">
+                            <label>维保开始时间</label>
+                            <input type="time" id="maintStart" value="14:00">
+                        </div>
+                        <div class="config-item">
+                            <label>维保结束时间</label>
+                            <input type="time" id="maintEnd" value="15:00">
+                        </div>
+                        <div class="config-item">
+                            <label>变异系数 (时间波动)</label>
+                            <input type="number" id="cvFactor" value="0.15" min="0" max="1" step="0.05">
+                        </div>
+                        <div class="config-item">
+                            <label>器具运行速度 (公里/小时)</label>
+                            <input type="number" id="baseSpeed" value="20.0" min="0.1" max="30" step="0.1">
+                        </div>
+                        <div class="config-item">
+                            <label>比例尺 (米/单位)</label>
+                            <input type="number" id="scaleFactor" value="10.0" min="0.1" max="100" step="0.1">
+                        </div>
+                        <div class="config-item">
+                            <label>迭代次数</label>
+                            <input type="number" id="iterations" value="100" min="10" max="500" step="10">
+                        </div>
+                        <div class="config-item">
+                            <label>随机种子</label>
+                            <input type="number" id="seed" value="42" min="0" max="999">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 动画控制 -->
+                <div class="panel animation-panel">
+                    <h2>🎬 动画控制</h2>
+                    <div class="config-section">
+                        <div class="config-item">
+                            <label>AGV线路</label>
+                            <select id="agvRouteSelect" onchange="updateSelectedRoute()">
+                                <option value="all">所有线路</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>动画时长</label>
+                            <select id="animationDuration" onchange="updateDuration()">
+                                <option value="10">快速 (10秒)</option>
+                                <option value="30" selected>标准 (30秒)</option>
+                                <option value="60">慢速 (60秒)</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                        </div>
+                        <div class="config-item" id="customDurationContainer" style="display: none;">
+                            <label>自定义时长 (秒)</label>
+                            <input type="number" id="customDuration" placeholder="输入秒数" min="5" max="300">
+                        </div>
+                        <div class="config-item">
+                            <label>播放速度</label>
+                            <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1.0" oninput="updateSpeed()">
+                            <span id="speedValue">1.0x</span>
+                        </div>
+                        <div class="btn-group" style="margin-top: 10px;">
+                            <button class="btn btn-primary" onclick="playAnimation()">▶ 播放</button>
+                            <button class="btn btn-secondary" onclick="pauseAnimation()">⏸ 暂停</button>
+                            <button class="btn btn-secondary" onclick="resetAnimation()">⏹ 重置</button>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 10px; height: 10px; background-color: #f0f0f0; border-radius: 5px; overflow: hidden;">
+                            <div id="animationProgress" style="width: 0%; height: 100%; background-color: #4CAF50;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作 -->
+                <div class="panel operations-panel">
+                    <h2>🎮 操作</h2>
+                    <div class="toolbar">
+                        <button class="btn btn-success" onclick="addNewNode()" style="width: 100%; height: 60px; margin-bottom: 10px;">➕ 添加工站</button>
+                        <button class="btn btn-warning" onclick="resetLayout()" style="width: 100%; height: 60px; margin-bottom: 10px;">🔄 重置布局</button>
+                        <div class="file-input-wrapper" style="width: 100%; height: 60px; margin-bottom: 10px;">
+                            <button class="btn btn-secondary" style="width: 100%; height: 100%;">📂 导入布局</button>
+                            <input type="file" id="layoutFileInput" accept=".json,.csv" onchange="importLayout(event)">
+                        </div>
+                        <button class="btn btn-secondary" onclick="exportLayout()" style="width: 100%; height: 60px; margin-bottom: 10px;">💾 导出布局</button>
+                        <button class="btn btn-info" onclick="clearSimulationResults()" style="width: 100%; height: 60px; margin-bottom: 10px;">🧹 清空模拟结果</button>
+                        <button class="btn btn-primary" onclick="runSimulation()" style="width: 100%; height: 60px;">🚀 运行模拟</button>
+                    </div>
+                </div>
+
+                <!-- 点位编辑 -->
+                <div class="panel node-editor-panel">
+                    <h2>📝 点位编辑</h2>
+                    <div class="node-editor" id="nodeEditor">
+                        <h3 id="editorTitle">工站编辑</h3>
+                        <div class="info" id="editorInfo"></div>
+                        <div class="config-item">
+                            <label>工站类型</label>
+                            <select id="editNodeType">
+                                <option value="Depot">仓库</option>
+                                <option value="SubLine">分装线</option>
+                                <option value="FinalLine">总装线</option>
+                                <option value="OperationPoint">通过点位</option>
+                                <option value="ChargingPoint">充电点位</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>工站ID</label>
+                            <input type="text" id="editNodeId" readonly>
+                        </div>
+                        <div class="config-item">
+                            <label>X坐标</label>
+                            <input type="number" id="editNodeX" step="0.5">
+                        </div>
+                        <div class="config-item">
+                            <label>Y坐标</label>
+                            <input type="number" id="editNodeY" step="0.5">
+                        </div>
+                                                <div class="config-item" id="loadTimeContainer">
+                            <label>装载时间(分钟)</label>
+                            <input type="number" id="editNodeLoadTime" min="0" max="30">
+                        </div>
+                        <div class="config-item" id="connectionsContainer" style="display:none;">
+                            <label>连接通过点</label>
+                            <div id="connectionsCheckboxGroup" class="checkbox-group">
+                            </div>
+                            <small style="color:#888;">勾选此节点需要连接的通过点</small>
+                        </div>
+                                                <div class="btn-group">
+                            <button class="btn btn-primary" onclick="applyNodeEdit()">✅ 应用</button>
+                            <button class="btn btn-secondary" onclick="cancelNodeEdit()">❌ 取消</button>
+                        </div>
+                        <div style="margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px;">
+                            <button class="btn btn-warning" onclick="deleteSelectedNode()" style="width:100%;">🗑️ 删除此工站</button>
+                        </div>
+                    </div>
+                    <div id="noSelection" style="text-align: center; color: #888; padding: 20px;">
+                        <p>👆 双击工站进行编辑</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 工厂布局与配送路线 -->
+            <div class="canvas-container">
+                <!-- 工厂布局与配送路线 -->
+                <div class="panel canvas-panel">
+                    <h2>🗺️ 工厂布局与配送路线</h2>
+                    <canvas id="mainCanvas"></canvas>
+                    <div class="legend" id="legend"></div>
+                </div>
+            </div>
+
+            <!-- 3. 模拟结果 -->
+            <div class="panel stats-row" id="statsPanel" style="display: none;">
+                <h2>📊 模拟结果</h2>
+                <div class="stats-grid" id="statsGrid"></div>
+                <div class="route-details" id="routeDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+    <div class="tooltip" id="coordTooltip" style="background: rgba(0, 100, 255, 0.9);"></div> <!-- 坐标提示工具 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>正在计算最优配送方案...</p>
+    </div>
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal"></div>
+    </div>
+
+    <script src="separate_0428.js"></script>
+    <script>
+        // 页面加载完成后自动应用默认布局
+        window.onload = function() {
+            console.log("应用系统自带默认布局");
+            // 直接使用系统自带的默认布局
+            if (typeof generateDefaultLayout !== 'undefined') {
+                generateDefaultLayout();
+            } else {
+                console.error("generateDefaultLayout函数未定义");
+            }
+        };
+    </script>
+</body>
+</html>

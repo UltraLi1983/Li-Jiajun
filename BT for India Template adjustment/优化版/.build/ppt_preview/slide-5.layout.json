@@ -1,0 +1,1026 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/d3u3md",
+    "id": "d3u3md",
+    "slide": 5,
+    "layoutId": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 794,
+      "height": 1123
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/idw729sj",
+      "id": "1",
+      "name": "top-band",
+      "bbox": [
+        0,
+        0,
+        794,
+        86
+      ],
+      "geometry": "rect",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": ""
+          }
+        ]
+      },
+      "fillColor": "#17365D",
+      "lineColor": "#17365D",
+      "lineWidth": 1
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5gnqx4bu",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        46,
+        17,
+        650,
+        42
+      ],
+      "geometry": "rect",
+      "text": "英文简历｜Resume",
+      "textPreview": "英文简历｜Resume",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "英文简历｜Resume"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "英文简历｜Resume",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "英文简历｜Resume",
+              "fontSize": 30,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4fe94zap",
+      "id": "3",
+      "name": "page",
+      "bbox": [
+        710,
+        22,
+        42,
+        34
+      ],
+      "geometry": "rect",
+      "text": "5",
+      "textPreview": "5",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "5"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "5",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "5",
+              "fontSize": 16,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r258zet0",
+      "id": "4",
+      "name": "subtitle",
+      "bbox": [
+        46,
+        104,
+        702,
+        48
+      ],
+      "geometry": "rect",
+      "text": "按时间倒序填写全部教育和工作经历；空档期需可解释。",
+      "textPreview": "按时间倒序填写全部教育和工作经历；空档期需可解释。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#244062",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "按时间倒序填写全部教育和工作经历；空档期需可解释。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "按时间倒序填写全部教育和工作经历；空档期需可解释。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#244062",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "按时间倒序填写全部教育和工作经历；空档期需可解释。",
+              "fontSize": 16,
+              "color": "#244062",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#D9EAF7",
+      "lineWidth": 1
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/61wr69sf",
+      "id": "5",
+      "name": "footer",
+      "bbox": [
+        46,
+        1080,
+        702,
+        22
+      ],
+      "geometry": "rect",
+      "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "textPreview": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#666666",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#666666",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+              "fontSize": 12,
+              "color": "#666666",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t47q1or6",
+      "id": "6",
+      "name": "label-Applicant-182",
+      "bbox": [
+        46,
+        182,
+        190,
+        74
+      ],
+      "geometry": "rect",
+      "text": "Applicant",
+      "textPreview": "Applicant",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Applicant"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Applicant",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Applicant",
+              "fontSize": 16,
+              "color": "#222222",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s3y98jal",
+      "id": "7",
+      "name": "input-Applicant-182",
+      "bbox": [
+        236,
+        182,
+        512,
+        74
+      ],
+      "geometry": "rect",
+      "text": "<<name / DOB / phone / email / address>>",
+      "textPreview": "<<name / DOB / phone / email / address>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<name / DOB / phone / email / address>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<name / DOB / phone / email / address>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<name / DOB / phone / email / address>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/76l8natw",
+      "id": "8",
+      "name": "edu-title",
+      "bbox": [
+        46,
+        280,
+        702,
+        42
+      ],
+      "geometry": "rect",
+      "text": "EDUCATION",
+      "textPreview": "EDUCATION",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "EDUCATION"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "EDUCATION",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "EDUCATION",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#17365D",
+      "lineColor": "#17365D",
+      "lineWidth": 1
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m5c7upsb",
+      "id": "9",
+      "name": "edu0",
+      "bbox": [
+        46,
+        322,
+        702,
+        92
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfy9kfq9",
+      "id": "10",
+      "name": "edu1",
+      "bbox": [
+        46,
+        414,
+        702,
+        92
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tg7atk7u",
+      "id": "11",
+      "name": "edu2",
+      "bbox": [
+        46,
+        506,
+        702,
+        92
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6tgri58j",
+      "id": "12",
+      "name": "work-title",
+      "bbox": [
+        46,
+        620,
+        702,
+        42
+      ],
+      "geometry": "rect",
+      "text": "PROFESSIONAL EXPERIENCE",
+      "textPreview": "PROFESSIONAL EXPERIENCE",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PROFESSIONAL EXPERIENCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PROFESSIONAL EXPERIENCE",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PROFESSIONAL EXPERIENCE",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#17365D",
+      "lineColor": "#17365D",
+      "lineWidth": 1
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7epsrapo",
+      "id": "13",
+      "name": "work0",
+      "bbox": [
+        46,
+        662,
+        702,
+        106
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gjytofql",
+      "id": "14",
+      "name": "work1",
+      "bbox": [
+        46,
+        768,
+        702,
+        106
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hk7axk76",
+      "id": "15",
+      "name": "work2",
+      "bbox": [
+        46,
+        874,
+        702,
+        106
+      ],
+      "geometry": "rect",
+      "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "textPreview": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFF2CC",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    }
+  ],
+  "composeRuns": []
+}

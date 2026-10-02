@@ -1,0 +1,293 @@
+{
+  "Invitation letter Sample.docx": {
+    "paragraphs": [
+      "Invitation",
+      "Information of the inviter",
+      "Company name: \tXXXXXX",
+      "Address: \tXXXXXX",
+      "Inviter's name：\tMs./Mr. XXXXXX",
+      "Tel:\t\t\tXXXXXX",
+      "E-mail：\t\tXXXXXX",
+      "Date:\t\t\tDD.MM.YYYY",
+      "To the Embassy of India, Beijing:",
+      "I am a citizen of India, and I hold the position of XXXX(Department) at XXXXXX(Indian Company Name). I would like to invite my partner – XXXXXX(Applicant Name) from XXXXXX(Chinese Company Name).  Add: XXXXXX, P.R. China(Chinese Company Address) to visit our company from 16/03/2026 to 03/04/2026 for XXXXXX(Business Purpose).",
+      "The invitee information is as follows:",
+      "During his visit, their company will be responsible for all his costs including the round trip airplane tickets, food, medical insurance and all the other expenses.",
+      "I am aware of India Immigration policy and will ensure that he understand the conditions and requirements of his staying in India. I make sure that he will obey the local laws and leave India before the expiration of his authorized stay.",
+      "Please kindly consider about granting him the Temporary Resident Visa. It will be greatly appreciated to get the updates from you soon.",
+      "If any additional information or clarifications are needed, please feel free to call me.",
+      "Sincerely,",
+      "XXXXXX(Indian Company Name)",
+      "Signature of the inviter：",
+      "Mr./Ms.XXXXXXXXXX",
+      "XXXX(Occupation)"
+    ],
+    "tables": [
+      {
+        "table": 1,
+        "rows": [
+          [
+            "Name",
+            "Passport number",
+            "Date of Birth",
+            "Position",
+            "Employed company name"
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  },
+  "Resume.docx": {
+    "paragraphs": [],
+    "tables": []
+  },
+  "simplified-proforma-Beijing-2026.docx": {
+    "paragraphs": [
+      "Annexure-I",
+      "BV  Proforma",
+      "Instructions:",
+      "·To be filled by the authorized person of the current employer.",
+      "·All Fields are mandatory and to be filled in English.",
+      "·A representative of the company may be called for an interview at the Embassy or through virtual mode,if required.",
+      "·The Proforma needs to be submitted with the visa application.",
+      "·The office seal/stamp for authentication may be affixed only in the space  provided.",
+      "Details of the Applicant",
+      "Details of the Applicant's Current  Emplover",
+      "Details of the Company/Organization with whom the Applicant will be working in India",
+      "9.On behalf of the company, I, hereby undertake that the nformation provided above is true to the best of my knowledge and accept full responsibility for the information provided above.",
+      "(Signature of the Authorised Person)",
+      "```markdown```",
+      "O",
+      "Name of Signatory(Mandatory):",
+      "Designation of the Signatory:",
+      "Mobile No.:",
+      "Telephone Number (Landline):",
+      "Email Address:",
+      "Official Seal:"
+    ],
+    "tables": [
+      {
+        "table": 1,
+        "rows": [
+          [
+            "1.",
+            "Specific details of skills/Experience in the field of operation",
+            ""
+          ],
+          [
+            "2.",
+            "Length of Applicant's job experience in the field",
+            ""
+          ],
+          [
+            "3.",
+            "Has the applicant worked in other countries before",
+            ""
+          ],
+          [
+            "In case of Yes,please share:",
+            "In case of Yes,please share:",
+            "In case of Yes,please share:"
+          ],
+          [
+            "(a)",
+            "Name of the Company:",
+            ""
+          ],
+          [
+            "(b)",
+            "Contact details and address of the Company",
+            ""
+          ],
+          [
+            "(c)",
+            "Details of project handled",
+            ""
+          ]
+        ]
+      },
+      {
+        "table": 2,
+        "rows": [
+          [
+            "1.",
+            "Name of the Company:",
+            ""
+          ],
+          [
+            "2.",
+            "Year of establishment of the Company:",
+            ""
+          ],
+          [
+            "3.",
+            "Address and contact details of the Company:",
+            ""
+          ],
+          [
+            "4.",
+            "Nature of Ownership:",
+            "Private/State Owned"
+          ]
+        ]
+      },
+      {
+        "table": 3,
+        "rows": [
+          [
+            "",
+            "",
+            "Enterprise/Joint Venture"
+          ],
+          [
+            "(a)",
+            "If SOE,Name of the Government/Ministry it is working under:",
+            ""
+          ],
+          [
+            "(b)",
+            "If JV,Please give the breakup of ownership",
+            ""
+          ],
+          [
+            "(c)",
+            "Shareholding pattern of the company | (Indicate the list of shareholders holding 5% or more shares in the Company)",
+            ""
+          ],
+          [
+            "5.",
+            "Total turnover of the company in past three years",
+            ""
+          ],
+          [
+            "5.",
+            "Total turnover of the company in past three years",
+            ""
+          ],
+          [
+            "5.",
+            "Total turnover of the company in past three years",
+            ""
+          ],
+          [
+            "6.",
+            "Whether the company is:",
+            "Listed/Non-Listed"
+          ],
+          [
+            "(a)",
+            "(If Listed,name of the stock exchange where the company is listed)",
+            ""
+          ],
+          [
+            "(b)",
+            "Sector(s)in which the Company is operating",
+            ""
+          ],
+          [
+            "7.",
+            "Please share a brief note about the Company.",
+            "Please share a brief note about the Company."
+          ],
+          [
+            "8.",
+            "Details of the Company's presence in India through subsidiary companies,Permanent Establishments,Joint Ventures or through  beneficial interest (either Direct or indirect)",
+            "Details of the Company's presence in India through subsidiary companies,Permanent Establishments,Joint Ventures or through  beneficial interest (either Direct or indirect)"
+          ],
+          [
+            "(a)",
+            "Name and Address of such entities",
+            ""
+          ],
+          [
+            "(b)",
+            "Nature of investment",
+            ""
+          ]
+        ]
+      },
+      {
+        "table": 4,
+        "rows": [
+          [
+            "1.",
+            "Name of the Company:",
+            ""
+          ],
+          [
+            "2.",
+            "Year of establishment of the Company:",
+            ""
+          ],
+          [
+            "3.",
+            "Address and contact details of the Company:",
+            ""
+          ],
+          [
+            "4.",
+            "Nature Of Ownership: | Is there any Foreign ownership:Y/N",
+            "If 'Y'-Nationality of | Beneficial owner and % | of ownership"
+          ]
+        ]
+      }
+    ]
+  },
+  "信息便签条.docx": {
+    "paragraphs": [],
+    "tables": []
+  },
+  "印度商务签材料清单.docx": {
+    "paragraphs": [
+      "印度商务签证",
+      "签证类型：商务签证                      出签时间：3 - 4周",
+      "印度公司提供材料：",
+      "1. 邀请信原件",
+      "使用英语的带有公司名称、地址、电话、传真的信头纸打印；需包含：邀请函开具日期，注明被邀请人姓名、护照号码、职务、中方公司名、出访时间、访问目的、访问的印方公司名和地址，落款处为邀请人的姓名、职位、公司名、邮箱、电话，并亲笔签名。",
+      "2. 印方公司注册证明",
+      "Certificate of Incorporation复印件 1份，包括更名的注册证书复印件 1份；",
+      "或PAN Card复印件一份",
+      "中方公司提供材料：",
+      "1. 派遣信",
+      "使用英语带有公司名称、地址、电话、传真的信头纸打印；需包含：派遣函开具日期，申请人姓名、护照号、身份证号、职务、年薪、访问目的及时间、印方公司名及地址，申请人会按时回国、公司费用承担、落款处为部门负责人拼音全名、职务、公司名、邮箱、电话，并亲笔签名加盖公司公章。",
+      "2. 营业执照复印件加盖公章和翻译件",
+      "3. Proforma信息详情表",
+      "表格需完整填写（不适用填N/A）并由负责人亲笔签名并加盖公章",
+      "申请人提供材料：",
+      "1. 在线申请表",
+      "申请表需完整填写，不带*号的也需填写。填写完成后打印并在下方签名，签名字迹与护照签名保持一致",
+      "填表网址：https://indianvisaonline.gov.in/visa/Registration",
+      "2. 2 张白底彩色照片",
+      "与上传照片一致，近6 个月内拍摄；尺寸50*50mm；清晰露出五官，不能露牙、不能戴眼镜",
+      "3. 护照原件",
+      "护照个人信息页复印件 2份，签证页和盖章页 1份，护照有效期不少于6个月，至少 2 页空白页，如有旧护照也提供原件及个人信息页、签证页和盖章页 1份",
+      "4. 英文简历",
+      "包含截至目前所有工作及教育经历",
+      "5. 最高学历毕业证和无犯罪证明公证书原件及复印件",
+      "公证需英文翻译",
+      "6. 英文行程单",
+      "整个在印度的行程，写明城市、拜访公司名称、商务会谈内容，并由申请人亲笔签名",
+      "7. 在职证明",
+      "需体现年收入且年收入大于25万元，加盖公章并由负责人签名",
+      "8. 个人银行流水",
+      "递交前7天内打印的近 6 个月工资卡流水，且余额不低于10万元",
+      "9. 身份证正反面复印件",
+      "需正反面打印在同一张纸",
+      "10. 商务材料清单",
+      "11. 信息便签条",
+      "包含个人姓名、印度公司名、在职公司名、个人电话及邮箱",
+      "注：",
+      "所有递交材料需彩色单面打印，不可装订；",
+      "领区划分：根据居住地所属使领馆领区递交申请",
+      "北京驻华印度大使馆领区：北京、天津、河北、安徽、甘肃、贵州、黑龙江、河南、湖北、江西、吉林、辽宁、青海、陕西、山东、山西、重庆、内蒙古、宁夏、西藏、新疆"
+    ],
+    "tables": []
+  }
+}

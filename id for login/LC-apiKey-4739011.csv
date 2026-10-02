@@ -1,0 +1,8 @@
+﻿id,4739011
+apiKey,sk-acd9d9aa68474af09abbcf8529fb24ca
+apiHost,ws-b5z48w0a5p6jpfpu.cn-beijing.maas.aliyuncs.com
+openAiCompatible,https://ws-b5z48w0a5p6jpfpu.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+dashScope,https://ws-b5z48w0a5p6jpfpu.cn-beijing.maas.aliyuncs.com/api/v1
+description,
+workspaceName,默认业务空间
+workspaceId,ws-b5z48w0a5p6jpfpu

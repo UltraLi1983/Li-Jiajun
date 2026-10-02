@@ -1,0 +1,842 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/dmx4ga",
+    "id": "dmx4ga",
+    "slide": 1,
+    "layoutId": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 794,
+      "height": 1123
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "418906cb-c7bf-4576-8ee6-de426adb7948",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rul8nedc",
+      "id": "1",
+      "name": "top-band",
+      "bbox": [
+        0,
+        0,
+        794,
+        86
+      ],
+      "geometry": "rect",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": ""
+          }
+        ]
+      },
+      "fillColor": "#17365D",
+      "lineColor": "#17365D",
+      "lineWidth": 1
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/svupgjux",
+      "id": "2",
+      "name": "title",
+      "bbox": [
+        46,
+        17,
+        650,
+        42
+      ],
+      "geometry": "rect",
+      "text": "印度商务签证｜可视化编辑包",
+      "textPreview": "印度商务签证｜可视化编辑包",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "印度商务签证｜可视化编辑包"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "印度商务签证｜可视化编辑包",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "印度商务签证｜可视化编辑包",
+              "fontSize": 30,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tw3qpovi",
+      "id": "3",
+      "name": "page",
+      "bbox": [
+        710,
+        22,
+        42,
+        34
+      ],
+      "geometry": "rect",
+      "text": "1",
+      "textPreview": "1",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "1",
+              "fontSize": 16,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i5s7apcv",
+      "id": "4",
+      "name": "subtitle",
+      "bbox": [
+        46,
+        104,
+        702,
+        48
+      ],
+      "geometry": "rect",
+      "text": "这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。",
+      "textPreview": "这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#244062",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#244062",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。",
+              "fontSize": 16,
+              "color": "#244062",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#D9EAF7",
+      "lineWidth": 1
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jq18judg",
+      "id": "5",
+      "name": "footer",
+      "bbox": [
+        46,
+        1080,
+        702,
+        22
+      ],
+      "geometry": "rect",
+      "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "textPreview": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#666666",
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#666666",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF",
+              "fontSize": 12,
+              "color": "#666666",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4rapczul",
+      "id": "6",
+      "name": "lead",
+      "bbox": [
+        46,
+        190,
+        702,
+        118
+      ],
+      "geometry": "rect",
+      "text": "推荐流程\n1. 在 Excel 黄色单元格一次性填写\n2. 用 PPTX 快速预览文案结构\n3. 双击“生成签证文档.command”输出 Word\n4. 复核、签字、盖章后转 PDF/打印",
+      "textPreview": "推荐流程 | 1. 在 Excel 黄色单元格一次性填写 | 2. 用 PPTX 快速预览文案结构 | 3. 双击“生成签证文档.command”输出 Word | 4. 复核、签字、盖章后转 PDF/打印",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "推荐流程"
+          },
+          {
+            "index": 2,
+            "text": "1. 在 Excel 黄色单元格一次性填写"
+          },
+          {
+            "index": 3,
+            "text": "2. 用 PPTX 快速预览文案结构"
+          },
+          {
+            "index": 4,
+            "text": "3. 双击“生成签证文档.command”输出 Word"
+          },
+          {
+            "index": 5,
+            "text": "4. 复核、签字、盖章后转 PDF/打印"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "推荐流程",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "推荐流程",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "1. 在 Excel 黄色单元格一次性填写",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. 在 Excel 黄色单元格一次性填写",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "2. 用 PPTX 快速预览文案结构",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. 用 PPTX 快速预览文案结构",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "3. 双击“生成签证文档.command”输出 Word",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. 双击“生成签证文档.command”输出 Word",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "4. 复核、签字、盖章后转 PDF/打印",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "4. 复核、签字、盖章后转 PDF/打印",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#F3F6FA",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5s3ql4v6",
+      "id": "7",
+      "name": "scope",
+      "bbox": [
+        46,
+        340,
+        702,
+        240
+      ],
+      "geometry": "rect",
+      "text": "本编辑包包含：\n• 派遣函版式\n• 邀请函版式\n• 行程单版式\n• 简历版式\n• 信息便签版式\n• Proforma 字段导览\n\n注意：PPTX 本身不是签证递交文件。",
+      "textPreview": "本编辑包包含： | • 派遣函版式 | • 邀请函版式 | • 行程单版式 | • 简历版式 | • 信息便签版式 | • Proforma 字段导览 |  | 注意：PPTX 本身不是签证递交文件。",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 9,
+        "lines": [
+          {
+            "index": 1,
+            "text": "本编辑包包含："
+          },
+          {
+            "index": 2,
+            "text": "• 派遣函版式"
+          },
+          {
+            "index": 3,
+            "text": "• 邀请函版式"
+          },
+          {
+            "index": 4,
+            "text": "• 行程单版式"
+          },
+          {
+            "index": 5,
+            "text": "• 简历版式"
+          },
+          {
+            "index": 6,
+            "text": "• 信息便签版式"
+          },
+          {
+            "index": 7,
+            "text": "• Proforma 字段导览"
+          },
+          {
+            "index": 8,
+            "text": ""
+          },
+          {
+            "index": 9,
+            "text": "注意：PPTX 本身不是签证递交文件。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "本编辑包包含：",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "本编辑包包含：",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "• 派遣函版式",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• 派遣函版式",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "• 邀请函版式",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• 邀请函版式",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "• 行程单版式",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• 行程单版式",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 5,
+          "text": "• 简历版式",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• 简历版式",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 6,
+          "text": "• 信息便签版式",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• 信息便签版式",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 7,
+          "text": "• Proforma 字段导览",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• Proforma 字段导览",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 9,
+          "text": "注意：PPTX 本身不是签证递交文件。",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "注意：PPTX 本身不是签证递交文件。",
+              "fontSize": 20,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#FFFFFF",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/21wrmtcz",
+      "id": "8",
+      "name": "source",
+      "bbox": [
+        46,
+        620,
+        702,
+        86
+      ],
+      "geometry": "rect",
+      "text": "官方核对来源\nhttps://www.eoibeijing.gov.in/page/business-visa-sports-visa/",
+      "textPreview": "官方核对来源 | https://www.eoibeijing.gov.in/page/business-visa-sports-visa/",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#222222",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "官方核对来源"
+          },
+          {
+            "index": 2,
+            "text": "https://www.eoibeijing.gov.in/page/business-visa-sports-visa/"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "官方核对来源",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "官方核对来源",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "https://www.eoibeijing.gov.in/page/business-visa-sports-visa/",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#222222",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "https://www.eoibeijing.gov.in/page/business-visa-sports-visa/",
+              "fontSize": 16,
+              "color": "#222222",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "fillColor": "#D9EAF7",
+      "lineColor": "#B4C6E7",
+      "lineWidth": 1
+    }
+  ],
+  "composeRuns": []
+}

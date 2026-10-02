@@ -1,0 +1,139 @@
+{"kind":"deck","id":"pr/r8dj5e","name":"Deck"}
+{"kind":"layout","layoutId":"418906cb-c7bf-4576-8ee6-de426adb7948","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"dcc4dca3-c573-4efb-86bd-bdbd4f89a2d3","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/dmx4ga","slide":1,"title":"印度商务签证｜可视化编辑包","textShapes":7}
+{"kind":"shape","id":"sh/rul8nedc","slide":1,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/svupgjux","slide":1,"name":"title","text":"印度商务签证｜可视化编辑包","textPreview":"印度商务签证｜可视化编辑包","textChars":13,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/tw3qpovi","slide":1,"name":"page","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/i5s7apcv","slide":1,"name":"subtitle","text":"这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。","textPreview":"这份 PPTX 用于所见即所得地整理与预览内容；Excel 仍是唯一数据源。","textChars":38,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/jq18judg","slide":1,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/4rapczul","slide":1,"name":"lead","text":"推荐流程\n1. 在 Excel 黄色单元格一次性填写\n2. 用 PPTX 快速预览文案结构\n3. 双击“生成签证文档.command”输出 Word\n4. 复核、签字、盖章后转 PDF/打印","textPreview":"推荐流程 | 1. 在 Excel 黄色单元格一次性填写 | 2. 用 PPTX 快速预览文案结构 | 3. 双击“生成签证文档.command”输出 Word | 4. 复核、签字、盖章后转 PDF/打印","textChars":95,"textLines":5,"bbox":[46,190,702,118]}
+{"kind":"textbox","id":"sh/5s3ql4v6","slide":1,"name":"scope","text":"本编辑包包含：\n• 派遣函版式\n• 邀请函版式\n• 行程单版式\n• 简历版式\n• 信息便签版式\n• Proforma 字段导览\n\n注意：PPTX 本身不是签证递交文件。","textPreview":"本编辑包包含： | • 派遣函版式 | • 邀请函版式 | • 行程单版式 | • 简历版式 | • 信息便签版式 | • Proforma 字段导览 |  | 注意：PPTX 本身不是签证递交文件。","textChars":84,"textLines":9,"bbox":[46,340,702,240]}
+{"kind":"textbox","id":"sh/21wrmtcz","slide":1,"name":"source","text":"官方核对来源\nhttps://www.eoibeijing.gov.in/page/business-visa-sports-visa/","textPreview":"官方核对来源 | https://www.eoibeijing.gov.in/page/business-visa-sports-visa/","textChars":68,"textLines":2,"bbox":[46,620,702,86]}
+{"kind":"notes","id":"nt/dmx4ga","slide":1,"text":""}
+{"kind":"slide","id":"sl/417bs5","slide":2,"title":"派遣函｜Dispatch Letter","textShapes":13}
+{"kind":"shape","id":"sh/0balo3yp","slide":2,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/za1kfyh4","slide":2,"name":"title","text":"派遣函｜Dispatch Letter","textPreview":"派遣函｜Dispatch Letter","textChars":19,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/y9s3mtgj","slide":2,"name":"page","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/9g32l8z6","slide":2,"name":"subtitle","text":"公司抬头、签字和公章应在最终 Word/打印件中完成。","textPreview":"公司抬头、签字和公章应在最终 Word/打印件中完成。","textChars":27,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/8falsnyl","slide":2,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/ne1kjih0","slide":2,"name":"label-Date-182","text":"Date","textPreview":"Date","textChars":4,"textLines":1,"bbox":[46,182,190,42]}
+{"kind":"textbox","id":"sh/mds3qdgf","slide":2,"name":"input-Date-182","text":"<<dispatch_date>>","textPreview":"<<dispatch_date>>","textChars":17,"textLines":1,"bbox":[236,182,512,42]}
+{"kind":"textbox","id":"sh/pkz29oz2","slide":2,"name":"label-To-230","text":"To","textPreview":"To","textChars":2,"textLines":1,"bbox":[46,230,190,42]}
+{"kind":"textbox","id":"sh/ojq1gjyh","slide":2,"name":"input-To-230","text":"The Embassy of India, Beijing","textPreview":"The Embassy of India, Beijing","textChars":29,"textLines":1,"bbox":[236,230,512,42]}
+{"kind":"textbox","id":"sh/6d8zyd4n","slide":2,"name":"body","text":"Subject: Dispatch Letter in Support of Business Visa Application\n\nThis is to certify that <<applicant_name>>, passport No. <<passport_no>>, is employed by <<cn_company_name>> as <<job_title>> in <<department>>.\n\nThe applicant will visit <<in_company_name>> in India from <<trip_start>> to <<trip_end>> for <<business_purpose>>. All expenses will be borne by <<cost_bearer>>. The applicant will return to China before the authorized stay expires.","textPreview":"Subject: Dispatch Letter in Support of Business Visa Application |  | This is to certify that <<applicant_name>>, passport No. <<passport...","textChars":445,"textLines":5,"bbox":[46,294,702,430]}
+{"kind":"textbox","id":"sh/reh0ri58","slide":2,"name":"label-Authorized signatory-760","text":"Authorized signatory","textPreview":"Authorized signatory","textChars":20,"textLines":1,"bbox":[46,760,190,62]}
+{"kind":"textbox","id":"sh/sfqh0nmt","slide":2,"name":"input-Authorized signatory-760","text":"<<signatory_name / title / email / phone>>","textPreview":"<<signatory_name / title / email / phone>>","textChars":42,"textLines":1,"bbox":[236,760,512,62]}
+{"kind":"textbox","id":"sh/tgzit83e","slide":2,"name":"label-Signature & seal-840","text":"Signature & seal","textPreview":"Signature & seal","textChars":16,"textLines":1,"bbox":[46,840,190,94]}
+{"kind":"textbox","id":"sh/eh8z2d4z","slide":2,"name":"input-Signature & seal-840","text":"（留白，最终打印后签字盖章）","textPreview":"（留白，最终打印后签字盖章）","textChars":14,"textLines":1,"bbox":[236,840,512,94]}
+{"kind":"notes","id":"nt/417bs5","slide":2,"text":""}
+{"kind":"slide","id":"sl/eti9je","slide":3,"title":"邀请函｜Invitation Letter","textShapes":15}
+{"kind":"shape","id":"sh/kf6hgby5","slide":3,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/jex076hk","slide":3,"name":"title","text":"邀请函｜Invitation Letter","textPreview":"邀请函｜Invitation Letter","textChars":21,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/ydoze1gz","slide":3,"name":"page","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/xsfi5wze","slide":3,"name":"subtitle","text":"邀请方信息、访问日期和费用承担方必须与派遣函一致。","textPreview":"邀请方信息、访问日期和费用承担方必须与派遣函一致。","textChars":25,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/wrmhcryt","slide":3,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/bqdg3mho","slide":3,"name":"label-Indian company-182","text":"Indian company","textPreview":"Indian company","textChars":14,"textLines":1,"bbox":[46,182,190,42]}
+{"kind":"textbox","id":"sh/ap4zahg3","slide":3,"name":"input-Indian company-182","text":"<<in_company_name>>","textPreview":"<<in_company_name>>","textChars":19,"textLines":1,"bbox":[236,182,512,42]}
+{"kind":"textbox","id":"sh/9ovy1czi","slide":3,"name":"label-Address-230","text":"Address","textPreview":"Address","textChars":7,"textLines":1,"bbox":[46,230,190,62]}
+{"kind":"textbox","id":"sh/onmh87yx","slide":3,"name":"input-Address-230","text":"<<in_company_address>>","textPreview":"<<in_company_address>>","textChars":22,"textLines":1,"bbox":[236,230,512,62]}
+{"kind":"textbox","id":"sh/qdkbahgv","slide":3,"name":"label-Inviter-310","text":"Inviter","textPreview":"Inviter","textChars":7,"textLines":1,"bbox":[46,310,190,54]}
+{"kind":"textbox","id":"sh/bedcjmhg","slide":3,"name":"input-Inviter-310","text":"<<inviter_name / title / department>>","textPreview":"<<inviter_name / title / department>>","textChars":37,"textLines":1,"bbox":[236,310,512,54]}
+{"kind":"textbox","id":"sh/czmtcry1","slide":3,"name":"label-Contact-382","text":"Contact","textPreview":"Contact","textChars":7,"textLines":1,"bbox":[46,382,190,54]}
+{"kind":"textbox","id":"sh/d0vulczm","slide":3,"name":"input-Contact-382","text":"<<inviter_mobile / inviter_email>>","textPreview":"<<inviter_mobile / inviter_email>>","textChars":34,"textLines":1,"bbox":[236,382,512,54]}
+{"kind":"textbox","id":"sh/29kb6xgz","slide":3,"name":"invite-body","text":"We hereby invite <<applicant_name>>, passport No. <<passport_no>>, <<job_title>> of <<cn_company_name>>, to visit our company from <<trip_start>> to <<trip_end>> for <<business_purpose>>.\n\nAll expenses will be borne by <<cost_bearer>>. We respectfully request that the appropriate Business Visa be granted.","textPreview":"We hereby invite <<applicant_name>>, passport No. <<passport_no>>, <<job_title>> of <<cn_company_name>>, to visit our company from <<trip...","textChars":306,"textLines":3,"bbox":[46,470,702,310]}
+{"kind":"textbox","id":"sh/3atcf2hk","slide":3,"name":"label-Signature / seal-820","text":"Signature / seal","textPreview":"Signature / seal","textChars":16,"textLines":1,"bbox":[46,820,190,92]}
+{"kind":"textbox","id":"sh/ob2t87yp","slide":3,"name":"input-Signature / seal-820","text":"（由印度邀请方签署）","textPreview":"（由印度邀请方签署）","textChars":10,"textLines":1,"bbox":[236,820,512,92]}
+{"kind":"notes","id":"nt/eti9je","slide":3,"text":""}
+{"kind":"slide","id":"sl/r54cx9","slide":4,"title":"行程单｜Business Itinerary","textShapes":53}
+{"kind":"shape","id":"sh/z61g3el0","slide":4,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/kruhwjml","slide":4,"name":"title","text":"行程单｜Business Itinerary","textPreview":"行程单｜Business Itinerary","textChars":22,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/ls3y5o36","slide":4,"name":"page","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/mtczytkr","slide":4,"name":"subtitle","text":"每行填写一段连续行程；不要只写 “Meeting”。","textPreview":"每行填写一段连续行程；不要只写 “Meeting”。","textChars":26,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/7ul07ylc","slide":4,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/8vuh032x","slide":4,"name":"h0","text":"Start","textPreview":"Start","textChars":5,"textLines":1,"bbox":[46,182,92,54]}
+{"kind":"textbox","id":"sh/tw3i9o3i","slide":4,"name":"h1","text":"End","textPreview":"End","textChars":3,"textLines":1,"bbox":[138,182,92,54]}
+{"kind":"textbox","id":"sh/uxcz2tkn","slide":4,"name":"h2","text":"City","textPreview":"City","textChars":4,"textLines":1,"bbox":[230,182,96,54]}
+{"kind":"textbox","id":"sh/vyl0byl8","slide":4,"name":"h3","text":"Company / place","textPreview":"Company / place","textChars":15,"textLines":1,"bbox":[326,182,164,54]}
+{"kind":"textbox","id":"sh/zyl83exk","slide":4,"name":"h4","text":"Activities","textPreview":"Activities","textChars":10,"textLines":1,"bbox":[490,182,130,54]}
+{"kind":"textbox","id":"sh/yxc7u9wf","slide":4,"name":"h5","text":"Hotel / flight","textPreview":"Hotel / flight","textChars":14,"textLines":1,"bbox":[620,182,128,54]}
+{"kind":"textbox","id":"sh/l0nq5ovq","slide":4,"name":"r0c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,236,92,92]}
+{"kind":"textbox","id":"sh/0zupwje5","slide":4,"name":"r0c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,236,92,92]}
+{"kind":"textbox","id":"sh/bulozexo","slide":4,"name":"r0c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,236,96,92]}
+{"kind":"textbox","id":"sh/qtc7q9w3","slide":4,"name":"r0c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,236,164,92]}
+{"kind":"textbox","id":"sh/dw361ofu","slide":4,"name":"r0c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,236,130,92]}
+{"kind":"textbox","id":"sh/cvupsje9","slide":4,"name":"r0c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,236,128,92]}
+{"kind":"textbox","id":"sh/vq58byds","slide":4,"name":"r1c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,328,92,92]}
+{"kind":"textbox","id":"sh/apw72tw7","slide":4,"name":"r1c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,328,92,92]}
+{"kind":"textbox","id":"sh/6xkjq1kr","slide":4,"name":"r1c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,328,96,92]}
+{"kind":"textbox","id":"sh/rytkj61c","slide":4,"name":"r1c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,328,164,92]}
+{"kind":"textbox","id":"sh/sz21sb2x","slide":4,"name":"r1c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,328,130,92]}
+{"kind":"textbox","id":"sh/d0b2lwji","slide":4,"name":"r1c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,328,128,92]}
+{"kind":"textbox","id":"sh/e1kju1k3","slide":4,"name":"r2c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,420,92,92]}
+{"kind":"textbox","id":"sh/fmtkn61o","slide":4,"name":"r2c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,420,92,92]}
+{"kind":"textbox","id":"sh/0n21wb2t","slide":4,"name":"r2c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,420,96,92]}
+{"kind":"textbox","id":"sh/1ov2pgje","slide":4,"name":"r2c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,420,164,92]}
+{"kind":"textbox","id":"sh/u50jihkj","slide":4,"name":"r2c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,420,130,92]}
+{"kind":"textbox","id":"sh/v690bml4","slide":4,"name":"r2c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,420,128,92]}
+{"kind":"textbox","id":"sh/xkfmhk3m","slide":4,"name":"r3c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,512,92,92]}
+{"kind":"textbox","id":"sh/cj6lofm1","slide":4,"name":"r3c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,512,92,92]}
+{"kind":"textbox","id":"sh/bix4falw","slide":4,"name":"r3c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,512,96,92]}
+{"kind":"textbox","id":"sh/aho3m54b","slide":4,"name":"r3c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,512,164,92]}
+{"kind":"textbox","id":"sh/lozmlk3y","slide":4,"name":"r3c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,512,130,92]}
+{"kind":"textbox","id":"sh/knq5szmd","slide":4,"name":"r3c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,512,128,92]}
+{"kind":"textbox","id":"sh/zmx4juls","slide":4,"name":"r4c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,604,92,92]}
+{"kind":"textbox","id":"sh/ylonqp47","slide":4,"name":"r4c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,604,92,92]}
+{"kind":"textbox","id":"sh/1svmp0ne","slide":4,"name":"r4c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,604,96,92]}
+{"kind":"textbox","id":"sh/0rmlgvm9","slide":4,"name":"r4c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,604,164,92]}
+{"kind":"textbox","id":"sh/47upo36h","slide":4,"name":"r4c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,604,130,92]}
+{"kind":"textbox","id":"sh/583qx8n2","slide":4,"name":"r4c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,604,128,92]}
+{"kind":"textbox","id":"sh/ils7mtor","slide":4,"name":"r5c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,696,92,92]}
+{"kind":"textbox","id":"sh/j61ovy5w","slide":4,"name":"r5c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,696,92,92]}
+{"kind":"textbox","id":"sh/wjapkj6l","slide":4,"name":"r5c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,696,96,92]}
+{"kind":"textbox","id":"sh/hkj6ton6","slide":4,"name":"r5c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,696,164,92]}
+{"kind":"textbox","id":"sh/uhs7itof","slide":4,"name":"r5c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,696,130,92]}
+{"kind":"textbox","id":"sh/vi1ory50","slide":4,"name":"r5c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,696,128,92]}
+{"kind":"textbox","id":"sh/8fapgj69","slide":4,"name":"r6c0","text":"<<Start>>","textPreview":"<<Start>>","textChars":9,"textLines":1,"bbox":[46,788,92,92]}
+{"kind":"textbox","id":"sh/9gj6ponu","slide":4,"name":"r6c1","text":"<<End>>","textPreview":"<<End>>","textChars":7,"textLines":1,"bbox":[138,788,92,92]}
+{"kind":"textbox","id":"sh/bah8ze9w","slide":4,"name":"r6c2","text":"<<City>>","textPreview":"<<City>>","textChars":8,"textLines":1,"bbox":[230,788,96,92]}
+{"kind":"textbox","id":"sh/a987q98b","slide":4,"name":"r6c3","text":"<<Company / place>>","textPreview":"<<Company / place>>","textChars":19,"textLines":1,"bbox":[326,788,164,92]}
+{"kind":"textbox","id":"sh/xczq1or2","slide":4,"name":"r6c4","text":"<<Activities>>","textPreview":"<<Activities>>","textChars":14,"textLines":1,"bbox":[490,788,130,92]}
+{"kind":"textbox","id":"sh/cbqpsjqh","slide":4,"name":"r6c5","text":"<<Hotel / flight>>","textPreview":"<<Hotel / flight>>","textChars":18,"textLines":1,"bbox":[620,788,128,92]}
+{"kind":"textbox","id":"sh/zeh83e9s","slide":4,"name":"sign","text":"Applicant's signature: ____________________    Date: ____________________","textPreview":"Applicant's signature: ____________________    Date: ____________________","textChars":73,"textLines":1,"bbox":[46,916,702,92]}
+{"kind":"notes","id":"nt/r54cx9","slide":4,"text":""}
+{"kind":"slide","id":"sl/d3u3md","slide":5,"title":"英文简历｜Resume","textShapes":14}
+{"kind":"shape","id":"sh/idw729sj","slide":5,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/5gnqx4bu","slide":5,"name":"title","text":"英文简历｜Resume","textPreview":"英文简历｜Resume","textChars":11,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/4fe94zap","slide":5,"name":"page","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/r258zet0","slide":5,"name":"subtitle","text":"按时间倒序填写全部教育和工作经历；空档期需可解释。","textPreview":"按时间倒序填写全部教育和工作经历；空档期需可解释。","textChars":25,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/61wr69sf","slide":5,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/t47q1or6","slide":5,"name":"label-Applicant-182","text":"Applicant","textPreview":"Applicant","textChars":9,"textLines":1,"bbox":[46,182,190,74]}
+{"kind":"textbox","id":"sh/s3y98jal","slide":5,"name":"input-Applicant-182","text":"<<name / DOB / phone / email / address>>","textPreview":"<<name / DOB / phone / email / address>>","textChars":40,"textLines":1,"bbox":[236,182,512,74]}
+{"kind":"textbox","id":"sh/76l8natw","slide":5,"name":"edu-title","text":"EDUCATION","textPreview":"EDUCATION","textChars":9,"textLines":1,"bbox":[46,280,702,42]}
+{"kind":"textbox","id":"sh/m5c7upsb","slide":5,"name":"edu0","text":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textPreview":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textChars":57,"textLines":1,"bbox":[46,322,702,92]}
+{"kind":"textbox","id":"sh/sfy9kfq9","slide":5,"name":"edu1","text":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textPreview":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textChars":57,"textLines":1,"bbox":[46,414,702,92]}
+{"kind":"textbox","id":"sh/tg7atk7u","slide":5,"name":"edu2","text":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textPreview":"<<YYYY.MM-YYYY.MM | University | Degree / Major | Notes>>","textChars":57,"textLines":1,"bbox":[46,506,702,92]}
+{"kind":"textbox","id":"sh/6tgri58j","slide":5,"name":"work-title","text":"PROFESSIONAL EXPERIENCE","textPreview":"PROFESSIONAL EXPERIENCE","textChars":23,"textLines":1,"bbox":[46,620,702,42]}
+{"kind":"textbox","id":"sh/7epsrapo","slide":5,"name":"work0","text":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textPreview":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textChars":59,"textLines":1,"bbox":[46,662,702,106]}
+{"kind":"textbox","id":"sh/gjytofql","slide":5,"name":"work1","text":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textPreview":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textChars":59,"textLines":1,"bbox":[46,768,702,106]}
+{"kind":"textbox","id":"sh/hk7axk76","slide":5,"name":"work2","text":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textPreview":"<<YYYY.MM-YYYY.MM | Company | Position | Responsibilities>>","textChars":59,"textLines":1,"bbox":[46,874,702,106]}
+{"kind":"notes","id":"nt/d3u3md","slide":5,"text":""}
+{"kind":"slide","id":"sl/uimcmq","slide":6,"title":"信息便签与 Proforma｜最后复核","textShapes":16}
+{"kind":"shape","id":"sh/exori9sz","slide":6,"name":"top-band","bbox":[0,0,794,86]}
+{"kind":"textbox","id":"sh/10fatobq","slide":6,"name":"title","text":"信息便签与 Proforma｜最后复核","textPreview":"信息便签与 Proforma｜最后复核","textChars":19,"textLines":1,"bbox":[46,17,650,42]}
+{"kind":"textbox","id":"sh/0z6tkja5","slide":6,"name":"page","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[710,22,42,34]}
+{"kind":"textbox","id":"sh/ruxsnet8","slide":6,"name":"subtitle","text":"所有不适用字段明确写 N/A，不留空。","textPreview":"所有不适用字段明确写 N/A，不留空。","textChars":19,"textLines":1,"bbox":[46,104,702,48]}
+{"kind":"textbox","id":"sh/qt4re9s3","slide":6,"name":"footer","text":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textPreview":"编辑预览版｜黄色文本框可直接改写｜正式递交请使用生成的 Word/PDF","textChars":36,"textLines":1,"bbox":[46,1080,702,22]}
+{"kind":"textbox","id":"sh/dwfapobe","slide":6,"name":"label-Name-182","text":"Name","textPreview":"Name","textChars":4,"textLines":1,"bbox":[46,182,190,42]}
+{"kind":"textbox","id":"sh/cv69gjat","slide":6,"name":"input-Name-182","text":"<<applicant_name>>","textPreview":"<<applicant_name>>","textChars":18,"textLines":1,"bbox":[236,182,512,42]}
+{"kind":"textbox","id":"sh/bqhszyts","slide":6,"name":"label-Indian company-230","text":"Indian company","textPreview":"Indian company","textChars":14,"textLines":1,"bbox":[46,230,190,42]}
+{"kind":"textbox","id":"sh/ap8bqts7","slide":6,"name":"input-Indian company-230","text":"<<in_company_name>>","textPreview":"<<in_company_name>>","textChars":19,"textLines":1,"bbox":[236,230,512,42]}
+{"kind":"textbox","id":"sh/grmtkrqp","slide":6,"name":"label-Chinese company-278","text":"Chinese company","textPreview":"Chinese company","textChars":15,"textLines":1,"bbox":[46,278,190,42]}
+{"kind":"textbox","id":"sh/hsvadw7a","slide":6,"name":"input-Chinese company-278","text":"<<cn_company_name>>","textPreview":"<<cn_company_name>>","textChars":19,"textLines":1,"bbox":[236,278,512,42]}
+{"kind":"textbox","id":"sh/up4bih8j","slide":6,"name":"label-Telephone-326","text":"Telephone","textPreview":"Telephone","textChars":9,"textLines":1,"bbox":[46,326,190,42]}
+{"kind":"textbox","id":"sh/fqdsbmp4","slide":6,"name":"input-Telephone-326","text":"<<mobile>>","textPreview":"<<mobile>>","textChars":10,"textLines":1,"bbox":[236,326,512,42]}
+{"kind":"textbox","id":"sh/sn2tgrqt","slide":6,"name":"label-Email-374","text":"Email","textPreview":"Email","textChars":5,"textLines":1,"bbox":[46,374,190,42]}
+{"kind":"textbox","id":"sh/toba9c7e","slide":6,"name":"input-Email-374","text":"<<email>>","textPreview":"<<email>>","textChars":9,"textLines":1,"bbox":[236,374,512,42]}
+{"kind":"textbox","id":"sh/6lkbeh8n","slide":6,"name":"proforma-title","text":"PROFORMA 重点字段","textPreview":"PROFORMA 重点字段","textChars":13,"textLines":1,"bbox":[46,460,702,42]}
+{"kind":"textbox","id":"sh/7mts7m98","slide":6,"name":"proforma-list","text":"• 申请人的专业技能与工作年限\n• 是否曾在其他国家工作；如否，其余三项填 N/A\n• 当前雇主的成立年份、所有制、股东、三年营业额\n• 上市状态、业务领域、公司简介、在印度的实体/投资\n• 印度合作公司的成立年份、所有制和外资受益所有人\n• 授权签字人姓名、职位、手机、座机、邮箱\n• 仅在指定区域签字盖章","textPreview":"• 申请人的专业技能与工作年限 | • 是否曾在其他国家工作；如否，其余三项填 N/A | • 当前雇主的成立年份、所有制、股东、三年营业额 | • 上市状态、业务领域、公司简介、在印度的实体/投资 | • 印度合作公司的成立年份、所有制和外资受益所有人 | • 授权签字人...","textChars":154,"textLines":7,"bbox":[46,502,702,430]}
+{"kind":"notes","id":"nt/uimcmq","slide":6,"text":""}

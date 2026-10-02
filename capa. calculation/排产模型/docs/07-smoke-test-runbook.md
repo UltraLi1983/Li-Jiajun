@@ -1,0 +1,196 @@
+# 烟测运行说明
+
+本文档记录正式版当前阶段的最小烟测方法。当前正式版已经有 `formal.html` UI，因此烟测同时覆盖 domain model、sample data、planning gate、计算核心兼容性，以及正式版页面和编译产物的最小可访问性。
+
+## 1. 进入项目目录
+
+必须先进入项目根目录，否则 `npm run check` 会去当前目录寻找 `package.json`。
+
+```bash
+cd "/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型"
+```
+
+确认当前目录正确：
+
+```bash
+pwd
+ls package.json
+```
+
+如果 `ls package.json` 能看到文件，再继续。
+
+## 2. TypeScript 编译烟测
+
+```bash
+npm run check
+```
+
+如果出现：
+
+```text
+tsc: command not found
+```
+
+说明项目依赖里的 TypeScript 编译器还没有可用，需要安装依赖：
+
+```bash
+npm install
+npm run check
+```
+
+## 3. 自动烟测
+
+当前已经有最小自动烟测，直接运行：
+
+```bash
+npm test
+```
+
+它会先执行 `npm run build`，再运行 `node --test`。
+
+当前覆盖：
+
+- `formal.html` 可以通过临时 HTTP server 返回 200。
+- `dist/ui/formal-app.js` 可以通过临时 HTTP server 返回 200。
+- `dist/domain/sample-data.js` 可以通过临时 HTTP server 返回 200。
+- 正式版页面和编译产物包含关键文本：Product Routing Setup、Station assignment configuration、Parameter check / capacity preflight、Product A Housing、Future Machining 03、Customer approval pending。
+- `sampleScenario` 可以被导入。
+- Product A 存在 routing 和 operation-station assignment。
+- `assign-a-op10-op10`：primary，可排产。
+- `assign-a-op10-op10b`：parallel，可排产。
+- `assign-a-op10-op10c`：backup，但客户批准 pending，不可排产。
+- Product 缺少 route 时禁止进入 capacity analysis。
+- Operation 没有 planning-allowed station assignment 时禁止进入 capacity analysis。
+- 可排产 assignment 缺少 operation-station parameter 时禁止进入 capacity analysis。
+- `calculateCapacityScenario(sampleScenario)` 仍可运行，新增字段没有破坏旧计算核心。
+- weekly demand + standard CT + available minutes 可以计算 `requiredCapacityShare`。
+- 可以读取项目阶段的 `requestedCapacityShare` profile。
+- required share 超过 requested share 时生成 capacity risk。
+- required share 未超过 requested share 时保持 ok。
+- batch HU policy 可以识别完整 HU 倍数、非整倍数例外审批、低于最小 HU。
+- backup approval gate pending 时保持 blocker，approved 后自动 release。
+- actual capacity share 可以从实绩占用分钟回算，并与 requested share 做风险比较。
+- planned activity rule 可以展开 approved recurring break / maintenance，并过滤未批准 rule。
+- demand engine 可以处理 weekly demand、annual demand 折算、manual scenario 和短周期订单兜底。
+- production segment 可以计算 observed CT、expected qty 和 hidden loss。
+- setup matrix 可以按产品序列生成 setup event。
+- calendar SA 可以区分 planned SA 与 real SA。
+- timeline engine 可以识别重叠、gap，并显式补 unscheduled / not planned。
+- capacity analysis preflight 可以汇总 readiness、capacity result、capacity share risk、batch HU check，并输出 blockers / warnings。
+- routing configuration view 可以把 Product / Routing / Station Assignment / Station / Parameter / Gate 状态整理成正式 UI 可直接渲染的结构。
+
+## 4. 当前通过标准
+
+运行结果应类似：
+
+```text
+pass 66
+fail 0
+```
+
+当前应看到：
+
+```text
+tests 66
+suites 20
+fail 0
+```
+
+## 5. 人工 UI 烟测
+
+正式版访问：
+
+```bash
+cd "/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型"
+npm run build
+npm run serve
+```
+
+打开：
+
+```text
+http://127.0.0.1:8785/formal.html
+```
+
+检查：
+
+- 首屏标题为 `Product Routing Setup`。
+- Product / Route 下拉框有数据，不应为空。
+- `工艺路线与工序清单` 下可以看到 `Machining` 和 `Assembly`。
+- `Machining` 下可以看到 primary、parallel、backup，其中 backup 包含 `Customer approval pending`。
+- `工站分配专项页` 中 `Future Machining 03` 为 blocking。
+- `Parameter Check / Capacity Preflight` 中 Product A ready，但保留 backup blocked 和 HU exception approval warning。
+- 点击 `Edit mock data` 后，可以模拟编辑 Product 和 Operation；点击 `Reset sample` 后恢复样例数据。
+
+
+### 5.1 标准 SA 与 R&R 人工烟测
+
+1. 点击第二阶段“标准 SA 设定”，确认当前工站已有生产、休息、换型等计划段。
+2. 在计划时间轴新增或修改一个时间段，确认开始日期、开始时间、结束日期、结束时间可以独立修改，持续分钟由系统计算。
+3. 点击第三阶段“现场 R&R 跟踪”，确认页面同时出现“计划 / 实际时间轴”，计划轨道与实际轨道使用同一组日期和时钟刻度。
+4. 在“实际时间段”中新增一段生产：填写起止日期/时间、OK 数量、NOK 数量、每循环件数和证据来源。保存后确认实际轨道出现绿色生产段，下一个新时间段的起点默认等于上一段终点，记录表显示实际时长与 OK/NOK，且计划时间轴没有被改写。
+5. 新增一段休息、换型或异常段，确认颜色与类型对应：生产绿色、休息黄色、换型蓝色、异常红色。尝试与已有段重叠，确认保存被阻止并出现中文提示。
+6. 编辑并删除一条实际记录，确认时间轴、记录表和汇总同步更新。删除后，空白时间显示为“待补录”，不自动被当作停机。
+7. 在实际轨道中补齐整个标准观察窗口，确认汇总显示实际时间开动率；未补齐时应显示“待补录”。
+8. 切换到“节拍检查”，输入少于目标样本数的节拍，确认不能作为已校验标准节拍。输入达到目标样本数后，填写可接受的慢速偏差：空白/0%表示全部超额时间计入时间开动率损失，允许范围最大为 5%。
+9. 回到时间窗口模式，确认节拍损失显示为“推断时间损失”和“性能损失”，显式异常停机不会被重复计入。
+10. 构造一个快于已校验标准节拍的生产段，确认页面显示“需复核节拍/数量”，并提示复核 OK/NOK、每循环件数和真实节拍，不生成负的时间损失。
+11. 点击第四阶段“校准与产能分析”，确认结果只消费已保存的实际记录；没有实际记录时不能把输入中的未保存草稿当成正式实绩。
+
+### 5.2 当前人工烟测边界
+
+- R&R 数据目前只保存在浏览器内存中，刷新页面后会清空；这是当前版本已知限制。
+- 计划 / 实际双轨、节拍损失归因及参数建议草稿已接入；本地确认不改计划，独立发布 CT/P/Q 后只在当前会话、到达生效日时参与计划份额与预检。两者均非正式审批，尚未进入跨工站正式产能计算。Most likely 不属于本轮 Best/Actual 核心验收；持久化尚未完成。
+- 人工疲劳随班次变化的节拍模型、MES/APS 自动采集和自动排产不在本轮烟测范围内。
+
+### 5.3 路线主数据门禁
+
+1. 选择 Product A，确认路线卡片显示来源和生效期间，OP10 / OP20 顺序与路线清单一致。
+2. 页面本身没有“发布路线”编辑按钮；草稿路线阻止进入正式预检由自动测试验证。
+3. 本地模拟编辑只用于验证，不能替代上游正式工艺路线。
+
+### 5.4 计划 / 实际时间对账
+
+1. Product A 选择 OP10，先在第二阶段确认标准 SA 时间段，再进入第三阶段添加实际段。
+2. 只录入首段生产后，进入第四阶段“校准与产能分析”：对账表应将剩余窗口显示为“待补录”，时间账状态为“待核对”。
+3. 把计划休息时间录成更长的实际休息，确认边界被拆开，差异段显示“状态不同”。
+4. 录入设备故障段，确认“显式异常分钟”只统计该段；录满观察窗口后，待补录分钟应变成 0。
+5. 当前对账是只读草稿，不能因为时间账完整就视作校准参数已批准。异步保存与正式三视角产能仍在后续任务中。
+
+### 5.5 R3-2 异常证据结构（已通过人工烟测）
+
+1. 在第三阶段新增一段“设备故障”等异常时间段，填写证据来源并按事实勾选“估算记录”。在第四阶段“异常证据与推断损失”表中确认类别、起止时钟、分钟、来源、估算标记和原始事件 ID 与输入一致。
+2. 再新增一个生产段，使它比同条件最快有效生产段更慢。确认多余时间单列为“推断损失 / 待归因”，引用该生产段 ID，不与显式异常分钟重复。
+3. 清空异常段的证据来源，确认第四阶段显示非阻断的“未填写来源”；实际时间未录满时显示“仍有待补录时间”并停止完整窗口对比。推断损失原因待查时，应仍可计算 Actual SA，不要求录入 root cause。
+4. 编辑或删除异常段后，确认第四阶段证据表跟着变化；标准 SA 时间轴和基准数值不变。当前证据仍只保存在页面会话内，刷新后清空。
+
+### 5.6 R3-3 参数建议（待人工烟测）
+
+1. 在第四阶段查看“参数更新建议”：休息超时、维保、计划停机和换型差异应显示在“Actual SA 待纠偏 / 诊断”区域，只列当前窗口标准分钟、实际分钟、差异、证据引用和处置边界，不应出现生效日期、本地确认或发布动作。换型总分钟应标为诊断用途，未来规则按单次切换方向定义。
+2. 有足量节拍样本时显示 CT 和性能率建议；有生产数量时显示良率建议。只有 CT/P/Q 行应提供生效日期、本地确认和“发布 CT/P/Q 到计划参数”流程。保持“推断损失 / 原因待查”但补齐全部时间和数量，确认 Best/Actual SA 仍可计算，本地参数建议不因未知根因被禁用；标准 SA、原 CT/P/Q 不自动变化。若时间待补录或节拍/数量错误，本地确认仍不可用。
+3. 在观察窗口内补齐实际记录并消除结构性错误。点“本地确认”后状态应为“已确认 · 未发布”，按钮变为“取消确认”，当前参数版本、计划良品能力和预检不变。点“取消确认”退回草稿；若 CT 变化且 P 已确认，取消 CT 时 P 也应退回。
+4. 对 CT/P/Q 选择同一生效日期并本地确认，再点“发布 CT/P/Q 到计划参数”。最终确认框应列出 CT/P/Q 建议值、生效日期及影响范围；点取消不生成版本，点确认才发布。
+5. 当天生效应生成新版本、保留旧版本、更新当前 CT/P/Q 与计划良品能力；上方原建议行标为“已发布 · 已生效”并显示版本号，下方版本清单可追溯。未来日期应标为“已发布 · 待生效”，当前结果不提前变化。已发布行不可取消确认；刷新或重置样例后本地版本消失。
+6. 修改 CT 时不确认 P，或让 CT/P/Q 使用不同生效日期，发布应被阻止；确认按新 CT 复核后的 P 后再发布。计划 SA 时间轴及其百分比应保持不变；动作差异不能通过此按钮发布为标准时间参数。
+7. 修改原始实际事件或节拍样本，未发布的旧确认应失效并回到草稿；已发布快照保留为历史行，新建议另行显示。无长期重复规则更新、正式审批或三视角产能的承诺。
+8. 将计划 10 分钟休息录成实际 20 分钟休息并补齐窗口，确认额外 10 分钟只通过 Actual SA / 时间损失减少产出能力，不再同时形成性能率或良率二次扣减。
+
+### 5.7 临时 R&R 验证样本与 Best / Actual 对比（待人工烟测）
+
+1. 选择 Product A、OP10、OP10 工站，进入第三阶段，点“加载 R&R 验证样本”。若该工站已有自定义计划或实际记录，先确认替换提示。顶部应显示“验证样本 · 非现场记录”。
+2. 标准与实际轨道应覆盖从当天 08:00 到次日 08:00 的完整 24 小时；已记录设备故障 30 分钟，另有生产段内约 4 分钟推断损失。原因待查应作为提示，而不阻止 Actual SA。
+3. 进入第四阶段“Best case 与实跑对比”：标准生产 1,290 分钟、实录生产 1,230 分钟；Best SA 约 89.6%，Actual SA 约 85.1%（已扣 4 分钟推断时间）。Best case 应先显示标准 CT 算出的理论总产出 3,225 件，并按 Planned Q 拆出理论 OK / NOK；Actual 应显示实跑总产出 3,065 件、良品 3,035 件、Actual CT 和 Actual Q。差额按时间、性能率和 NOK 拆分：按当前未设置节拍容差的规则，时间损失折算 160 件（其中推断 10 件）、性能率 0 件、不良 30 件，不重复扣减。
+4. 删除最后一段实际记录，完整窗口对比应停止显示数字并提示补齐；重新加载样本恢复。刷新页面后样本会消失，需要再次手动加载。
+5. 样本是开发验证数据，不是真实 R&R。正式启用前按工程计划移除加载入口与样本模块；本预览不代表 R3-4 的正式跨工站产能结果。
+
+### 5.8 R3-4 同窗跨工站本地试算（待人工烟测）
+
+1. 在第四阶段查看“同窗工序能力”：OP10、OP10B 的计划良品能力应各自按 70% / 30% 占用上限计算，OP20 默认 100%；工序行将同工序工站相加。份额不是自动分单比例。
+2. 不勾选“各工序件数均可按 1:1 换算为成品件数”时，路线级成品瓶颈及需求余量必须留空；勾选后才显示。输入“本窗口需求件数”后显示正负能力余量，不能自动把周需求当成窗口需求。
+3. 只加载 OP10 的 R&R 验证样本：其他工站实跑不完整，路线 Actual 应留空，工站行说明缺少的记录。补齐同窗所有可排产工站的实际轨道后，才显示路线实跑等效成品上限。
+4. 人为造成计划空档、实际空档或节拍/数量错误，受影响工站及路线结果应留空并给出待补条件；未知 root cause 不应独自阻止结果。刷新页面后本地窗口需求和 1:1 确认会消失。
+5. 这是最多 48 小时的本地观察窗口试算，不是周/月投影或正式排产结果；若工序 WIP 件数并非 1:1，当前不可勾选换算确认。
+
+## 6. 推荐下一步
+
+先完成 R3-3 和 R3-4 同窗本地试算的浏览器烟测，再继续工序 WIP 件数换算、长周期投影与正式产能，以及 R3-5 可恢复证据包。

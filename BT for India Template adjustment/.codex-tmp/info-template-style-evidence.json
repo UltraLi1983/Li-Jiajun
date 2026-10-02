@@ -1,0 +1,12 @@
+{
+  "input": "/Users/lijiajun/Documents/GitHub/python-document/BT for India Template adjustment/\u4fe1\u606f\u4fbf\u7b7e\u6761.docx",
+  "fonts_by_char_count": {},
+  "direct_run_formatting_runs": 0,
+  "direct_paragraph_formatting_paragraphs": 0,
+  "heading_like_paragraphs_not_heading_style": [],
+  "examples": {},
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

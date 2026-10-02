@@ -1,0 +1,39 @@
+meta:
+  brand: "供应链课程"
+  brand_en: "Supply Chain · VDA 6.8"
+  event: "2026 · 企业公开课"
+  title: "供应链管理"
+  title_emphasis: "体系课程"
+  subtitle: |
+    从概念到体系，从审核到降本
+    四层递进，覆盖企业供应链能力提升全路径
+  hero_image: "assets/讲师照片.png"
+
+info:
+  - label: "Duration"
+    value: "1 – 5 天\n基础包 3天 · 落地包 5天\n按企业需求灵活组合"
+  - label: "Format"
+    value: "公开课 · 企业内训\n培训 + 咨询混合模式"
+  - label: "Audience"
+    value: "零部件企业 · 主机厂\n采购 · 物流 · 中高层管理者"
+
+levels:
+  - num: "Level 01"
+    name: "供应链概念体系"
+    desc: "通识基础 · 全链路逻辑"
+  - num: "Level 02"
+    name: "VDA 6.8 体系"
+    desc: "标准解读 · 企业定制"
+  - num: "Level 03"
+    name: "预审核与问题整改"
+    desc: "实战落地 · 改善方案"
+  - num: "Level 04"
+    name: "端到端降本"
+    desc: "高阶实践 · 成本优化"
+
+instructor:
+  name: "李嘉俊"
+  title: "中欧供应链体系与管理专家"
+  credentials: |
+    VDA 6.8 / VDA 6.3 双认证审核员 · 20年大众/奥迪供应链体系经验
+    上汽集团外聘讲师 · 奥迪中国供应链咨询创始负责人
