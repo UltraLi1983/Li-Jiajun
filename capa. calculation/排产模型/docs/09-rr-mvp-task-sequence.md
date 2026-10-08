@@ -23,7 +23,7 @@ Product / Route / Operation / Station
 
 项目路径：
 
-/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型
+/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型
 
 正式版入口：
 

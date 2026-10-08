@@ -245,6 +245,7 @@ export interface TimelineEvent {
   label?: string;
   note?: string;
   changeoverKey?: string;
+  autoFilled?: boolean;
 }
 
 export interface TimelineValidationIssue {

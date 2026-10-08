@@ -5,36 +5,38 @@
 ## 当前项目位置
 
 ```text
-/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型
+/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型
 ```
 
 关键文件：
 
 - Demo 页面：`index.html`
 - 正式版入口：`formal.html`
+- 双击启动文件：`启动排产产能工具.command`（macOS）
 - 开发计划：`docs/04-development-roadmap.md`
 - 领域模型：`docs/01-domain-model.md`
 - TypeScript 核心：`src/`
-- Cursor 任务包：`docs/08-cursor-task-packages.md`
+- 当前工程计划：`docs/04-development-roadmap.md`
+- 历史 Cursor 任务包：`docs/08-cursor-task-packages.md`
 
 ## 推荐打开方式
 
 Demo 页面可以直接打开 HTML 文件：
 
 ```text
-/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型/index.html
+/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型/index.html
 ```
 
 这个 demo 当前是单文件静态页面，不依赖后台服务。直接用浏览器打开最稳定。
 
-正式版 `formal.html` 依赖 `dist/` 下的 ES module，需要先 build，再通过本地 HTTP 服务访问。不要直接用 `file://` 打开正式版，否则 ES module 可能不会正常加载。
+正式版 `formal.html` 依赖 `dist/` 下的 ES module。macOS 可双击 `启动排产产能工具.command`，由脚本构建并打开页面；关闭其终端窗口即停止服务。不要直接用 `file://` 打开正式版，否则 ES module 可能不会正常加载。
 
 ## 需要本地服务时
 
 如果浏览器因为本地文件权限、缓存或后续模块化开发需要 HTTP 服务，可以在项目根目录运行：
 
 ```bash
-cd "/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型"
+cd "/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型"
 npm run build
 npm run serve
 ```
@@ -72,7 +74,7 @@ kill <PID>
 换端口启动示例：
 
 ```bash
-cd "/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型"
+cd "/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型"
 python3 -m http.server 8786 --bind 127.0.0.1
 ```
 

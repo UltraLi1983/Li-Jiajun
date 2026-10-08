@@ -9,7 +9,7 @@
 项目位置：
 
 ```text
-/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型
+/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型
 ```
 
 当前入口：
@@ -24,7 +24,7 @@
 当前验证命令：
 
 ```bash
-cd "/Users/lijiajun/Documents/GitHub/python-document/capa. calculation/排产模型"
+cd "/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型"
 npm run check
 npm test
 npm run build

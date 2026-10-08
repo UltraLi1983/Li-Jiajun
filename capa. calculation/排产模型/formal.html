@@ -65,6 +65,7 @@
     .status.warn { color: var(--amber); border-color: #e6c887; background: #fff8e8; }
     .field-grid, .mini-grid { display: grid; gap: 10px; margin-top: 14px; }
     .field-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .field-grid.shift-config-grid { grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
     .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .field { border: 1px solid #e1e8ed; border-radius: 7px; padding: 10px; background: #fbfdfe; min-width: 0; }
     .field span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
@@ -72,6 +73,8 @@
     .checkbox-field { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .checkbox-field input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; padding: 0; accent-color: var(--teal); }
     .checkbox-field span { margin: 0; }
+    .copy-day-date { white-space: nowrap; }
+    .checkbox-field .copy-day-weekday { margin-left: auto; color: var(--teal); font-weight: 800; white-space: nowrap; }
     .operation-row { padding: 14px; margin-top: 12px; }
     .operation-row:focus { outline: 3px solid #b8d1d5; outline-offset: 2px; }
     .operation-row.selectable { cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
@@ -119,6 +122,7 @@
     .timeline-row { display: grid; grid-template-columns: 120px minmax(760px, 1fr); min-width: 880px; min-height: 92px; }
     .timeline-station { padding: 14px 10px; border-right: 1px solid #e4ebef; font-weight: 850; color: var(--teal); background: #f8fbfc; }
     .timeline-track { position: relative; margin: 14px 12px; border-radius: 8px; background: repeating-linear-gradient(to right, #edf2f5 0, #edf2f5 1px, transparent 1px, transparent 12.5%); min-height: 66px; }
+    .timeline-offshift { position: absolute; top: 3px; height: 58px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #e3e9ec; color: #54636d; font-size: 11px; font-weight: 750; white-space: nowrap; }
     .timeline-segment { position: absolute; top: 3px; min-width: 6px; height: 58px; padding: 0; color: #fff; font-size: 12px; font-weight: 850; overflow: visible; white-space: nowrap; text-overflow: ellipsis; container-type: inline-size; }
     .timeline-segment-label { display: block; height: 28px; padding: 6px 8px; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; background: inherit; }
     .timeline-segment-time { display: block; padding: 5px 3px 0; overflow: hidden; text-overflow: ellipsis; color: #fff; font-size: 11px; font-weight: 850; text-align: center; }
@@ -248,6 +252,6 @@
       </div>
     </main>
   </div>
-  <script type="module" src="./dist/ui/formal-app.js"></script>
+  <script type="module" src="./dist/ui/formal-app.js?v=20261008-week-anchor"></script>
 </body>
 </html>

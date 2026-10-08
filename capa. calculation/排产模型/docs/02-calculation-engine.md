@@ -1,21 +1,38 @@
 # 计算引擎边界
 
 
-## 0. scheduled minutes 与班制
+## 0. 生产日、排班分钟与班制
 
-scheduled minutes 不由用户手工输入，而由班制、排产计划和未排产窗口推导。
+生产日从可配置的白班开班时间起算 24 小时，可连续记录 1–2 个生产日。每班为 8H/480 分钟或 12H/720 分钟；每日班数为班长的完整倍数。R&R 实际观察仍可只覆盖若干小时，不强制补足生产日。排班分钟不由用户手工输入，而由班长、每日班数和生产日数推导。
 
 ```text
-shift_end = shift_start + shift_duration
-scheduled_minutes = sum(planned_operation_windows) - unscheduled_not_planned_minutes
+day_minutes = 1440 × production_day_count
+scheduled_minutes = shift_minutes × shifts_per_day × production_day_count
+off_shift_minutes = day_minutes - scheduled_minutes
+planned_production_minutes = scheduled_minutes - planned_break - setup - maintenance - planned_stop - other_scheduled_loss
+SA_with_breaks = planned_production_minutes / day_minutes
+SA_without_breaks = planned_production_minutes / (scheduled_minutes - planned_break)
 ```
 
 说明：
 
-- 2 班制不等于固定 16H，也可以是 12H + 12H 覆盖完整 24H。
-- 班次只需要定义开始时间和持续时长，结束时间由系统推导。
-- 计划运行分钟不作为手工输入字段，避免使用者重复定义同一件事。
+- With breaks 包含未开班、计划休息及计划动作损失，是全天排产机会口径，不是 OEE。
+- Without breaks 从分母排除非排班和**计划**休息；计划换型、维护、停机仍是开动损失。Actual 也必须保持同一计划分母，实际休息超时不得从分母再扣一次。
+- 2 个 12H 班或 3 个 8H 班可覆盖完整生产日；少开班次形成非排班时间，不应误报为时间账空档。
+- 计划良品能力应使用具体生产分钟和 CT/P/Q，不能把 `scheduled_minutes × SA_with_breaks` 当作可用分钟。周内“平均每班停机分钟”是产能表的单班输入，原始事件和逐班能力同时保留以供核对。
 - 交接班、开班、复线或切换造成的时间损失不单列；应进入 setup / changeover 或对应 planned event。
+
+### 周级汇总与日历机会
+
+先由计划指定工作日；即使该日生产为零，也不能事后从工作日数中剔除。工作日从各自白班开班时刻起算 24 小时。按日汇总的生产、休息、换型、维护、停机及未排产分钟必须覆盖该日排班分钟，非排班分钟单列；不要求每个周级输入都有具体起止时钟。
+
+```text
+weekly_SA_with_breaks = sum(working_day_production_minutes) / (working_day_count × 1440)
+weekly_SA_without_breaks = sum(working_day_production_minutes) / (sum(working_day_scheduled_minutes) - sum(working_day_planned_break_minutes))
+weekly_calendar_utilization = sum(weekly_production_minutes) / (7 × 1440)
+```
+
+无计划工作日或无有效排班分母时，相应 SA 不可计算，不以零代替。With breaks 包含已指定工作日内的非排班，却不把整周停工日算进分母；整周日历利用率才包含停工日，用于展示增开工作日/班次的机会，不能冒充原表 SA。原始表按每周班数选择 5/6 个工作日，默认工作日由 2×12H 或 3×8H 排满；8H×2 班与班内未排产是本系统的扩展口径。
 
 ## 1. SA 三视角
 
@@ -26,14 +43,15 @@ scheduled_minutes = sum(planned_operation_windows) - unscheduled_not_planned_min
 Best case SA 只使用已安排、可解释、可进入计划的 planned activity。它是生产计划和 APS 的基础能力输入。
 
 ```text
-planned_loss = setup + break + maintenance + planned_stop
-best_case_sa = (scheduled_minutes - planned_loss) / scheduled_minutes
+planned_loss = setup + maintenance + planned_stop
+best_case_sa_with_breaks = planned_production_minutes / day_minutes
+best_case_sa_without_breaks = planned_production_minutes / (scheduled_minutes - planned_break)
 ```
 
 说明：
 
 - setup 是被安排的计划事件，不是异常损失。
-- 不同自然日因排产内容不同，Best case SA 可以不同。
+- 不同生产日因排产内容不同，Best case SA 可以不同；日界以白班开班时刻而非午夜为准。
 - Best case SA 不包含 R&R 或量产过程中偶发的异常损失。
 
 ### Most likely SA
@@ -162,8 +180,10 @@ observed_performance = standard_cycle_sec / observed_cycle_sec
 ## 5. station capacity
 
 ```text
-available_minutes = scheduled_minutes * SA * project_share
-capacity_gap = available_minutes - required_minutes * (1 + buffer_rate)
+best_available_minutes = planned_production_minutes * project_share
+                       = day_minutes * SA_with_breaks * project_share
+                       = (scheduled_minutes - planned_break) * SA_without_breaks * project_share
+capacity_gap = best_available_minutes - required_minutes * (1 + buffer_rate)
 ```
 
 不同视角使用不同 SA：

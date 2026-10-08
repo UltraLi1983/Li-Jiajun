@@ -41,6 +41,29 @@ describe("R&R planned/actual timeline reconciliation", () => {
     assert.equal(result.rows.find(row => row.startMinute === 120)?.status, "unrecorded");
   });
 
+  it("excludes off-shift time from missing records while keeping overtime visible", () => {
+    const input = {
+      stationId: "OP10", startMinute: 0, endMinute: 1440,
+      planned: [event("planned", "production", 0, 960)],
+      offShiftIntervals: [{ startMinute: 960, endMinute: 1440 }],
+    };
+    const complete = reconcileRnrTimeline({ ...input, actual: [event("actual", "production", 0, 960)] });
+    assert.equal(complete.windowMinutes, 1440);
+    assert.equal(complete.unrecordedMinutes, 0);
+    assert.equal(complete.plannedGapMinutes, 0);
+    assert.equal(complete.complete, true);
+    assert.equal(complete.rows.at(-1)?.plannedKind, "offShift");
+    assert.equal(complete.rows.at(-1)?.actualKind, "offShift");
+
+    const incomplete = reconcileRnrTimeline({ ...input, actual: [event("actual", "production", 0, 900)] });
+    assert.equal(incomplete.unrecordedMinutes, 60);
+    assert.equal(incomplete.complete, false);
+
+    const overtime = reconcileRnrTimeline({ ...input, actual: [event("actual", "production", 0, 1020)] });
+    assert.equal(overtime.actualProductionMinutes, 1020);
+    assert.equal(overtime.rows.find(row => row.startMinute === 960)?.status, "changed");
+  });
+
   it("rejects overlap or out-of-window records before comparison", () => {
     assert.throws(() => reconcileRnrTimeline({
       stationId: "OP10", startMinute: 0, endMinute: 240, planned,

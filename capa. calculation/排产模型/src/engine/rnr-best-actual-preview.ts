@@ -10,6 +10,9 @@ export interface RnrBestActualPreviewInput {
   stationId: string;
   planned: TimelineEvent[];
   actual: PreviewActualEvent[];
+  windowStartMinute?: number;
+  windowEndMinute?: number;
+  offShiftIntervals?: Array<{ startMinute: number; endMinute: number }>;
   standardCycleSec: number;
   piecesPerCycle: number;
   plannedQualityRate?: number;
@@ -52,11 +55,12 @@ export function buildRnrBestActualPreview(input: RnrBestActualPreviewInput): Rnr
   if (!Number.isFinite(inferredSaLossMinutes) || inferredSaLossMinutes < 0) {
     throw new RangeError("Inferred SA loss must be nonnegative");
   }
-  const startMinute = Math.min(...input.planned.map(event => event.startMinute));
-  const endMinute = Math.max(...input.planned.map(event => event.endMinute));
+  const startMinute = input.windowStartMinute ?? Math.min(...input.planned.map(event => event.startMinute));
+  const endMinute = input.windowEndMinute ?? Math.max(...input.planned.map(event => event.endMinute));
   const timeline = reconcileRnrTimeline({
     stationId: input.stationId, startMinute, endMinute,
     planned: input.planned, actual: input.actual,
+    ...(input.offShiftIntervals ? { offShiftIntervals: input.offShiftIntervals } : {}),
   });
   const production = input.actual.filter(event => event.kind === "production");
   if (production.some(event => !Number.isInteger(event.okQty) || !Number.isInteger(event.nokQty)

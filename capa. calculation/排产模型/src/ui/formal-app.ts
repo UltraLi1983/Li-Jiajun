@@ -5,6 +5,9 @@ import { calculateRouteWindowCapacity, type WindowStationInput } from "../engine
 import { publishParameterVersion, selectEffectiveParameter } from "../engine/parameter-versioning.js";
 import { createRnrValidationFixture } from "../engine/rnr-validation-fixture.js";
 import { buildRnrBestActualPreview, type RnrBestActualPreview } from "../engine/rnr-best-actual-preview.js";
+import { freezeStandardWindow, isFrozenStandardWindowCurrent, type FrozenStandardWindow, type StandardWindowIssue } from "../engine/standard-window.js";
+import { copyStandardWindowToWeek, expandWeekToFourWeeks, type CopyStandardWindowResult, type FollowingWeekMode, type ProjectionIssue } from "../engine/standard-window-projection.js";
+import { buildStandardSaSampleSlots, findStandardSaDayGaps, reconcileAutoFilledGaps, standardSaOffShiftIntervals, summarizeStandardSaDay, validateStandardSaDay, type StandardSaDayConfig } from "../engine/standard-sa-day.js";
 import { formatNumber } from "./number-format.js";
 import { calculateRnrPaceSummary, reconcileRnrSpeedLoss } from "../engine/rnr-reconciliation.js";
 import {
@@ -578,7 +581,17 @@ let isMockEditing = false;
 let plannedSaEvents: TimelineEvent[] = [];
 let plannedSaContextKey = "";
 const plannedSaContexts = new Map<string, { events: TimelineEvent[]; areDefault: boolean }>();
+const standardSaDayConfigs = new Map<string, StandardSaDayConfig>();
+const frozenStandardWindows = new Map<string, FrozenStandardWindow>();
+interface CopyProjectionDraft {
+  weekStartDate: string;
+  selectedDays: number[];
+  followingWeekModes: FollowingWeekMode[];
+  result?: CopyStandardWindowResult;
+}
+const copyProjectionDrafts = new Map<string, CopyProjectionDraft>();
 let plannedSaEventsAreDefault = false;
+let standardWindowFreezeError = "";
 let plannedBlockDraft = {
   startMinute: 0,
   endMinute: 60,
@@ -862,6 +875,10 @@ function bindProductEditing(currentProductId: string): void {
     selectedOperationId = "";
     selectedWorkflowStationId = "";
     plannedSaContexts.clear();
+    standardSaDayConfigs.clear();
+    frozenStandardWindows.clear();
+    copyProjectionDrafts.clear();
+    standardWindowFreezeError = "";
     plannedSaContextKey = "";
     plannedSaEvents = [];
     rnrDrafts.clear();
@@ -1236,12 +1253,17 @@ function renderPlannedSaInput(
   if (stationId === "-") { plannedSaRoot.innerHTML = emptyState(t("stationRequired")); return; }
   const productId = routingConfig.product?.productId ?? selectedProductId;
   const events = getPlannedSaEvents(stationId, productId);
+  const dayConfig = getStandardSaDayConfig(productId, stationId);
+  const frozenWindow = frozenStandardWindows.get(`${productId}::${stationId}`);
+  const frozenCurrent = frozenWindow ? isFrozenStandardWindowCurrent(frozenWindow, events, dayConfig) : false;
   document.querySelector<HTMLButtonElement>('[data-stage-next="reality"]')!.disabled = events.length === 0;
   alignPlannedBlockDraftAfterExistingEvents(events, stationId, horizonMinutes);
   const plannedWindow = derivePlannedSaWindow(events);
-  const summary = summarizePlannedSa(events, plannedWindow.durationMinutes);
+  const summary = summarizeStandardSaDay(events, dayConfig);
   const validationIssues = validatePlannedSaEvents(events, plannedWindow);
-  const gaps = findTimelineGapsWithinWindow(events, stationId, plannedWindow);
+  const dayIssues = validateStandardSaDay(events, dayConfig);
+  const gaps = findStandardSaDayGaps(events, dayConfig).map(gap => ({ ...gap, stationId }));
+  const dayEndMinute = dayConfig.startMinute + dayConfig.dayCount * MINUTE_PER_DAY;
 
   plannedSaRoot.innerHTML = `
     <div class="panel-head">
@@ -1251,29 +1273,49 @@ function renderPlannedSaInput(
       </div>
       <div class="panel-actions">
         <span class="section-label">${t("bestCaseSaInput")}</span>
+        <button class="button secondary" type="button" id="generatePlannedSample">${locale === "zh" ? "生成模拟时间轴" : "Generate sample timeline"}</button>
         <button class="button" type="button" id="fillPlannedGaps">${t("fillGaps")}</button>
       </div>
+    </div>
+    <div class="field-grid shift-config-grid">
+      <div class="field"><label for="standardDayStartDate">${locale === "zh" ? "生产日日期" : "Production-day date"}</label><input id="standardDayStartDate" type="date" value="${escapeHtml(minuteToDateValue(dayConfig.startMinute))}" /></div>
+      <div class="field"><label>${locale === "zh" ? "白班开班时间" : "First-shift start"}</label><div class="time-pair"><select id="standardDayStartHour" aria-label="${locale === "zh" ? "白班开班时" : "First-shift hour"}">${numberOptions(0, 23, Math.floor((dayConfig.startMinute % MINUTE_PER_DAY) / 60))}</select><select id="standardDayStartMinute" aria-label="${locale === "zh" ? "白班开班分" : "First-shift minute"}">${numberOptions(0, 59, dayConfig.startMinute % 60)}</select></div></div>
+      <div class="field"><label for="standardShiftMinutes">${locale === "zh" ? "班次时长" : "Shift length"}</label><select id="standardShiftMinutes"><option value="720" ${dayConfig.shiftMinutes === 720 ? "selected" : ""}>12H / 720 min</option><option value="480" ${dayConfig.shiftMinutes === 480 ? "selected" : ""}>8H / 480 min</option></select></div>
+      <div class="field"><label for="standardShiftsPerDay">${locale === "zh" ? "每日班数" : "Shifts per day"}</label><select id="standardShiftsPerDay">${Array.from({ length: MINUTE_PER_DAY / dayConfig.shiftMinutes }, (_, i) => `<option value="${i + 1}" ${dayConfig.shiftsPerDay === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}</select></div>
+      <div class="field"><label for="standardDayCount">${locale === "zh" ? "生产日数" : "Production days"}</label><select id="standardDayCount"><option value="1" ${dayConfig.dayCount === 1 ? "selected" : ""}>1</option><option value="2" ${dayConfig.dayCount === 2 ? "selected" : ""}>2</option></select></div>
     </div>
     <div class="field-grid">
       ${field(t("windowType"), `${t("maxFortyEightHours")} / ${t("minOneHourGrain")}`)}
       ${field(t("station"), stationId)}
-      ${field(t("horizonMinutes"), formatNumber(plannedWindow.durationMinutes))}
-      ${field(t("scheduledMinutes"), formatNumber(plannedWindow.durationMinutes))}
-      ${field(t("windowStart"), formatOptionalMinutePoint(plannedWindow.startMinute))}
-      ${field(t("windowEnd"), formatOptionalMinutePoint(plannedWindow.endMinute))}
+      ${field(t("horizonMinutes"), formatNumber(summary.horizonMinutes))}
+      ${field(t("scheduledMinutes"), formatNumber(summary.scheduledMinutes))}
+      ${field(locale === "zh" ? "非排班分钟" : "Off-shift minutes", formatNumber(summary.nonScheduledMinutes))}
+      ${field(t("windowStart"), formatOptionalMinutePoint(dayConfig.startMinute))}
+      ${field(t("windowEnd"), formatOptionalMinutePoint(dayEndMinute))}
     </div>
+    ${dayIssues.length ? `<p class="form-error">${locale === "zh" ? "标准日尚未完整：" : "Standard day incomplete: "}${escapeHtml(formatStandardSaDayIssues(dayIssues))}</p>` : ""}
+    <div class="action-bar" style="margin-top:14px;">
+      <span>${frozenWindow
+        ? frozenCurrent
+          ? (locale === "zh" ? `本地源窗口 v${frozenWindow.version} · 已冻结` : `Local source window v${frozenWindow.version} · frozen`)
+          : (locale === "zh" ? `本地源窗口 v${frozenWindow.version} · 已过期，请重新冻结` : `Local source window v${frozenWindow.version} · stale; freeze again`)
+        : (locale === "zh" ? "尚未冻结投影源窗口" : "No frozen projection source window")}</span>
+      <button class="button secondary" type="button" id="freezeStandardWindow">${locale === "zh" ? "冻结源窗口" : "Freeze source window"}</button>
+    </div>
+    ${standardWindowFreezeError ? `<p class="form-error">${escapeHtml(standardWindowFreezeError)}</p>` : ""}
+    ${renderCopyProjectionPanel(productId, stationId, frozenWindow, frozenCurrent)}
     ${renderPlannedBlockForm()}
-    ${renderPlannedTimeline(stationId, events, plannedWindow)}
+    ${renderPlannedTimeline(stationId, events, { startMinute: dayConfig.startMinute, endMinute: dayEndMinute, durationMinutes: summary.horizonMinutes }, dayConfig)}
     <section class="metrics" aria-label="${t("plannedSaTitle")}" style="margin-top:14px;">
-      ${metricCard(t("scheduledMin"), formatNumber(summary.scheduledMinutes), t("maxFortyEightHours"), "neutral")}
+      ${metricCard(t("scheduledMin"), formatNumber(summary.scheduledMinutes), locale === "zh" ? "仅已开班时段" : "Scheduled shifts only", "neutral")}
       ${metricCard(t("plannedOperationMin"), formatNumber(summary.productionMinutes), t("productionNotSaLoss"), "good")}
       ${metricCard(t("setupChangeoverMin"), formatNumber(summary.setupMinutes), t("plannedLossKinds"), summary.setupMinutes ? "warn" : "good")}
       ${metricCard(t("breakMin"), formatNumber(summary.breakMinutes), t("plannedLossKinds"), summary.breakMinutes ? "warn" : "good")}
       ${metricCard(t("plannedStopMin"), formatNumber(summary.plannedStopMinutes), t("plannedLossKinds"), summary.plannedStopMinutes ? "warn" : "good")}
       ${metricCard(t("unscheduledMin"), formatNumber(summary.unscheduledMinutes), t("notPlannedNotOpenCapacity"), summary.unscheduledMinutes ? "warn" : "good")}
       ${metricCard(t("bestCaseAvailableMin"), formatNumber(summary.bestCaseAvailableMinutes), t("productionMinutesDetail"), "good")}
-      ${metricCard(t("bestCaseSaWithBreaks"), percent(summary.bestCaseSaWithBreaks), t("availableScheduled"), "good")}
-      ${metricCard(t("bestCaseSaWithoutBreaks"), percent(summary.bestCaseSaWithoutBreaks), t("availableScheduled"), "good")}
+      ${metricCard(t("bestCaseSaWithBreaks"), dayIssues.length ? "-" : percent(summary.bestCaseSaWithBreaks), locale === "zh" ? "生产分钟 / 生产日分钟（含非排班）" : "Production / full production day", "good")}
+      ${metricCard(t("bestCaseSaWithoutBreaks"), dayIssues.length ? "-" : percent(summary.bestCaseSaWithoutBreaks), locale === "zh" ? "生产分钟 /（排班分钟－计划休息）" : "Production / (scheduled minus planned breaks)", "good")}
     </section>
     <div class="table-wrap">
       <table>
@@ -1301,11 +1343,29 @@ function getPlannedSaEvents(stationId: string, productId: string): TimelineEvent
     if (plannedSaContextKey) plannedSaContexts.set(plannedSaContextKey, { events: plannedSaEvents, areDefault: plannedSaEventsAreDefault });
     const saved = plannedSaContexts.get(contextKey);
     plannedSaContextKey = contextKey;
-    plannedSaEvents = saved?.events ?? buildDefaultPlannedActivityEvents(stationId, productId);
+    plannedSaEvents = saved?.events ?? buildDefaultPlannedActivityEvents(stationId, productId, getStandardSaDayConfig(productId, stationId));
     plannedSaEventsAreDefault = saved?.areDefault ?? true;
+    standardWindowFreezeError = "";
     resetPlannedBlockDraft(stationId, PLANNED_SA_HORIZON_MINUTES);
   }
   return plannedSaEvents;
+}
+
+function getStandardSaDayConfig(productId: string, stationId: string): StandardSaDayConfig {
+  const key = `${productId}::${stationId}`;
+  let config = standardSaDayConfigs.get(key);
+  if (!config) {
+    config = { startMinute: 510, dayCount: 1, shiftMinutes: 720, shiftsPerDay: 1 };
+    standardSaDayConfigs.set(key, config);
+  }
+  return config;
+}
+
+function formatStandardSaDayIssues(issues: ReturnType<typeof validateStandardSaDay>): string {
+  const labels = locale === "zh"
+    ? { invalid_config: "班制设置无效", invalid_boundary: "时间段起止无效", overlap: "时间段重叠", outside_shift: "事件超出已开班时段", gap: "已开班时段存在未标记空档" }
+    : { invalid_config: "Invalid shift setup", invalid_boundary: "Invalid interval", overlap: "Overlapping intervals", outside_shift: "Event outside scheduled shifts", gap: "Unmarked gap in scheduled shift" };
+  return issues.map(issue => labels[issue]).join(locale === "zh" ? "、" : ", ");
 }
 
 function renderPlannedBlockForm(): string {
@@ -1402,6 +1462,120 @@ function plannedKindsForCategory(category: string): TimelineEvent["kind"][] {
 }
 
 function bindPlannedSaEditing(stationId: string, productId: string, horizonMinutes: number): void {
+  const dayConfig = getStandardSaDayConfig(productId, stationId);
+  const updateDayConfig = (next: StandardSaDayConfig) => {
+    const delta = next.startMinute - dayConfig.startMinute;
+    if (plannedSaEventsAreDefault) {
+      plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, next);
+      resetPlannedBlockDraft(stationId, horizonMinutes);
+    } else {
+      if (delta) {
+        plannedSaEvents = plannedSaEvents.map(event => ({
+          ...event, startMinute: event.startMinute + delta, endMinute: event.endMinute + delta,
+        }));
+        plannedBlockDraft.startMinute += delta;
+        plannedBlockDraft.endMinute += delta;
+      }
+      plannedSaEvents = reconcileAutoFilledGaps(plannedSaEvents, next);
+    }
+    standardSaDayConfigs.set(`${productId}::${stationId}`, next);
+    frozenStandardWindows.delete(`${productId}::${stationId}`);
+    delete getCopyProjectionDraft(productId, stationId).result;
+    render(selectedProductId);
+  };
+  plannedSaRoot.querySelector<HTMLButtonElement>("#generatePlannedSample")?.addEventListener("click", () => {
+    if (!plannedSaEventsAreDefault && !window.confirm(locale === "zh"
+      ? "重新生成模拟时间轴会替换当前手工计划。继续吗？"
+      : "Generating a sample timeline replaces the current manual plan. Continue?")) return;
+    plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, dayConfig);
+    plannedSaEventsAreDefault = true;
+    frozenStandardWindows.delete(`${productId}::${stationId}`);
+    delete getCopyProjectionDraft(productId, stationId).result;
+    standardWindowFreezeError = "";
+    plannedSaDraftError = "";
+    resetPlannedBlockDraft(stationId, horizonMinutes);
+    render(selectedProductId);
+  });
+  plannedSaRoot.querySelector<HTMLInputElement>("#standardDayStartDate")?.addEventListener("change", event => {
+    const date = (event.currentTarget as HTMLInputElement).value;
+    updateDayConfig({ ...dayConfig, startMinute: combineDateTimeMinute(date, minuteToTimeValue(dayConfig.startMinute)) });
+  });
+  plannedSaRoot.querySelector<HTMLSelectElement>("#standardDayStartHour")?.addEventListener("change", event => {
+    updateDayConfig({ ...dayConfig, startMinute: updateMinuteClockPart(dayConfig.startMinute, "startHour", (event.currentTarget as HTMLSelectElement).value) });
+  });
+  plannedSaRoot.querySelector<HTMLSelectElement>("#standardDayStartMinute")?.addEventListener("change", event => {
+    updateDayConfig({ ...dayConfig, startMinute: updateMinuteClockPart(dayConfig.startMinute, "startMinuteOfHour", (event.currentTarget as HTMLSelectElement).value) });
+  });
+  plannedSaRoot.querySelector<HTMLSelectElement>("#standardShiftMinutes")?.addEventListener("change", event => {
+    const shiftMinutes = Number((event.currentTarget as HTMLSelectElement).value) as 480 | 720;
+    updateDayConfig({ ...dayConfig, shiftMinutes, shiftsPerDay: Math.min(dayConfig.shiftsPerDay, MINUTE_PER_DAY / shiftMinutes) });
+  });
+  plannedSaRoot.querySelector<HTMLSelectElement>("#standardShiftsPerDay")?.addEventListener("change", event => {
+    updateDayConfig({ ...dayConfig, shiftsPerDay: Number((event.currentTarget as HTMLSelectElement).value) });
+  });
+  plannedSaRoot.querySelector<HTMLSelectElement>("#standardDayCount")?.addEventListener("change", event => {
+    updateDayConfig({ ...dayConfig, dayCount: Number((event.currentTarget as HTMLSelectElement).value) as 1 | 2 });
+  });
+  plannedSaRoot.querySelector<HTMLButtonElement>("#freezeStandardWindow")?.addEventListener("click", () => {
+    const issues = validateStandardSaDay(plannedSaEvents, dayConfig);
+    if (issues.length) {
+      standardWindowFreezeError = formatStandardSaDayIssues(issues);
+      render(selectedProductId);
+      return;
+    }
+    const contextKey = `${productId}::${stationId}`;
+    const previous = frozenStandardWindows.get(contextKey);
+    const result = freezeStandardWindow({
+      sourceId: contextKey,
+      version: (previous?.version ?? 0) + 1,
+      stationId,
+      baseDate: minuteToDateValue(dayConfig.startMinute),
+      events: plannedSaEvents,
+      dayConfig,
+    });
+    if (result.snapshot) {
+      frozenStandardWindows.set(contextKey, result.snapshot);
+      standardWindowFreezeError = "";
+    } else {
+      standardWindowFreezeError = formatStandardWindowIssues(result.issues);
+    }
+    render(selectedProductId);
+  });
+  const projectionDraft = getCopyProjectionDraft(productId, stationId);
+  plannedSaRoot.querySelector<HTMLInputElement>("#copyWeekStartDate")?.addEventListener("change", event => {
+    projectionDraft.weekStartDate = (event.currentTarget as HTMLInputElement).value;
+    delete projectionDraft.result;
+    render(selectedProductId);
+  });
+  plannedSaRoot.querySelectorAll<HTMLInputElement>("[data-copy-day]").forEach(input => {
+    input.addEventListener("change", () => {
+      const dayIndex = Number(input.dataset.copyDay);
+      projectionDraft.selectedDays = input.checked
+        ? [...projectionDraft.selectedDays, dayIndex].sort((a, b) => a - b)
+        : projectionDraft.selectedDays.filter(item => item !== dayIndex);
+      delete projectionDraft.result;
+      render(selectedProductId);
+    });
+  });
+  plannedSaRoot.querySelectorAll<HTMLSelectElement>("[data-following-week]").forEach(input => {
+    input.addEventListener("change", () => {
+      const week = Number(input.dataset.followingWeek);
+      projectionDraft.followingWeekModes[week - 2] = input.value === "copy" ? "copy" : "off";
+      render(selectedProductId);
+    });
+  });
+  plannedSaRoot.querySelector<HTMLButtonElement>("#generateCopyProjection")?.addEventListener("click", () => {
+    const frozen = frozenStandardWindows.get(`${productId}::${stationId}`);
+    if (!frozen) return;
+    projectionDraft.result = copyStandardWindowToWeek({
+      source: frozen,
+      currentSourceEvents: plannedSaEvents,
+      currentDayConfig: dayConfig,
+      weekStartDate: projectionDraft.weekStartDate,
+      repeatDates: projectionDraft.weekStartDate ? projectionDraft.selectedDays.map(day => addDays(projectionDraft.weekStartDate, day)) : [],
+    });
+    render(selectedProductId);
+  });
   plannedSaRoot.querySelector<HTMLButtonElement>("#addPlannedTimeBlock")?.addEventListener("click", () => {
     addPlannedTimeBlock(stationId, productId, horizonMinutes);
   });
@@ -1410,7 +1584,9 @@ function bindPlannedSaEditing(stationId: string, productId: string, horizonMinut
     render(selectedProductId);
   });
   plannedSaRoot.querySelector<HTMLButtonElement>("#fillPlannedGaps")?.addEventListener("click", () => {
-    plannedSaEvents = fillWindowGapsAsUnscheduled(plannedSaEvents, stationId, derivePlannedSaWindow(plannedSaEvents));
+    plannedSaEvents = [...plannedSaEvents, ...findStandardSaDayGaps(plannedSaEvents, dayConfig).map((gap, index) =>
+      ({ ...buildTimelineEvent(`planned-unscheduled-${Date.now()}-${index}`, stationId, productId, "unscheduled", gap.startMinute, gap.endMinute, "未排产"), autoFilled: true }))]
+      .sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
     plannedSaEventsAreDefault = false;
     render(selectedProductId);
   });
@@ -1431,6 +1607,98 @@ function bindPlannedSaEditing(stationId: string, productId: string, horizonMinut
   });
 }
 
+function getCopyProjectionDraft(productId: string, stationId: string): CopyProjectionDraft {
+  const key = `${productId}::${stationId}`;
+  let draft = copyProjectionDrafts.get(key);
+  if (!draft) {
+    const today = parseUtcDate(todayDateValue());
+    const daysUntilMonday = (8 - today.getUTCDay()) % 7;
+    draft = { weekStartDate: addDays(todayDateValue(), daysUntilMonday), selectedDays: [0, 1, 2, 3, 4, 5], followingWeekModes: ["off", "off", "off"] };
+    copyProjectionDrafts.set(key, draft);
+  }
+  return draft;
+}
+
+function renderCopyProjectionPanel(productId: string, stationId: string, frozen: FrozenStandardWindow | undefined, sourceCurrent: boolean): string {
+  const draft = getCopyProjectionDraft(productId, stationId);
+  const result = sourceCurrent && draft.result?.sourceWindowVersion === frozen?.version ? draft.result : undefined;
+  const zh = locale === "zh";
+  const weekStartClock = minuteToTimeValue(getStandardSaDayConfig(productId, stationId).startMinute);
+  const fourWeek = result && !result.issues.length ? expandWeekToFourWeeks(result, draft.followingWeekModes) : undefined;
+  return `
+    <section class="sub-card" style="margin-top:14px;">
+      <div class="panel-head"><h3>${zh ? "长周期投影 / 日历展开" : "Long-horizon projection / calendar"}</h3><span class="section-label">${zh ? "按需生成 · 本地预览" : "Optional · local preview"}</span></div>
+      <div class="field-grid">
+        <div class="field"><label for="copyWeekStartDate">${zh ? "整周起始日期" : "Week start date"}</label><input id="copyWeekStartDate" type="date" value="${escapeHtml(draft.weekStartDate)}" /></div>
+        ${field(zh ? "周起点时间" : "Week start time", weekStartClock)}
+      </div>
+      <h4>${zh ? "第 1 周：选择复制源窗口的日期" : "Week 1: select source-copy dates"}</h4>
+      <div class="field-grid" role="group" aria-label="${zh ? "复制日期" : "Copy dates"}">
+        ${Array.from({ length: 7 }, (_, day) => {
+          const date = draft.weekStartDate ? addDays(draft.weekStartDate, day) : "";
+          return `<label class="field checkbox-field"><input type="checkbox" data-copy-day="${day}" ${draft.selectedDays.includes(day) ? "checked" : ""} /><span class="copy-day-date">${date ? escapeHtml(date) : "-"}</span><span class="copy-day-weekday">${date ? formatWeekday(date) : ""}</span></label>`;
+        }).join("")}
+      </div>
+      <div class="action-bar"><span>${frozen ? (sourceCurrent ? `${zh ? "源版本" : "Source version"} v${frozen.version}` : (zh ? "源窗口已过期" : "Source window is stale")) : (zh ? "先冻结源窗口" : "Freeze source window first")}</span><button class="button" type="button" id="generateCopyProjection" ${!frozen || !sourceCurrent ? "disabled" : ""}>${zh ? "生成整周预览" : "Generate week preview"}</button></div>
+      ${result?.issues.length ? `<ul class="message-list">${result.issues.map(issue => `<li>${escapeHtml(formatCopyProjectionIssue(issue))}</li>`).join("")}</ul>` : ""}
+      ${result && !result.issues.length ? `
+        <div class="table-wrap"><table><thead><tr><th>${zh ? "生产日" : "Production day"}</th><th>${zh ? "计划分钟" : "Scheduled min"}</th><th>${zh ? "生产分钟" : "Production min"}</th><th>${zh ? "计划损失分钟" : "Planned loss min"}</th><th>${zh ? "未排产分钟" : "Unscheduled min"}</th><th>${zh ? "Best case 可用分钟" : "Best case available min"}</th><th>${zh ? "复制段生产占比" : "Copied-event production share"}</th></tr></thead>
+          <tbody>${result.days.map(day => `<tr><td>${day.date}</td><td>${formatNumber(day.scheduledMinutes)}</td><td>${formatNumber(day.productionMinutes)}</td><td>${formatNumber(day.plannedLossMinutes)}</td><td>${formatNumber(day.unscheduledMinutes)}</td><td>${formatNumber(day.bestCaseAvailableMinutes)}</td><td>${day.bestCaseSa === undefined ? "-" : percent(day.bestCaseSa)}</td></tr>`).join("")}</tbody></table></div>
+        <details style="margin-top:14px;"><summary>${zh ? "生成事件与来源" : "Generated events and sources"} (${formatNumber(result.events.length)})</summary>
+          <div class="table-wrap"><table><thead><tr><th>${zh ? "起点" : "Start"}</th><th>${zh ? "终点" : "End"}</th><th>${zh ? "类型" : "Type"}</th><th>${zh ? "产品" : "Product"}</th><th>${zh ? "生成方式" : "Origin"}</th><th>${zh ? "来源事件" : "Source event"}</th></tr></thead><tbody>
+          ${result.events.map(event => `<tr><td>${escapeHtml(formatProjectedMinute(draft.weekStartDate, event.startMinute))}</td><td>${escapeHtml(formatProjectedMinute(draft.weekStartDate, event.endMinute))}</td><td>${escapeHtml(formatTimelineKind(event.kind))}</td><td>${escapeHtml(event.productId ?? "-")}</td><td>${zh ? "源窗口复制" : "Source copy"}</td><td>${escapeHtml(event.sourceEventId ?? "-")}</td></tr>`).join("")}
+          </tbody></table></div></details>` : ""}
+      ${fourWeek ? `
+        <h4>${zh ? "连续四周编排" : "Four-week rolling arrangement"}</h4>
+        <div class="table-wrap"><table><thead><tr><th>${zh ? "周次" : "Week"}</th><th>${zh ? "周起点" : "Week start"}</th><th>${zh ? "编排方式" : "Arrangement"}</th><th>${zh ? "生产分钟" : "Production min"}</th><th>${zh ? "计划损失分钟" : "Planned loss min"}</th><th>${zh ? "复制段生产占比" : "Copied-event production share"}</th></tr></thead><tbody>
+          ${fourWeek.weeks.map(week => {
+            const scheduled = week.days.reduce((sum, day) => sum + day.scheduledMinutes, 0);
+            const production = week.days.reduce((sum, day) => sum + day.productionMinutes, 0);
+            const loss = week.days.reduce((sum, day) => sum + day.plannedLossMinutes, 0);
+            return `<tr><td>${zh ? `第 ${week.weekNumber} 周` : `Week ${week.weekNumber}`}</td><td>${week.weekStartDate} ${weekStartClock}</td><td>${week.weekNumber === 1 ? (zh ? "已定义整周" : "Defined week") : `<select data-following-week="${week.weekNumber}"><option value="off" ${week.mode === "off" ? "selected" : ""}>${zh ? "暂不排产" : "No schedule"}</option><option value="copy" ${week.mode === "copy" ? "selected" : ""}>${zh ? "复制第 1 周" : "Copy week 1"}</option></select>`}</td><td>${formatNumber(production)}</td><td>${formatNumber(loss)}</td><td>${scheduled ? percent(production / scheduled) : "-"}</td></tr>`;
+          }).join("")}
+        </tbody></table></div>
+        <div class="action-bar"><span>${zh ? "复制包含源窗口已有换型；非重复换型须另编该周。" : "Copy includes source setups; one-off setups require a separately arranged week."}</span><strong>${zh ? "四周 Best case 可用分钟" : "Four-week Best case available min"}：${formatNumber(fourWeek.bestCaseAvailableMinutes)}</strong></div>
+      ` : ""}
+    </section>`;
+}
+
+function formatProjectedMinute(weekStartDate: string, minute: number): string {
+  const day = Math.floor(minute / MINUTE_PER_DAY);
+  const withinDay = minute - day * MINUTE_PER_DAY;
+  return `${addDays(weekStartDate, day)} ${String(Math.floor(withinDay / 60)).padStart(2, "0")}:${String(withinDay % 60).padStart(2, "0")}`;
+}
+
+function formatCopyProjectionIssue(issue: ProjectionIssue): string {
+  if (locale !== "zh") {
+    const labels: Record<ProjectionIssue["code"], string> = {
+      source_stale: "Source window changed; freeze it again", invalid_source: "Invalid source window", invalid_week_date: "Invalid week start date",
+      no_repeat_date: "Select at least one copy date", invalid_repeat_date: "Invalid copy date", duplicate_repeat_date: "Duplicate copy date",
+      outside_week: "Event falls outside the selected week", repeat_overlap: "Copied intervals overlap",
+    };
+    return `${issue.date ? `${issue.date}: ` : ""}${labels[issue.code]}`;
+  }
+  const labels: Record<ProjectionIssue["code"], string> = {
+    source_stale: "源窗口已更改，请重新冻结", invalid_source: "源窗口无效", invalid_week_date: "整周起始日期无效",
+    no_repeat_date: "至少选择一个复制日期", invalid_repeat_date: "复制日期无效", duplicate_repeat_date: "复制日期重复",
+    outside_week: "事件超出所选整周", repeat_overlap: "复制后的时间段重叠",
+  };
+  return `${issue.date ? `${issue.date}：` : ""}${labels[issue.code]}`;
+}
+
+function formatStandardWindowIssues(issues: StandardWindowIssue[]): string {
+  if (locale === "zh") {
+    const labels: Record<StandardWindowIssue, string> = {
+      empty: "没有时间段", mixed_station: "包含其他工站", duplicate_id: "事件 ID 重复",
+      invalid_kind: "包含非计划事件", invalid_boundary: "起止时间无效",
+      outside_horizon: "超出 48 小时窗口", overlap: "时间段重叠", gap: "存在未标记空档",
+      invalid_schedule: "班制设置无效", outside_shift: "事件超出已开班时段",
+    };
+    return `不能冻结：${issues.map(issue => labels[issue]).join("、")}。`;
+  }
+  return `Cannot freeze: ${issues.join(", ")}.`;
+}
+
 function resolvePlannedSaStationId(
   operations: OperationRoutingView[],
   selectedOperation: OperationRoutingView | undefined,
@@ -1445,15 +1713,13 @@ function resolvePlannedSaStationId(
   return routeStation ?? "-";
 }
 
-function buildDefaultPlannedActivityEvents(stationId: string, productId: string): TimelineEvent[] {
-  return [
-    buildTimelineEvent("planned-production-1", stationId, productId, "production", 510, 660, `${formatTimelineKind("production")} 08:30-11:00`),
-    buildTimelineEvent("planned-break-1", stationId, productId, "break", 660, 690, `${formatTimelineKind("break")} 11:00-11:30`),
-    buildTimelineEvent("planned-production-2", stationId, productId, "production", 690, 1020, `${formatTimelineKind("production")} 11:30-17:00`),
-    buildTimelineEvent("planned-break-2", stationId, productId, "break", 1020, 1050, `${formatTimelineKind("break")} 17:00-17:30`),
-    buildTimelineEvent("planned-production-3", stationId, productId, "production", 1050, 1140, `${formatTimelineKind("production")} 17:30-19:00`),
-    buildTimelineEvent("planned-setup-1", stationId, productId, "setup", 1140, 1260, `${formatTimelineKind("setup")} 19:00-21:00`),
-  ];
+function buildDefaultPlannedActivityEvents(stationId: string, productId: string, config: StandardSaDayConfig): TimelineEvent[] {
+  const counts = { production: 0, break: 0, setup: 0 };
+  return buildStandardSaSampleSlots(config).map(slot => {
+    const id = `planned-${slot.kind}-${++counts[slot.kind]}`;
+    const label = `${formatTimelineKind(slot.kind)} ${minuteToTimeValue(slot.startMinute)}-${minuteToTimeValue(slot.endMinute)}`;
+    return buildTimelineEvent(id, stationId, productId, slot.kind, slot.startMinute, slot.endMinute, label);
+  });
 }
 
 function buildTimelineEvent(
@@ -1494,6 +1760,11 @@ function derivePlannedSaWindow(events: TimelineEvent[]): PlannedSaWindow {
   };
 }
 
+function standardSaDayWindow(config: StandardSaDayConfig): Required<PlannedSaWindow> {
+  const durationMinutes = config.dayCount * MINUTE_PER_DAY;
+  return { startMinute: config.startMinute, endMinute: config.startMinute + durationMinutes, durationMinutes };
+}
+
 function validatePlannedSaEvents(events: TimelineEvent[], window: PlannedSaWindow): ReturnType<typeof validateTimelineEvents> {
   if (window.startMinute === undefined) return [];
   const normalizedEvents = events.map(event => ({
@@ -1504,77 +1775,11 @@ function validatePlannedSaEvents(events: TimelineEvent[], window: PlannedSaWindo
   return validateTimelineEvents(normalizedEvents, PLANNED_SA_HORIZON_MINUTES);
 }
 
-function summarizePlannedSa(events: TimelineEvent[], scheduledMinutes: number) {
-  const productionMinutes = sumTimelineDuration(events.filter(event => event.kind === "production"));
-  const setupMinutes = sumTimelineDuration(events.filter(event => event.kind === "setup"));
-  const breakMinutes = sumTimelineDuration(events.filter(event => event.kind === "break"));
-  const plannedStopMinutes = sumTimelineDuration(events.filter(event => event.kind === "maintenance" || event.kind === "plannedStop"));
-  const unscheduledEventMinutes = sumTimelineDuration(events.filter(event => event.kind === "unscheduled"));
-  const recordedMinutes = productionMinutes + setupMinutes + breakMinutes + plannedStopMinutes + unscheduledEventMinutes;
-  const implicitGapMinutes = Math.max(scheduledMinutes - recordedMinutes, 0);
-  const unscheduledMinutes = unscheduledEventMinutes + implicitGapMinutes;
-  const plannedLossWithBreaks = setupMinutes + breakMinutes + plannedStopMinutes;
-  const plannedLossWithoutBreaks = setupMinutes + plannedStopMinutes;
-  const bestCaseAvailableMinutes = Math.max(scheduledMinutes - plannedLossWithBreaks - unscheduledMinutes, 0);
-  const bestCaseAvailableWithoutBreaks = Math.max(scheduledMinutes - plannedLossWithoutBreaks - unscheduledMinutes, 0);
-  const bestCaseSaWithBreaks = scheduledMinutes > 0 ? bestCaseAvailableMinutes / scheduledMinutes : 0;
-  const bestCaseSaWithoutBreaks = scheduledMinutes > 0 ? bestCaseAvailableWithoutBreaks / scheduledMinutes : 0;
-
-  return {
-    scheduledMinutes,
-    productionMinutes,
-    setupMinutes,
-    breakMinutes,
-    plannedStopMinutes,
-    unscheduledMinutes,
-    bestCaseAvailableMinutes,
-    bestCaseSaWithBreaks,
-    bestCaseSaWithoutBreaks,
-  };
-}
-
 function sumTimelineDuration(events: TimelineEvent[]): number {
   return events.reduce((sum, event) => sum + Math.max(event.endMinute - event.startMinute, 0), 0);
 }
 
-function findTimelineGapsWithinWindow(events: TimelineEvent[], stationId: string, window: PlannedSaWindow): ReturnType<typeof findTimelineGaps> {
-  if (window.startMinute === undefined || window.endMinute === undefined) return [];
-  const stationEvents = events
-    .filter(event => event.stationId === stationId)
-    .sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
-  const gaps: ReturnType<typeof findTimelineGaps> = [];
-  let cursor = window.startMinute;
-
-  for (const event of stationEvents) {
-    if (event.startMinute > cursor) {
-      gaps.push({ stationId, startMinute: cursor, endMinute: event.startMinute });
-    }
-    cursor = Math.max(cursor, event.endMinute);
-  }
-
-  if (cursor < window.endMinute) {
-    gaps.push({ stationId, startMinute: cursor, endMinute: window.endMinute });
-  }
-  return gaps;
-}
-
-function fillWindowGapsAsUnscheduled(events: TimelineEvent[], stationId: string, window: PlannedSaWindow): TimelineEvent[] {
-  const gaps = findTimelineGapsWithinWindow(events, stationId, window);
-  const unscheduledEvents = gaps.map((gap, index): TimelineEvent => ({
-    id: `${stationId}-unscheduled-${index + 1}`,
-    stationId,
-    kind: "unscheduled",
-    startMinute: gap.startMinute,
-    endMinute: gap.endMinute,
-    source: "manual",
-    label: "unscheduled / not planned",
-  }));
-
-  return [...events, ...unscheduledEvents]
-    .sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute || a.id.localeCompare(b.id));
-}
-
-function renderPlannedTimeline(stationId: string, events: TimelineEvent[], window: PlannedSaWindow): string {
+function renderPlannedTimeline(stationId: string, events: TimelineEvent[], window: PlannedSaWindow, dayConfig: StandardSaDayConfig): string {
   const stationEvents = events.filter(event => event.stationId === stationId);
   const durationMinutes = Math.max(window.durationMinutes, 1);
   const startMinute = window.startMinute ?? 0;
@@ -1593,6 +1798,11 @@ function renderPlannedTimeline(stationId: string, events: TimelineEvent[], windo
         <div class="timeline-row">
           <div class="timeline-station">${escapeHtml(stationId)}</div>
           <div class="timeline-track">
+            ${standardSaOffShiftIntervals(dayConfig).map(interval => {
+              const left = (interval.startMinute - startMinute) / durationMinutes * 100;
+              const width = (interval.endMinute - interval.startMinute) / durationMinutes * 100;
+              return `<span class="timeline-offshift" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${locale === "zh" ? "非排班" : "Off shift"}">${locale === "zh" ? "非排班" : "Off shift"}</span>`;
+            }).join("")}
             ${stationEvents.map(event => renderTimelineSegment(event, startMinute, durationMinutes)).join("")}
           </div>
         </div>
@@ -1822,6 +2032,13 @@ function addDays(dateValue: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+function formatWeekday(dateValue: string): string {
+  const day = parseUtcDate(dateValue).getUTCDay();
+  return locale === "zh"
+    ? ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][day]!
+    : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]!;
+}
+
 function daysBetween(startDateValue: string, endDateValue: string): number {
   const start = parseUtcDate(startDateValue).getTime();
   const end = parseUtcDate(endDateValue).getTime();
@@ -1870,6 +2087,8 @@ function updateMinuteClockPart(currentMinute: number, fieldName: string, value: 
 function updatePlannedActivityEvent(eventId: string, fieldName: string, value: string): void {
   const event = plannedSaEvents.find(item => item.id === eventId);
   if (!event) return;
+
+  if (event.autoFilled === true || /^planned-unscheduled-\d{13}-\d+$/.test(event.id)) event.autoFilled = false;
 
   if (fieldName === "kind") {
     event.kind = value as TimelineEvent["kind"];
@@ -2022,16 +2241,19 @@ function renderRnrTracking(selectedOperation: OperationRoutingView | undefined):
 
 function renderRnrBaselineReference(stationId: string, productId: string): string {
   const events = getPlannedSaEvents(stationId, productId);
-  const window = derivePlannedSaWindow(events);
-  const summary = summarizePlannedSa(events, window.durationMinutes);
+  const dayConfig = getStandardSaDayConfig(productId, stationId);
+  const window = standardSaDayWindow(dayConfig);
+  const summary = summarizeStandardSaDay(events, dayConfig);
+  const valid = !validateStandardSaDay(events, dayConfig).length;
   return `
     <section class="sub-card" style="margin-top:14px;">
       <div class="panel-head"><h3>${t("baselineReference")}</h3><span class="pill">${plannedSaEventsAreDefault ? t("sampleBaseline") : t("baselineReference")}</span></div>
       <div class="field-grid">
         ${field(t("station"), stationId)}
-        ${field(t("baselineSaMetric"), percent(summary.bestCaseSaWithBreaks))}
+        ${field(t("baselineSaMetric"), valid ? percent(summary.bestCaseSaWithBreaks) : "-")}
+        ${field(t("bestCaseSaWithoutBreaks"), valid ? percent(summary.bestCaseSaWithoutBreaks) : "-")}
       </div>
-      ${renderRnrComparisonTimeline(stationId, events, window)}
+      ${renderRnrComparisonTimeline(stationId, events, window, dayConfig)}
       ${rnrMode === "timeWindow" ? `<p class="note">${locale === "zh" ? "实际轨道由现场记录构成；空白表示待补录，不自动计为停机。推断时间损失只在生产段内扣除，不与显式停机重复。" : "The actual track uses on-site records. Blank time is unrecorded, not downtime. Inferred loss is deducted only within production windows, never double-counted with explicit stops."}</p>` : ""}
       ${reconcileCurrentRnrSpeed().segments.some(segment => segment.issue === "faster_than_verified_standard") ? `<p class="form-error" role="alert">${locale === "zh" ? "存在快于已校验标准节拍的生产段：请复核 OK/NOK 数量、每循环件数和真实节拍后再出结果。" : "A production interval is faster than the verified standard: review OK/NOK quantity, pieces per cycle and observed cycle before finalizing."}</p>` : ""}
     </section>
@@ -2081,17 +2303,18 @@ function formatPaceVariance(deltaSec: number | undefined, deltaPercent: number |
   return `${sign}${formatNumber(deltaSec, 1)}s (${sign}${formatNumber(deltaPercent * 100, 1)}%)`;
 }
 
-function renderRnrComparisonTimeline(stationId: string, planned: TimelineEvent[], window: PlannedSaWindow): string {
+function renderRnrComparisonTimeline(stationId: string, planned: TimelineEvent[], window: PlannedSaWindow, dayConfig: StandardSaDayConfig): string {
   const actual = currentRnrActualEvents();
   const start = window.startMinute ?? 0;
   const duration = Math.max(window.durationMinutes, 1);
   const ticks = timelineTicks(duration);
   const plannedMinutes = sumTimelineDuration(planned.filter(event => event.kind === "production"));
   const actualMinutes = sumTimelineDuration(actual.filter(event => event.kind === "production"));
-  const coveredMinutes = sumTimelineDuration(actual);
+  const unrecordedMinutes = findStandardSaDayGaps(actual, dayConfig)
+    .reduce((sum, gap) => sum + gap.endMinute - gap.startMinute, 0);
   const speed = reconcileCurrentRnrSpeed();
   const pace = currentRnrPaceSummary();
-  const complete = coveredMinutes === duration
+  const complete = unrecordedMinutes === 0
     && actual.length > 0
     && actual.every(event => event.startMinute >= start && event.endMinute <= start + duration)
     && !validatePlannedSaEvents(actual, window).some(issue => issue.severity === "error")
@@ -2108,7 +2331,7 @@ function renderRnrComparisonTimeline(stationId: string, planned: TimelineEvent[]
       <div class="field-grid">
         ${field(locale === "zh" ? "计划时间开动率" : "Planned time availability", percent(plannedMinutes / duration))}
         ${field(locale === "zh" ? "实际时间开动率" : "Actual time availability", actualSa)}
-        ${field(locale === "zh" ? "待补录分钟" : "Unrecorded minutes", formatNumber(Math.max(duration - coveredMinutes, 0)))}
+        ${field(locale === "zh" ? "待补录分钟" : "Unrecorded minutes", formatNumber(unrecordedMinutes))}
         ${field(locale === "zh" ? "推断时间损失（分钟）" : "Inferred time loss (min)", round1(speed.inferredSaLossMinutes))}
         ${field(locale === "zh" ? "性能损失（分钟）" : "Performance loss (min)", round1(speed.performanceLossMinutes))}
         ${field(locale === "zh" ? "全程平均节拍" : "Full-run average cycle time", pace.averageCycleSec === undefined ? "-" : `${round1(pace.averageCycleSec)}s`)}
@@ -2118,16 +2341,25 @@ function renderRnrComparisonTimeline(stationId: string, planned: TimelineEvent[]
           <span class="timeline-station">${t("station")}</span>
           <div class="rnr-axis-track">${ticks.map((minute, index) => `<span class="${index === ticks.length - 1 ? "end" : ""}" style="left:${(minute / duration * 100).toFixed(2)}%">${formatTimelineTick(start + minute, index === 0 ? undefined : start + ticks[index - 1]!)}</span>`).join("")}</div>
         </div>
-        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
-        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${actual.map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${actual.map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
       </div>
     </section>
   `;
 }
 
+function renderRnrOffShift(config: StandardSaDayConfig, startMinute: number, durationMinutes: number): string {
+  return standardSaOffShiftIntervals(config).map(interval => {
+    const left = (interval.startMinute - startMinute) / durationMinutes * 100;
+    const width = (interval.endMinute - interval.startMinute) / durationMinutes * 100;
+    const label = locale === "zh" ? "非排班" : "Off shift";
+    return `<span class="timeline-offshift" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${label}">${label}</span>`;
+  }).join("");
+}
+
 function renderRnrActualEditor(stationId: string, productId: string, parameter: { standardCycleSec: number; piecesPerCycle: number } | undefined): string {
   const events = currentRnrActualEvents();
-  const window = derivePlannedSaWindow(getPlannedSaEvents(stationId, productId));
+  const window = standardSaDayWindow(getStandardSaDayConfig(productId, stationId));
   const issues = validatePlannedSaEvents(events, window);
   const pace = currentRnrPaceSummary();
   return `
@@ -2190,7 +2422,7 @@ function resetRnrActualDraft(): void {
 }
 
 function saveRnrActualEvent(stationId: string, productId: string): void {
-  const plannedWindow = derivePlannedSaWindow(getPlannedSaEvents(stationId, productId));
+  const plannedWindow = standardSaDayWindow(getStandardSaDayConfig(productId, stationId));
   const start = rnrSegmentDraft.startMinute;
   const end = rnrSegmentDraft.endMinute;
   if (end <= start || start < (plannedWindow.startMinute ?? 0) || end > (plannedWindow.endMinute ?? 0)) {
@@ -2371,6 +2603,7 @@ function bindRnrTracking(): void {
     plannedSaEvents = fixture.planned;
     plannedSaEventsAreDefault = false;
     plannedSaContexts.set(`${productId}::${stationId}`, { events: fixture.planned, areDefault: false });
+    standardSaDayConfigs.set(`${productId}::${stationId}`, { startMinute: 480, dayCount: 1, shiftMinutes: 720, shiftsPerDay: 2 });
     rnrActualEventsByContext.set(rnrContextKey, fixture.actual);
     validationFixtureContexts.add(rnrContextKey);
     confirmedSuggestions.clear();
@@ -2470,8 +2703,11 @@ function renderCalibration(selectedOperation: OperationRoutingView | undefined, 
   const productId = assignment?.productId ?? selectedProductId;
   const events = getPlannedSaEvents(stationId, productId);
   if (!events.length) { calibrationRoot.innerHTML = emptyState(t("baselineRequired")); return; }
-  const window = derivePlannedSaWindow(events);
-  const baseline = summarizePlannedSa(events, window.durationMinutes);
+  const dayConfig = getStandardSaDayConfig(productId, stationId);
+  const window = standardSaDayWindow(dayConfig);
+  const offShiftIntervals = standardSaOffShiftIntervals(dayConfig);
+  const baseline = summarizeStandardSaDay(events, dayConfig);
+  const baselineValid = !validateStandardSaDay(events, dayConfig).length;
   const actualEvents = rnrActualEventsByContext.get(`${productId}::${selectedOperation?.operation.operationId ?? ""}::${stationId}`) ?? [];
   const productionEvents = actualEvents.filter(event => event.kind === "production");
   const actualQty = productionEvents.reduce((sum, event) => sum + (event.okQty ?? 0) + (event.nokQty ?? 0), 0);
@@ -2489,6 +2725,7 @@ function renderCalibration(selectedOperation: OperationRoutingView | undefined, 
       endMinute: window.endMinute ?? 0,
       planned: events,
       actual: actualEvents,
+      offShiftIntervals,
     });
   } catch (error) {
     reconciliationError = error instanceof Error ? error.message : String(error);
@@ -2496,7 +2733,7 @@ function renderCalibration(selectedOperation: OperationRoutingView | undefined, 
   const evidence = reconciliation ? buildRnrEvidence({
     productId, operationId: selectedOperation?.operation.operationId ?? "", stationId,
     startMinute: window.startMinute ?? 0, endMinute: window.endMinute ?? 0,
-    planned: events, actual: actualEvents, speed,
+    planned: events, actual: actualEvents, offShiftIntervals, speed,
   }) : undefined;
   const operationId = selectedOperation?.operation.operationId ?? "";
   const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operationId, stationId);
@@ -2507,6 +2744,7 @@ function renderCalibration(selectedOperation: OperationRoutingView | undefined, 
     try {
       bestActualPreview = buildRnrBestActualPreview({
         stationId, planned: events, actual: actualEvents,
+        windowStartMinute: window.startMinute, windowEndMinute: window.endMinute, offShiftIntervals,
         standardCycleSec: parameter.standardCycleSec, piecesPerCycle: parameter.piecesPerCycle,
         plannedQualityRate: parameter.qualityRate,
         inferredSaLossMinutes: speed.inferredSaLossMinutes,
@@ -2567,7 +2805,7 @@ function renderCalibration(selectedOperation: OperationRoutingView | undefined, 
     <div class="panel-head"><div><p class="eyebrow">${t("stageCalibration")}</p><h2>${t("calibrationTitle")}</h2></div><span class="pill">${t("observedDraft")}</span></div>
     <p class="note">${t("calibrationNote")}</p>
     <section class="metrics" style="margin-top:14px;">
-      ${metricCard(t("baselineSaMetric"), percent(baseline.bestCaseSaWithBreaks), t("baselineReference"), "good")}
+      ${metricCard(t("baselineSaMetric"), baselineValid ? percent(baseline.bestCaseSaWithBreaks) : "-", t("baselineReference"), "good")}
       ${metricCard(t("draftPerformanceMetric"), performance === undefined ? "-" : percent(performance), t("observedDraft"), "neutral")}
       ${metricCard(t("draftQualityMetric"), qualityRate === undefined ? "-" : percent(qualityRate), t("observedDraft"), "neutral")}
     </section>
@@ -2822,7 +3060,7 @@ function renderRouteWindowCapacityPanel(routingConfig: ProductRoutingConfigurati
         shareCeiling: view.assignment.plannedShare ?? 1,
         ...(view.parameter ? { parameter: view.parameter } : {}),
         planned: planKey === plannedSaContextKey ? plannedSaEvents
-          : plannedSaContexts.get(planKey)?.events ?? buildDefaultPlannedActivityEvents(stationId, routingConfig.productId),
+          : plannedSaContexts.get(planKey)?.events ?? buildDefaultPlannedActivityEvents(stationId, routingConfig.productId, getStandardSaDayConfig(routingConfig.productId, stationId)),
         actual: rnrActualEventsByContext.get(actualKey) ?? [],
         ...(speedOptions ? { speedOptions } : {}),
       };

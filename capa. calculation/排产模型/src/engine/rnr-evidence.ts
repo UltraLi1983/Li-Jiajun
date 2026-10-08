@@ -18,6 +18,7 @@ export interface RnrEvidenceInput {
   endMinute: number;
   planned: TimelineEvent[];
   actual: RnrEvidenceEvent[];
+  offShiftIntervals?: Array<{ startMinute: number; endMinute: number }>;
   speed: RnrSpeedResult;
 }
 

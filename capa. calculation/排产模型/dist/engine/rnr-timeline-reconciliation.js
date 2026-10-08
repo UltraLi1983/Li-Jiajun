@@ -6,12 +6,18 @@ export function reconcileRnrTimeline(input) {
     if (!Number.isFinite(startMinute) || !Number.isFinite(endMinute) || endMinute <= startMinute) {
         throw new RangeError("R&R observation window must have a positive duration");
     }
+    if (input.offShiftIntervals?.some(interval => !Number.isFinite(interval.startMinute)
+        || !Number.isFinite(interval.endMinute) || interval.startMinute < startMinute
+        || interval.endMinute > endMinute || interval.endMinute <= interval.startMinute)) {
+        throw new RangeError("Off-shift intervals must be inside the R&R observation window");
+    }
     const planned = validateTrack(input.planned, stationId, startMinute, endMinute, "planned");
     const actual = validateTrack(input.actual, stationId, startMinute, endMinute, "actual");
     const boundaries = [...new Set([
             startMinute, endMinute,
             ...planned.flatMap(event => [event.startMinute, event.endMinute]),
             ...actual.flatMap(event => [event.startMinute, event.endMinute]),
+            ...(input.offShiftIntervals ?? []).flatMap(interval => [interval.startMinute, interval.endMinute]),
         ])].sort((a, b) => a - b);
     const rows = [];
     let plannedProductionMinutes = 0;
@@ -24,8 +30,9 @@ export function reconcileRnrTimeline(input) {
         const to = boundaries[index + 1];
         const plannedEvent = planned.find(event => event.startMinute <= from && event.endMinute >= to);
         const actualEvent = actual.find(event => event.startMinute <= from && event.endMinute >= to);
-        const plannedKind = plannedEvent?.kind ?? "unrecorded";
-        const actualKind = actualEvent?.kind ?? "unrecorded";
+        const offShift = input.offShiftIntervals?.some(interval => interval.startMinute <= from && interval.endMinute >= to) ?? false;
+        const plannedKind = plannedEvent?.kind ?? (offShift ? "offShift" : "unrecorded");
+        const actualKind = actualEvent?.kind ?? (offShift ? "offShift" : "unrecorded");
         const minutes = to - from;
         if (plannedKind === "production")
             plannedProductionMinutes += minutes;
@@ -33,12 +40,12 @@ export function reconcileRnrTimeline(input) {
             actualProductionMinutes += minutes;
         if (actualEvent && abnormalKinds.has(actualEvent.kind))
             explicitAbnormalMinutes += minutes;
-        if (!actualEvent)
+        if (!actualEvent && !offShift)
             unrecordedMinutes += minutes;
-        if (!plannedEvent)
+        if (!plannedEvent && !offShift)
             plannedGapMinutes += minutes;
-        const status = !plannedEvent ? "plannedGap"
-            : !actualEvent ? "unrecorded"
+        const status = !plannedEvent && !offShift ? "plannedGap"
+            : !actualEvent && !offShift ? "unrecorded"
                 : plannedKind === actualKind ? "matched" : "changed";
         rows.push({
             startMinute: from,

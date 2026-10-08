@@ -12,12 +12,12 @@
     #screen:before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--green) 0 23%,var(--blue) 23% 100%)}
     .header{display:flex;justify-content:space-between;align-items:center;min-width:0}.title-wrap{display:flex;align-items:center;gap:20px}.brand-bar{width:7px;height:45px;background:var(--blue);border-radius:5px}.eyebrow{color:var(--blue);font-size:18px;font-weight:800;letter-spacing:2px}.header h1{margin:2px 0 0;font-size:35px;line-height:1.1;letter-spacing:1px}.header-right{display:flex;align-items:center;gap:17px;font-size:20px;color:var(--muted)}.tag{padding:9px 14px;border:1px solid #4b6475;border-radius:7px;color:var(--amber);background:#342b25;font-size:17px;font-weight:800}.time{font-size:29px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}.fullscreen{background:#1a3049;color:var(--text);border:1px solid #45617b;border-radius:7px;padding:9px 14px;cursor:pointer;font-size:17px}.fullscreen:focus-visible{outline:3px solid var(--amber);outline-offset:3px}.fullscreen:hover{background:#274865}
     .card,.panel{background:var(--panel);border:1px solid var(--border);border-radius:13px;min-width:0;overflow:hidden}.overview{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.metric{padding:7px 18px;position:relative}.metric .label{font-size:20px;color:var(--muted);font-weight:700;white-space:nowrap}.metric .figure{font-size:62px;line-height:1.06;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-2px;margin-top:4px}.metric .unit{font-size:25px;letter-spacing:0;margin-left:5px;color:var(--muted)}.metric .sub{font-size:16px;color:var(--muted);margin-top:3px;white-space:nowrap}.metric.production{border-color:#4387a8}.metric.production .figure{color:var(--blue)}.metric.danger{background:#34252b;border-color:#97505a}.metric.danger .figure{color:var(--red)}.metric.danger .sub{color:#ffb1b5}.metric.delivery,.metric.positive{background:#1c332c;border-color:#54885b}.metric.delivery .figure,.metric.positive .figure{color:var(--green)}.metric.delivery .sub,.metric.positive .sub{color:#c9e8c9}
-    .middle{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.panel{padding:16px 22px}.panel-head{display:flex;justify-content:space-between;align-items:baseline}.panel h2{font-size:24px;line-height:1.2;margin:0}.minor{font-size:17px;color:var(--muted)}.legend{display:flex;gap:17px;font-size:17px;color:var(--muted);align-items:center}.legend span{display:flex;gap:8px;align-items:center}.linekey{width:24px;height:4px;border-radius:2px;display:inline-block}.linekey.plan{background:var(--amber);border-top:2px dashed var(--amber);height:0}.linekey.actual{background:var(--blue)}.linekey.future{background:var(--green);border-top:2px dashed var(--green);height:0}.chart{width:100%;height:180px;margin-top:6px;display:block}.chart text{font-family:inherit;fill:#bfd0dd;font-size:18px}.chart .grid{stroke:#355066;stroke-width:1}.chart .axis{stroke:#6b8599;stroke-width:1}.chart .plan-line{stroke:var(--amber);stroke-width:4;stroke-dasharray:10 7;fill:none}.chart .actual-line{stroke:var(--blue);stroke-width:6;fill:none}.chart .future-line{stroke:var(--green);stroke-width:4;stroke-dasharray:5 7;fill:none}.chart .now{stroke:#b7c9d7;stroke-width:2;stroke-dasharray:5 6}.chart .dot{fill:var(--blue);stroke:#071421;stroke-width:4}
+    .middle{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.panel{padding:16px 22px}.panel-head{display:flex;justify-content:space-between;align-items:baseline}.panel h2{font-size:24px;line-height:1.2;margin:0}.minor{font-size:17px;color:var(--muted)}.legend{display:flex;gap:21px;font-size:18px;color:var(--muted);align-items:center}.legend span{display:flex;gap:8px;align-items:center}.linekey{width:24px;height:4px;border-radius:2px;display:inline-block}.linekey.plan{background:#728a9d}.linekey.actual{background:var(--blue)}.linekey.future{background:var(--amber);border-top:2px dashed var(--amber);height:0}.chart{width:100%;height:180px;margin-top:6px;display:block}.chart text{font-family:inherit;fill:#bfd0dd;font-size:18px}.chart .grid{stroke:#355066;stroke-width:1}.chart .axis{stroke:#6b8599;stroke-width:1}.chart .plan-line{stroke:#8197a7;stroke-width:4;fill:none}.chart .actual-line{stroke:var(--blue);stroke-width:6;fill:none}.chart .future-line{stroke:var(--amber);stroke-width:5;stroke-dasharray:11 8;fill:none}.chart .now{stroke:#b7c9d7;stroke-width:2;stroke-dasharray:5 6}.chart .dot{fill:var(--blue);stroke:#071421;stroke-width:4}
     .bridge{display:flex;flex-direction:column}.bridge h2{margin-bottom:3px}.bridge-row{height:45px;margin-top:5px;display:grid;grid-template-columns:112px 1fr 84px;align-items:center;gap:8px;padding:0 13px;background:var(--panel2);border:1px solid #405b72;border-radius:9px}.bridge-row .row-label{font-size:17px;color:var(--muted);font-weight:750}.bridge-row .expression{font-size:18px;color:var(--text);font-weight:750;white-space:nowrap}.bridge-row strong{text-align:right;color:var(--blue);font-size:27px;font-variant-numeric:tabular-nums}.bridge-row.shortfall strong{color:var(--red)}.bridge-row:last-of-type strong{color:var(--green)}.bridge-note{font-size:15px;color:var(--muted);margin-top:5px;line-height:1.2}
     .drivers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.driver{padding:14px 18px;display:flex;flex-direction:column;justify-content:space-between}.driver .top{display:flex;align-items:center;justify-content:space-between}.driver .name{font-size:22px;font-weight:800}.driver .badge{font-size:16px;color:var(--muted);border:1px solid #53687a;border-radius:5px;padding:4px 8px}.driver .main{display:flex;align-items:baseline;gap:11px}.driver .val{font-size:56px;font-weight:850;line-height:1;font-variant-numeric:tabular-nums}.driver .target{font-size:19px;color:var(--muted)}.driver .bar{height:10px;border-radius:9px;background:var(--track);overflow:hidden}.driver .fill{height:100%;border-radius:9px;background:var(--blue)}.driver .detail{font-size:17px;color:var(--muted);white-space:nowrap}.driver.s .val,.driver.staff .val{color:var(--amber)}.driver.s .fill,.driver.staff .fill{background:var(--amber)}.driver.p .val,.driver.q .val{color:var(--green)}.driver.p .fill,.driver.q .fill{background:var(--green)}
     .issues{padding:10px 18px}.issues-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.issues h2{margin:0;font-size:24px}.issues .scope{font-size:18px;color:var(--muted)}.table{display:grid;grid-template-columns:95px 2.1fr 1.16fr 170px 125px;align-items:center}.table.head{height:37px;color:var(--muted);font-size:17px;border-bottom:1px solid #385269;font-weight:700}.table.row{height:56px;border-bottom:1px solid #294158;font-size:19px}.table.row:last-child{border-bottom:none}.priority{font-size:17px;font-weight:800;border-radius:5px;padding:6px 9px;display:inline-block;text-align:center}.priority.high{background:#6a303b;color:#ffe3e5}.priority.mid{background:#604a2d;color:#ffdfa5}.priority.low{background:#254b5b;color:#c0eefb}.issue-title{font-weight:800}.issue-title small{font-size:17px;color:var(--muted);font-weight:500;margin-left:12px}.owner{color:var(--text)}.deadline{color:var(--amber);font-variant-numeric:tabular-nums}.impact{color:var(--red);font-weight:850;font-size:24px;font-variant-numeric:tabular-nums}.impact.unknown{color:var(--muted);font-size:18px}
     .footer{display:flex;align-items:center;justify-content:space-between;color:#b2c3d1;font-size:17px;border-top:1px solid #284156;padding-top:8px}.footer strong{color:var(--amber)}
-    .header h1{font-size:32px}.eyebrow{font-size:17px}.header-right{gap:11px}.replay{border-color:#4e9bbd;color:#c7eeff;background:#17384b}.replay:hover{background:#245a73}
+    .header h1{font-size:32px}.eyebrow{font-size:17px}
     @media print{#viewport{width:1920px;height:1080px}#screen{transform:none!important}.fullscreen{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
   </style>
 </head>
@@ -26,7 +26,7 @@
     <main id="screen" aria-label="宁德时代项目作战室大屏示意">
       <header class="header">
         <div class="title-wrap"><div class="brand-bar" aria-hidden="true"></div><div><div class="eyebrow">CATL × 海威 · 联合作战室</div><h1>宁德时代项目｜本班交付与生产态势</h1></div></div>
-        <div class="header-right"><span class="tag">10秒模拟回放 · 非现场数据</span><span>当前白班 08:00—20:00</span><span class="time">班内时点 14:20</span><button class="fullscreen replay" id="replay" type="button" aria-label="播放10秒模拟回放">播放演示</button><button class="fullscreen" id="fullscreen" type="button" aria-label="切换全屏预览">全屏预览</button></div>
+        <div class="header-right"><span class="tag">静态讨论图 · 数据均为示例</span><span>当前白班 08:00—20:00</span><span class="time">班内时点 14:20</span><button class="fullscreen" id="fullscreen" type="button" aria-label="切换全屏预览">全屏预览</button></div>
       </header>
 
       <section class="overview" aria-label="本班生产与交付双缺口">
@@ -39,16 +39,16 @@
 
       <section class="middle" aria-label="本班生产与交付桥接">
         <article class="panel">
-          <div class="panel-head"><h2>累计良品｜当前计划 377 · 实际 320 · 班末预测 580</h2><div class="legend"><span><i class="linekey plan"></i>累计计划</span><span><i class="linekey actual"></i>累计实际</span><span><i class="linekey future"></i>剩余预测</span></div></div>
+          <div class="panel-head"><h2>本班生产良品｜计划 600 · 当前 320 · 预测 580</h2><div class="legend"><span><i class="linekey plan"></i>本班目标 600</span><span><i class="linekey actual"></i>已确认良品</span><span><i class="linekey future"></i>预计良品</span></div></div>
           <svg class="chart" viewBox="0 0 1000 230" role="img" aria-label="本班生产良品：计划600件，14点20分确认320件，20点预计580件，生产欠产20件。">
             <line class="grid" x1="82" y1="41" x2="940" y2="41"/><line class="grid" x1="82" y1="101" x2="940" y2="101"/><line class="grid" x1="82" y1="161" x2="940" y2="161"/><line class="axis" x1="82" y1="205" x2="940" y2="205"/>
             <text x="4" y="47">650件</text><text x="6" y="108">450件</text><text x="6" y="168">250件</text>
-            <path class="plan-line" d="M 82 205 L 225 175 L 368 144 L 511 114 L 654 89 L 797 69 L 940 54"/>
+            <path class="plan-line" d="M 82 54 L 940 54" stroke-dasharray="7 7"/>
             <path class="actual-line" d="M 82 205 L 225 185 L 368 152 L 535 124"/>
             <path class="future-line" d="M 535 124 L 737 91 L 940 59"/>
             <line class="now" x1="535" y1="34" x2="535" y2="205"/><circle class="dot" cx="535" cy="124" r="8"/>
             <text x="485" y="27">现在 14:20</text><text x="82" y="228" text-anchor="middle">08:00</text><text x="225" y="228" text-anchor="middle">10:00</text><text x="368" y="228" text-anchor="middle">12:00</text><text x="511" y="228" text-anchor="middle">14:00</text><text x="654" y="228" text-anchor="middle">16:00</text><text x="797" y="228" text-anchor="middle">18:00</text><text x="940" y="228" text-anchor="middle">20:00</text>
-            <text x="850" y="27" fill="#ffc370">计划 600</text><text x="850" y="89" fill="#9ddc52">预测 580</text>
+            <text x="850" y="43" fill="#b8c9d6">班目标 600</text><text x="850" y="89" fill="#ffc370">预测 580</text>
           </svg>
         </article>
         <article class="panel bridge">
@@ -76,7 +76,7 @@
         <div class="table row"><div><span class="priority low">预警</span></div><div class="issue-title">本班工序二缺 3 人、工序三缺 1 人<small>未确认实际损失</small></div><div>核实是否造成停等</div><div class="owner">生产负责人</div><div class="impact unknown">暂不计入</div></div>
       </section>
 
-      <footer class="footer"><span>白班 08:00—20:00｜夜班 20:00—次日 08:00；下一班班初库存承接上一班结存，全部指标按班重算。</span><span><strong>模拟演示</strong>｜班理论能力暂设 972 件/班；黄线为示例分时排程，待现场核实</span></footer>
+      <footer class="footer"><span>白班 08:00—20:00｜夜班 20:00—次日 08:00；下一班班初库存承接上一班结存，全部指标按班重算。</span><span><strong>静态讨论图</strong>｜数值均为演示假设｜交付执行与班理论能力待核实</span></footer>
     </main>
   </div>
   <script>
@@ -88,106 +88,6 @@
       else await document.exitFullscreen?.();
       fit();
     });
-    const $$=(selector)=>[...document.querySelectorAll(selector)];
-    const cards=$$('.overview .metric');
-    const rows=$$('.bridge-row');
-    const drivers=$$('.drivers .driver');
-    const issues=$$('.issues .table.row');
-    const chart=document.querySelector('.chart');
-    const clock=document.querySelector('.header .time');
-    const heading=document.querySelector('.middle .panel h2');
-    const note=document.querySelector('.bridge-note');
-    const theoretical=972, plan=600, stock=100, due=650, futureS=.634;
-    const lerp=(a,b,t)=>a+(b-a)*t;
-    const round=(a)=>Math.round(a);
-    const timeText=(minutes)=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
-    const setCard=(i,label,value,sub,mode)=>{
-      const el=cards[i];el.className=`card metric ${mode}`;
-      el.querySelector('.label').textContent=label;
-      el.querySelector('.figure').innerHTML=`${value}<span class="unit">件</span>`;
-      el.querySelector('.sub').textContent=sub;
-    };
-    const setDriver=(i,value,detail,pct,target)=>{
-      drivers[i].querySelector('.val').textContent=value;
-      drivers[i].querySelector('.detail').textContent=detail;
-      drivers[i].querySelector('.fill').style.width=`${pct}%`;
-      if(target!==undefined)drivers[i].querySelector('.target').textContent=target;
-    };
-    const y=(v)=>205-v/650*164;
-    const planNodes=[[480,0],[600,120],[720,240],[840,360],[960,460],[1080,540],[1200,600]];
-    function plannedAt(minutes){
-      for(let i=1;i<planNodes.length;i++)if(minutes<=planNodes[i][0]){
-        const [m0,v0]=planNodes[i-1],[m1,v1]=planNodes[i];
-        return round(lerp(v0,v1,(minutes-m0)/(m1-m0)));
-      }
-      return plan;
-    }
-    function renderAt(progress){
-      const t=Math.max(0,Math.min(1,progress));
-      const minutes=round(lerp(720,860,t));
-      const s=70,p=round(lerp(98,97,t)),q=round(lerp(95,92,t));
-      const good=round(theoretical*(minutes-480)/720*(s/100)*(p/100)*(q/100));
-      const processed=round(good/(q/100)),scrap=processed-good;
-      const forecast=round(good+(1200-minutes)/720*theoretical*futureS*(p/100)*(q/100));
-      const productionDelta=plan-forecast;
-      const deliverable=stock+forecast,deliveryDelta=deliverable-due;
-      const running=round(lerp(62,56,t)),slow=round(lerp(1,5,t)),fault=round(lerp(0,42,t));
-      const staff=round(lerp(90,86,t)),process2=round(lerp(30,27,t)),process3=round(lerp(30,29,t));
-      const now=timeText(minutes),x=82+(minutes-480)/720*858,plannedNow=plannedAt(minutes);
-      clock.textContent=`班内时点 ${now}`;
-      setCard(0,'本班计划生产 · 良品',plan,'按本班排程目标','production');
-      setCard(1,'本班预计可生产 · 良品',forecast,'余下时段预计 S 63.4%','production');
-      setCard(2,productionDelta>=0?'本班预计欠产':'本班预计超产',Math.abs(productionDelta),
-        productionDelta>=0?`计划 ${plan} − 预计良品 ${forecast}`:`预计良品 ${forecast} − 计划 ${plan}`,
-        productionDelta>=0?'danger':'positive');
-      setCard(3,'本班预计可交付',deliverable,`班初可用 ${stock} ＋ 预计良品 ${forecast}`,'delivery');
-      setCard(4,deliveryDelta>=0?'交付完毕后预计余量':'本班预计交付缺口',
-        deliveryDelta>=0?`+${deliveryDelta}`:Math.abs(deliveryDelta),
-        deliveryDelta>=0?`预计可交付 ${deliverable} − 应交 ${due}`:`应交 ${due} − 预计可交付 ${deliverable}`,
-        deliveryDelta>=0?'positive':'danger');
-      heading.textContent=`累计良品｜当前计划 ${plannedNow} · 实际 ${good} · 班末预测 ${forecast}`;
-      const at10=round(theoretical*(600-480)/720*(s/100)*.98*.95);
-      const at12=round(theoretical*(720-480)/720*(s/100)*.98*.95);
-      chart.querySelector('.actual-line').setAttribute('d',`M 82 205 L 225 ${y(at10)} L 368 ${y(at12)} L ${x} ${y(good)}`);
-      chart.querySelector('.future-line').setAttribute('d',`M ${x} ${y(good)} L ${lerp(x,940,.5)} ${y(lerp(good,forecast,.5))} L 940 ${y(forecast)}`);
-      chart.querySelector('.now').setAttribute('x1',x);chart.querySelector('.now').setAttribute('x2',x);
-      chart.querySelector('.dot').setAttribute('cx',x);chart.querySelector('.dot').setAttribute('cy',y(good));
-      chart.querySelectorAll('text')[3].textContent=`现在 ${now}`;
-      chart.querySelectorAll('text')[3].setAttribute('x',x-50);
-      chart.querySelectorAll('text')[12].textContent=`预测 ${forecast}`;
-      chart.querySelectorAll('text')[12].setAttribute('y',Math.max(87,y(forecast)+25));
-      chart.setAttribute('aria-label',`本班计划${plan}件；${now}累计计划${plannedNow}件、确认良品${good}件；截止20点预测良品${forecast}件。`);
-      rows[1].classList.toggle('shortfall',productionDelta>=0);
-      rows[1].querySelector('.row-label').textContent=productionDelta>=0?'生产欠产':'生产超产';
-      rows[1].querySelector('.expression').textContent=productionDelta>=0?`计划良品 ${plan} − 当前预测 ${forecast}`:`当前预测 ${forecast} − 计划良品 ${plan}`;
-      rows[1].querySelector('strong').textContent=Math.abs(productionDelta);
-      rows[2].querySelector('.expression').textContent=`班初可用 ${stock} ＋ 预测良品 ${forecast}`;
-      rows[2].querySelector('strong').textContent=deliverable;
-      note.textContent=`客户本班应交 ${due}；${deliveryDelta>=0?`预计交付余量 +${deliveryDelta}`:`预计交付缺口 ${Math.abs(deliveryDelta)}`}。${productionDelta>=0?`生产欠产 ${productionDelta}`:`生产超产 ${Math.abs(productionDelta)}`}，与交付差额分别判断。`;
-      for(const d of drivers.slice(0,3))d.querySelector('.badge').textContent=`本班累计至 ${now}`;
-      setDriver(0,`${s}%`,`当前运行 ${running} / 80 台｜12# 本班已停 ${fault} 分钟`,s);
-      setDriver(1,`${p}%`,`本班慢节拍机台 ${slow} 台｜需核实工艺与设备`,p);
-      setDriver(2,`${q}%`,`本班加工 ${processed} 件｜良品 ${good} / 废件 ${scrap}`,q,`报废约 ${100-q}%`);
-      setDriver(3,`${staff}/90`,`本班：工序一 30/30 ｜二 ${process2}/30 ｜三 ${process3}/30`,staff/90*100,`${(staff/90*100).toFixed(1)}%`);
-      issues[0].querySelector('small').textContent=`本班已停 ${fault} 分钟`;
-      issues[1].querySelector('.issue-title').childNodes[0].textContent=`本班已确认废件 ${scrap} 件`;
-      issues[3].querySelector('.issue-title').childNodes[0].textContent=`本班工序二缺 ${30-process2} 人、工序三缺 ${30-process3} 人`;
-      window.demoState={minutes,s,p,q,good,processed,scrap,plannedNow,forecast,productionDelta,deliverable,deliveryDelta};
-      return window.demoState;
-    }
-    window.renderAt=renderAt;
-    let playing=false;
-    function playDemo(){
-      if(playing)return;playing=true;
-      const start=performance.now(),button=document.getElementById('replay');
-      button.textContent='演示中…';button.disabled=true;
-      function frame(ts){const t=Math.min(1,(ts-start)/10000);renderAt(t);
-        if(t<1)requestAnimationFrame(frame);
-        else{playing=false;button.textContent='重新播放';button.disabled=false;}}
-      requestAnimationFrame(frame);
-    }
-    document.getElementById('replay').addEventListener('click',playDemo);
-    renderAt(1);
   </script>
 </body>
 </html>

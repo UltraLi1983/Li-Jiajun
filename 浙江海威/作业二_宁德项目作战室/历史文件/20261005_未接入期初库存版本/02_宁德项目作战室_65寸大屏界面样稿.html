@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>宁德项目作战室｜65 寸大屏界面样稿</title>
+  <style>
+    :root{--bg:#081421;--panel:#122238;--panel2:#152941;--border:#2b4359;--text:#f3f8fb;--muted:#bdcdd9;--blue:#44b9ee;--green:#9ddc52;--amber:#ffc370;--red:#ff6f76;--track:#2a4055}
+    *{box-sizing:border-box}html,body{margin:0;min-width:320px;min-height:100%;background:#040b13;color:var(--text);font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",Arial,sans-serif}button{font:inherit}
+    #viewport{width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #screen{width:1920px;height:1080px;flex:none;transform-origin:center center;background:var(--bg);padding:16px 32px;display:grid;grid-template-rows:68px 139px 247px 169px 319px 35px;gap:14px;position:relative;overflow:hidden}
+    #screen:before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--green) 0 23%,var(--blue) 23% 100%)}
+    .header{display:flex;justify-content:space-between;align-items:center;min-width:0}.title-wrap{display:flex;align-items:center;gap:20px}.brand-bar{width:7px;height:45px;background:var(--blue);border-radius:5px}.eyebrow{color:var(--blue);font-size:18px;font-weight:800;letter-spacing:2px}.header h1{margin:2px 0 0;font-size:35px;line-height:1.1;letter-spacing:1px}.header-right{display:flex;align-items:center;gap:17px;font-size:20px;color:var(--muted)}.tag{padding:9px 14px;border:1px solid #4b6475;border-radius:7px;color:var(--amber);background:#342b25;font-size:17px;font-weight:800}.time{font-size:29px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}.fullscreen{background:#1a3049;color:var(--text);border:1px solid #45617b;border-radius:7px;padding:9px 14px;cursor:pointer;font-size:17px}.fullscreen:focus-visible{outline:3px solid var(--amber);outline-offset:3px}.fullscreen:hover{background:#274865}
+    .card,.panel{background:var(--panel);border:1px solid var(--border);border-radius:13px;min-width:0;overflow:hidden}.overview{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px}.metric{padding:10px 22px;position:relative}.metric .label{font-size:21px;color:var(--muted);font-weight:700}.metric .figure{font-size:69px;line-height:1.06;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-2px;margin-top:3px}.metric .unit{font-size:27px;letter-spacing:0;margin-left:6px;color:var(--muted)}.metric .sub{font-size:17px;color:var(--muted);margin-top:1px;white-space:nowrap}.metric.danger{background:#34252b;border-color:#97505a}.metric.danger .figure{color:var(--red)}.metric.danger .sub{color:#ffb1b5}.metric.positive{background:#1c332c;border-color:#54885b}.metric.positive .figure{color:var(--green)}.metric.positive .sub{color:#c9e8c9}.metric.good .figure{color:var(--green)}.metric.forecast .figure{color:var(--blue)}
+    .middle{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.panel{padding:16px 22px}.panel-head{display:flex;justify-content:space-between;align-items:baseline}.panel h2{font-size:24px;line-height:1.2;margin:0}.minor{font-size:17px;color:var(--muted)}.legend{display:flex;gap:21px;font-size:18px;color:var(--muted);align-items:center}.legend span{display:flex;gap:8px;align-items:center}.linekey{width:24px;height:4px;border-radius:2px;display:inline-block}.linekey.plan{background:#728a9d}.linekey.actual{background:var(--blue)}.linekey.future{background:var(--amber);border-top:2px dashed var(--amber);height:0}.chart{width:100%;height:180px;margin-top:6px;display:block}.chart text{font-family:inherit;fill:#bfd0dd;font-size:18px}.chart .grid{stroke:#355066;stroke-width:1}.chart .axis{stroke:#6b8599;stroke-width:1}.chart .plan-line{stroke:#8197a7;stroke-width:4;fill:none}.chart .actual-line{stroke:var(--blue);stroke-width:6;fill:none}.chart .future-line{stroke:var(--amber);stroke-width:5;stroke-dasharray:11 8;fill:none}.chart .now{stroke:#b7c9d7;stroke-width:2;stroke-dasharray:5 6}.chart .dot{fill:var(--blue);stroke:#071421;stroke-width:4}
+    .bridge{display:flex;flex-direction:column}.bridge h2{margin-bottom:4px}.bridge-steps{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr;align-items:center;gap:7px;margin-top:2px}.step{height:94px;border:1px solid #405b72;border-radius:10px;background:var(--panel2);padding:7px 11px}.step .small{font-size:16px;color:var(--muted);font-weight:700}.step strong{display:block;font-size:36px;margin-top:2px;line-height:1.05;font-variant-numeric:tabular-nums}.step strong.green{color:var(--green)}.step strong.blue{color:var(--blue)}.step strong.amber{color:var(--amber)}.arrow{text-align:center;color:var(--blue);font-size:30px;font-weight:700}.bridge-formula{margin-top:7px;padding:7px 11px;background:#1b3444;border-radius:8px;display:flex;justify-content:space-between;gap:10px;font-size:18px;font-weight:750;color:var(--text)}.bridge-formula em{font-style:normal;color:var(--green)}.bridge-note{font-size:16px;color:var(--muted);margin-top:6px;line-height:1.25}
+    .drivers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.driver{padding:14px 18px;display:flex;flex-direction:column;justify-content:space-between}.driver .top{display:flex;align-items:center;justify-content:space-between}.driver .name{font-size:22px;font-weight:800}.driver .badge{font-size:16px;color:var(--muted);border:1px solid #53687a;border-radius:5px;padding:4px 8px}.driver .main{display:flex;align-items:baseline;gap:11px}.driver .val{font-size:56px;font-weight:850;line-height:1;font-variant-numeric:tabular-nums}.driver .target{font-size:19px;color:var(--muted)}.driver .bar{height:10px;border-radius:9px;background:var(--track);overflow:hidden}.driver .fill{height:100%;border-radius:9px;background:var(--blue)}.driver .detail{font-size:17px;color:var(--muted);white-space:nowrap}.driver.s .val,.driver.staff .val{color:var(--amber)}.driver.s .fill,.driver.staff .fill{background:var(--amber)}.driver.p .val,.driver.q .val{color:var(--green)}.driver.p .fill,.driver.q .fill{background:var(--green)}
+    .issues{padding:10px 18px}.issues-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.issues h2{margin:0;font-size:24px}.issues .scope{font-size:18px;color:var(--muted)}.table{display:grid;grid-template-columns:95px 2.1fr 1.16fr 170px 125px;align-items:center}.table.head{height:37px;color:var(--muted);font-size:17px;border-bottom:1px solid #385269;font-weight:700}.table.row{height:56px;border-bottom:1px solid #294158;font-size:19px}.table.row:last-child{border-bottom:none}.priority{font-size:17px;font-weight:800;border-radius:5px;padding:6px 9px;display:inline-block;text-align:center}.priority.high{background:#6a303b;color:#ffe3e5}.priority.mid{background:#604a2d;color:#ffdfa5}.priority.low{background:#254b5b;color:#c0eefb}.issue-title{font-weight:800}.issue-title small{font-size:17px;color:var(--muted);font-weight:500;margin-left:12px}.owner{color:var(--text)}.deadline{color:var(--amber);font-variant-numeric:tabular-nums}.impact{color:var(--red);font-weight:850;font-size:24px;font-variant-numeric:tabular-nums}.impact.unknown{color:var(--muted);font-size:18px}
+    .footer{display:flex;align-items:center;justify-content:space-between;color:#b2c3d1;font-size:17px;border-top:1px solid #284156;padding-top:8px}.footer strong{color:var(--amber)}
+    @media print{#viewport{width:1920px;height:1080px}#screen{transform:none!important}.fullscreen{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <main id="screen" aria-label="宁德时代项目作战室大屏示意">
+      <header class="header">
+        <div class="title-wrap"><div class="brand-bar" aria-hidden="true"></div><div><div class="eyebrow">CATL × 海威 · 联合作战室</div><h1>宁德时代项目｜今日交付与生产态势</h1></div></div>
+        <div class="header-right"><span class="tag">演示数据 · 未接现场</span><span>日班 08:00—20:00</span><span class="time" id="clock">示例时点 14:20</span><button class="fullscreen" id="replay" type="button" aria-label="播放十秒数据演示">播放演示</button><button class="fullscreen" id="fullscreen" type="button" aria-label="切换全屏预览">全屏预览</button></div>
+      </header>
+
+      <section class="overview" aria-label="今日交付总览">
+        <article class="card metric"><div class="label">客户今日需求</div><div class="figure">650<span class="unit">件</span></div><div class="sub">交付截止 20:00｜示例工单</div></article>
+        <article class="card metric good"><div class="label">当前已确认良品</div><div class="figure"><span id="goodNow">320</span><span class="unit">件</span></div><div class="sub">加工完成并判定合格</div></article>
+        <article class="card metric forecast"><div class="label">预计截止前可交付</div><div class="figure"><span id="deliverForecast">580</span><span class="unit">件</span></div><div class="sub" id="deliveryBridge">预计良品 600 − 待放行 20</div></article>
+        <article class="card metric danger" id="gapCard"><div class="label">预计交付差额</div><div class="figure"><span id="gap">−70</span><span class="unit">件</span></div><div class="sub" id="gapText">若不干预，预计无法足额交付</div></article>
+      </section>
+
+      <section class="middle" aria-label="交付趋势与预测逻辑">
+        <article class="panel">
+          <div class="panel-head"><h2>计划 → 当前 → 预计收官</h2><div class="legend"><span><i class="linekey plan"></i>计划良品</span><span><i class="linekey actual"></i>已确认良品</span><span><i class="linekey future"></i>预计良品</span></div></div>
+          <svg class="chart" id="trendChart" viewBox="0 0 1000 230" role="img" aria-label="良品累计趋势：14点20分确认320件，20点预计600件，客户需求650件">
+            <line class="grid" x1="82" y1="41" x2="940" y2="41"/><line class="grid" x1="82" y1="101" x2="940" y2="101"/><line class="grid" x1="82" y1="161" x2="940" y2="161"/><line class="axis" x1="82" y1="205" x2="940" y2="205"/>
+            <text x="4" y="47">650件</text><text x="6" y="108">450件</text><text x="6" y="168">250件</text>
+            <path class="plan-line" d="M 82 205 L 225 178 L 368 151 L 511 123 L 654 96 L 797 68 L 940 41"/>
+            <path class="actual-line" id="actualPath" d="M 82 205 L 225 187 L 368 164 L 511 149 L 535 147"/>
+            <path class="future-line" id="futurePath" d="M 535 147 L 654 126 L 797 91 L 940 55"/>
+            <line class="now" id="nowLine" x1="535" y1="34" x2="535" y2="205"/><circle class="dot" id="nowDot" cx="535" cy="147" r="8"/>
+            <text id="nowLabel" x="485" y="27">现在 14:20</text><text x="82" y="228" text-anchor="middle">08:00</text><text x="225" y="228" text-anchor="middle">10:00</text><text x="368" y="228" text-anchor="middle">12:00</text><text x="511" y="228" text-anchor="middle">14:00</text><text x="654" y="228" text-anchor="middle">16:00</text><text x="797" y="228" text-anchor="middle">18:00</text><text x="940" y="228" text-anchor="middle">20:00</text>
+            <text x="906" y="35" fill="#aabac6">计划 650</text><text id="forecastLabel" x="899" y="77" fill="#ffc370">预测 600</text>
+          </svg>
+        </article>
+        <article class="panel bridge">
+          <div class="panel-head"><h2>预测链路</h2><span class="minor">生产与交付分开判断</span></div>
+          <div class="bridge-steps">
+            <div class="step"><span class="small">理论加工能力</span><strong>960</strong><span class="small">件 / 日</span></div><div class="arrow">→</div>
+            <div class="step"><span class="small">QSP 预计良品</span><strong class="green" id="goodForecast">600</strong><span class="small">件 / 日</span></div><div class="arrow">→</div>
+            <div class="step"><span class="small">预计可交付</span><strong class="blue" id="deliverBridgeValue">580</strong><span class="small">件 / 日</span></div>
+          </div>
+          <div class="bridge-formula"><span id="formula">960 × S 70% × P 97% × Q 92%</span><em id="formulaResult">≈ 600 件</em></div>
+          <div class="bridge-note" id="holdNote">其中 20 件预计尚待质量放行；此环节不计入 Q。</div>
+        </article>
+      </section>
+
+      <section class="drivers" aria-label="QSP 与人员配置状态">
+        <article class="card driver s"><div class="top"><span class="name">S · 时间开动率</span><span class="badge">已发生停机计入 S</span></div><div class="main"><span class="val" id="sValue">70%</span><span class="target">累计口径示例</span></div><div class="bar"><div class="fill" id="sBar" style="width:70%"></div></div><div class="detail" id="sDetail">运行 56 / 80 台｜12# 故障已停 42 分钟</div></article>
+        <article class="card driver p"><div class="top"><span class="name">P · 节拍达成率</span><span class="badge">影响运行速度</span></div><div class="main"><span class="val" id="pValue">97%</span><span class="target">相对标准节拍</span></div><div class="bar"><div class="fill" id="pBar" style="width:97%"></div></div><div class="detail" id="pDetail">慢节拍机台 5 台｜需核实工艺与设备</div></article>
+        <article class="card driver q"><div class="top"><span class="name">Q · 良品率</span><span class="badge">废件计入 Q</span></div><div class="main"><span class="val" id="qValue">92%</span><span class="target" id="qTarget">报废约 8%</span></div><div class="bar"><div class="fill" id="qBar" style="width:92%"></div></div><div class="detail" id="qDetail">加工 348 件｜良品 320 / 废件 28</div></article>
+        <article class="card driver staff"><div class="top"><span class="name">人员 · 有效岗位覆盖</span><span class="badge">独立预警 · 未计入 S</span></div><div class="main"><span class="val" id="staffValue">86/90</span><span class="target" id="staffPct">95.6%</span></div><div class="bar"><div class="fill" id="staffBar" style="width:95.6%"></div></div><div class="detail" id="staffDetail">工序一 30/30 ｜工序二 27/30 ｜工序三 29/30</div></article>
+      </section>
+
+      <section class="panel issues" aria-label="待处理异常与决策">
+        <div class="issues-top"><h2>异常 → 指标 → 决策</h2><span class="scope">同一事件只归因一次；人员损失未经核实不入 S</span></div>
+        <div class="table head"><div>状态</div><div>事件 / 风险</div><div>下一动作</div><div>责任接口</div><div>归属</div></div>
+        <div class="table row"><div><span class="priority high">紧急</span></div><div class="issue-title">12# 设备刀库故障<small id="faultMinutes">已停 42 分钟</small></div><div>维修确认恢复时间</div><div class="owner">设备负责人</div><div class="impact unknown">计入 S</div></div>
+        <div class="table row"><div><span class="priority mid">质量</span></div><div class="issue-title"><span id="scrapEvent">已确认废件 28 件</span><small>与待放行分开</small></div><div>识别缺陷与责任工序</div><div class="owner">质量负责人</div><div class="impact unknown">计入 Q</div></div>
+        <div class="table row"><div><span class="priority mid">待放行</span></div><div class="issue-title"><span id="holdEvent">20 件成品待质量放行</span><small>减少可交付量</small></div><div>确认放行结论与时点</div><div class="owner">质量负责人</div><div class="impact unknown">交付门</div></div>
+        <div class="table row"><div><span class="priority low">预警</span></div><div class="issue-title"><span id="staffEvent">工序二缺 3 人，工序三缺 1 人</span><small>未确认实际损失</small></div><div>核实是否造成停等</div><div class="owner">生产负责人</div><div class="impact unknown">暂不计入</div></div>
+      </section>
+
+      <footer class="footer"><span>口径：设备停机→S；废件→Q；待放行→交付。人员缺口单独预警，核实停等后才计入 S。</span><span><strong>界面样稿</strong>｜所有数值均为讨论用示例｜信息源与刷新规则待下一轮定义</span></footer>
+    </main>
+  </div>
+  <script>
+    const screen=document.getElementById('screen');
+    const el=id=>document.getElementById(id);
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    const round=(a,b,t)=>Math.round(lerp(a,b,t));
+    const chartY=value=>205-(value/650)*164;
+    const clockText=minutes=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
+    // 单一状态驱动数值、预测链路、异常内容与曲线。仅用于演示，不代表现场实测。
+    window.renderAt=function(progress){
+      const t=Math.min(1,Math.max(0,progress));
+      const minutes=round(720,860,t),time=clockText(minutes);
+      const s=round(75,70,t),p=round(98,97,t),q=round(95,92,t);
+      const goodNow=round(210,320,t),processed=Math.round(goodNow/(q/100)),scrap=processed-goodNow;
+      const hold=round(0,20,t),forecastGood=Math.round(960*s/100*p/100*q/100);
+      const forecastDeliver=forecastGood-hold,difference=forecastDeliver-650;
+      const staff2=30-round(0,3,t),staff3=30-round(0,1,t),staff=30+staff2+staff3;
+      const running=round(62,56,t),slow=round(1,5,t),faultMinutes=round(0,42,t);
+      el('clock').textContent=`示例时点 ${time}`;
+      el('goodNow').textContent=goodNow;
+      el('deliverForecast').textContent=forecastDeliver;
+      el('deliveryBridge').textContent=`预计良品 ${forecastGood} − 待放行 ${hold}`;
+      el('gap').textContent=(difference>=0?'+':'−')+Math.abs(difference);
+      el('gapText').textContent=difference>=0?'预计可满足今日需求':'若不干预，预计无法足额交付';
+      el('gapCard').classList.toggle('positive',difference>=0);
+      el('gapCard').classList.toggle('danger',difference<0);
+      el('goodForecast').textContent=forecastGood;
+      el('deliverBridgeValue').textContent=forecastDeliver;
+      el('formula').textContent=`960 × S ${s}% × P ${p}% × Q ${q}%`;
+      el('formulaResult').textContent=`≈ ${forecastGood} 件`;
+      el('holdNote').textContent=`其中 ${hold} 件预计尚待质量放行；此环节不计入 Q。`;
+      el('sValue').textContent=`${s}%`;el('sBar').style.width=`${s}%`;
+      el('sDetail').textContent=`运行 ${running} / 80 台｜12# 故障已停 ${faultMinutes} 分钟`;
+      el('pValue').textContent=`${p}%`;el('pBar').style.width=`${p}%`;
+      el('pDetail').textContent=`慢节拍机台 ${slow} 台｜需核实工艺与设备`;
+      el('qValue').textContent=`${q}%`;el('qBar').style.width=`${q}%`;
+      el('qTarget').textContent=`报废约 ${100-q}%`;
+      el('qDetail').textContent=`加工 ${processed} 件｜良品 ${goodNow} / 废件 ${scrap}`;
+      el('staffValue').textContent=`${staff}/90`;
+      el('staffPct').textContent=`${(staff/90*100).toFixed(1)}%`;
+      el('staffBar').style.width=`${staff/90*100}%`;
+      el('staffDetail').textContent=`工序一 30/30 ｜工序二 ${staff2}/30 ｜工序三 ${staff3}/30`;
+      el('faultMinutes').textContent=`已停 ${faultMinutes} 分钟`;
+      el('scrapEvent').textContent=`已确认废件 ${scrap} 件`;
+      el('holdEvent').textContent=`${hold} 件成品待质量放行`;
+      el('staffEvent').textContent=`工序二缺 ${30-staff2} 人，工序三缺 ${30-staff3} 人`;
+      const x=368+(535-368)*t,y=chartY(goodNow),endY=chartY(forecastGood);
+      el('actualPath').setAttribute('d',`M 82 205 L 225 ${chartY(80).toFixed(1)} L 368 ${chartY(210).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);
+      el('futurePath').setAttribute('d',`M ${x.toFixed(1)} ${y.toFixed(1)} L ${((x+940)/2).toFixed(1)} ${((y+endY)/2).toFixed(1)} L 940 ${endY.toFixed(1)}`);
+      el('nowLine').setAttribute('x1',x);el('nowLine').setAttribute('x2',x);
+      el('nowDot').setAttribute('cx',x);el('nowDot').setAttribute('cy',y);
+      el('nowLabel').setAttribute('x',x-50);el('nowLabel').textContent=`现在 ${time}`;
+      el('forecastLabel').setAttribute('y',Math.max(58,endY+22));el('forecastLabel').textContent=`预测 ${forecastGood}`;
+      el('trendChart').setAttribute('aria-label',`良品累计趋势：${time} 确认 ${goodNow} 件，20点预计 ${forecastGood} 件，客户需求650件`);
+      return {time,s,p,q,goodNow,processed,scrap,hold,forecastGood,forecastDeliver,difference,staff};
+    };
+    let animationId=0;
+    function playDemo(){
+      cancelAnimationFrame(animationId);
+      if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){window.renderAt(1);return;}
+      const start=performance.now();
+      function frame(now){const t=Math.min(1,(now-start)/10000);window.renderAt(t);if(t<1)animationId=requestAnimationFrame(frame);}
+      animationId=requestAnimationFrame(frame);
+    }
+    function fit(){const scale=Math.min(window.innerWidth/1920,window.innerHeight/1080);screen.style.transform=`scale(${scale})`;}
+    window.addEventListener('resize',fit);fit();
+    el('replay').addEventListener('click',playDemo);
+    document.getElementById('fullscreen').addEventListener('click',async()=>{if(!document.fullscreenElement){await document.documentElement.requestFullscreen?.();}else{await document.exitFullscreen?.();}fit();});
+    window.renderAt(1);
+  </script>
+</body>
+</html>
