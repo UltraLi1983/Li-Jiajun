@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buildStandardSaSampleSlots, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../dist/engine/standard-sa-day.js";
+import { buildStandardSaSampleSlots, intervalCoveredByShifts, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../dist/engine/standard-sa-day.js";
 
 const event = (id, kind, startMinute, endMinute) => ({
   id, kind, startMinute, endMinute, stationId: "OP10", source: "manual",
@@ -94,6 +94,15 @@ describe("standard SA production day", () => {
     assert.ok(next.some(item => item.id === manualProduction.id));
     assert.deepEqual(validateStandardSaDay(reconcileAutoFilledGaps([...events, secondDayGap], config), config), []);
     assert.ok(validateStandardSaDay(next, config).includes("outside_shift"));
+  });
+
+  it("keeps an actual interval inside scheduled shifts and rejects off-shift time", () => {
+    const oneShift = standardSaShiftIntervals(config);
+    assert.equal(intervalCoveredByShifts(510, 1230, oneShift), true);
+    assert.equal(intervalCoveredByShifts(1200, 1300, oneShift), false);
+    const twoShifts = standardSaShiftIntervals({ ...config, shiftsPerDay: 2 });
+    assert.equal(intervalCoveredByShifts(1200, 1300, twoShifts), true);
+    assert.equal(intervalCoveredByShifts(510, 1950, twoShifts), true);
   });
 
   it("clips auto-filled gaps at the new 8-hour boundary and keeps edited gaps", () => {

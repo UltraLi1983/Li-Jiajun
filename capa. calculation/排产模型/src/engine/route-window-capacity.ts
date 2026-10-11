@@ -17,6 +17,7 @@ export interface WindowStationInput {
   planned: TimelineEvent[];
   actual: WindowActualEvent[];
   speedOptions?: RnrSpeedOptions;
+  offShiftIntervals?: Array<{ startMinute: number; endMinute: number }>;
 }
 
 export interface RouteWindowCapacityInput {
@@ -97,6 +98,7 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
       timeline = reconcileRnrTimeline({
         stationId: station.stationId, startMinute: input.startMinute, endMinute: input.endMinute,
         planned: station.planned, actual: station.actual,
+        ...(station.offShiftIntervals ? { offShiftIntervals: station.offShiftIntervals } : {}),
       });
     } catch {
       result.blockers.push("timeline_invalid");
@@ -106,7 +108,7 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
     result.actualProductionMinutes = timeline.actualProductionMinutes;
     if (timeline.plannedGapMinutes > 0) result.blockers.push("planned_window_gap");
     if (parameter && !result.blockers.length) {
-      result.bestGoodCapacity = timeline.plannedProductionMinutes * shareCeiling * 60
+      result.bestGoodCapacity = timeline.plannedProductionMinutes * 60
         / parameter.standardCycleSec * parameter.piecesPerCycle
         * parameter.performanceRate * parameter.qualityRate;
     }
@@ -146,7 +148,7 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
   });
   const comparable = operations.length > 0 && operations.every(operation => {
     const factor = input.operationUnitsPerProduct?.[operation.operationId];
-    return factor !== undefined && Number.isFinite(factor) && factor > 0;
+    return factor !== undefined && Number.isSafeInteger(factor) && factor > 0;
   });
   const bestReady = comparable && operations.every(operation => operation.bestGoodCapacity !== undefined);
   const actualReady = comparable && operations.every(operation => operation.actualGoodOutput !== undefined);
@@ -159,7 +161,7 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
   const bestGoodCapacity = bestBottleneck
     ? bestBottleneck.bestGoodCapacity! / input.operationUnitsPerProduct![bestBottleneck.operationId]! : undefined;
   const actualGoodOutput = actualBottleneck
-    ? actualBottleneck.actualGoodOutput! / input.operationUnitsPerProduct![actualBottleneck.operationId]! : undefined;
+    ? Math.floor(actualBottleneck.actualGoodOutput! / input.operationUnitsPerProduct![actualBottleneck.operationId]!) : undefined;
   return {
     windowMinutes, stations, operations,
     ...(bestBottleneck ? { bestGoodCapacity: bestGoodCapacity!, bestBottleneckOperationId: bestBottleneck.operationId } : {}),

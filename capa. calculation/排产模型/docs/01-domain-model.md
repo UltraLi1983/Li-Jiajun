@@ -141,6 +141,8 @@
 - `successorOperationIds`
 - `inputStageBomId`
 - `outputStageBomId`
+- `requiredOutputUnitsPerFinishedProduct`：每件目标成品需要的本工序目标产出/WIP 件数；离散件数为正整数，按产品、路线、工序及输出物料定义，不是机台 cavity 数。
+- `quantitySourceVersion`：工序本地验证用量的版本；上游用量的引用由 `outputStageBomId` 给出，版本及生效期保留在 Stage BOM 上。
 - `digitalTwinNodeId`
 - `logisticsEdgeIds`
 - `bufferRuleId`
@@ -149,6 +151,8 @@
 
 - Operation 定义产品路线中的工艺阶段；该阶段具体使用哪些 station，由 OperationStationAssignment 定义。
 - Stage BOM 只描述该阶段成立时的物料状态，不反向决定路线顺序。
+- 正式路线优先引用上游已定义的阶段物料用量；若上游尚无该数据，验证模式允许在第一阶段为当前产品路线的工序本地维护，不能静默覆盖上游版本。缺失或无效时，工站能力仍可展示，路线级成品等效能力不得假定为 1:1。
+- 工序产出用量与“部分产品经过该工序的比例”是不同概念；分支/分流比例后续单独建模，不借用产出用量或工站占用份额。
 
 字段：
 
@@ -182,12 +186,16 @@ Stage BOM 描述某个工艺阶段的物料上下文，不替代产品总 BOM，
 - `inputItems`
 - `consumedItems`
 - `outputItem`
+- `requiredOutputUnitsPerFinishedProduct`：该阶段目标产出对应每件成品的需求件数。
 - `wipStateId`
+- `sourceVersion`
 - `effectiveFrom`
 - `effectiveTo`
 - `sourceSystem`
 
-WIPState 表示产品经过某个工艺阶段后的中间状态，可作为下一工序的输入。第一版产能计算只引用 `operationId`、`stageBomId` 和 `wipStateId` 做追溯，不展开完整物料需求计算。
+WIPState 表示产品经过某个工艺阶段后的中间状态，可作为下一工序的输入。当前本地试算读取匹配的阶段 BOM 目标产出件数；不展开完整物料需求计算。
+
+工序件数换算只读取对应阶段的目标产出/WIP 用量，不以 Stage BOM 推导工序顺序，也不在本模块展开整车到零件的 EBR/VR。进入本模块的需求已经是独立零件号的成品件数。当前仅支持本地对象与验证输入；正式上游数据接口、多输出物料或分支路线的逐物料换算仍待开发。
 
 ## StationMaster
 
@@ -265,6 +273,8 @@ operation-station 组合的产能参数。Performance rate 和 Quality rate 保�
 - `parameterSource`：`manual` / `engineeringEstimate` / `runRate` / `historicalActual`。
 - `approvalStatus`
 - `effectiveFrom`
+
+`piecesPerCycle` 是该工序在该工站一次循环可产出的目标件数，类似模具 cavity 数；即使两台机台执行同一工序，也可各有不同值。它先进入各工站的产能计算，不能充当 `requiredOutputUnitsPerFinishedProduct`。后者属于产品路线工序，回答每件最终成品需要多少件该工序产出/WIP。
 
 
 ## PlannedActivityRule

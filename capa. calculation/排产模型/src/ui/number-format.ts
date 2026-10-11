@@ -5,3 +5,7 @@ export function formatNumber(value: number, fractionDigits?: number): string {
     maximumFractionDigits: fractionDigits ?? 3,
   }).format(value);
 }
+
+export function formatOutputUnits(value: number): string {
+  return formatNumber(value, 0);
+}

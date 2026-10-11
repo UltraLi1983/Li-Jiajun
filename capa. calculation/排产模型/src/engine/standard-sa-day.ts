@@ -84,6 +84,25 @@ export function standardSaShiftIntervals(config: StandardSaDayConfig): Array<{ s
   });
 }
 
+export function intervalCoveredByShifts(
+  startMinute: number,
+  endMinute: number,
+  shifts: Array<{ startMinute: number; endMinute: number }>,
+): boolean {
+  if (!Number.isFinite(startMinute) || !Number.isFinite(endMinute) || endMinute <= startMinute) return false;
+  const ordered = [...shifts]
+    .filter(shift => Number.isFinite(shift.startMinute) && Number.isFinite(shift.endMinute) && shift.endMinute > shift.startMinute)
+    .sort((left, right) => left.startMinute - right.startMinute || left.endMinute - right.endMinute);
+  let cursor = startMinute;
+  for (const shift of ordered) {
+    if (shift.endMinute <= cursor) continue;
+    if (shift.startMinute > cursor) return false;
+    cursor = Math.min(endMinute, shift.endMinute);
+    if (cursor >= endMinute) return true;
+  }
+  return false;
+}
+
 export function standardSaOffShiftIntervals(config: StandardSaDayConfig): Array<{ startMinute: number; endMinute: number }> {
   const shifts = standardSaShiftIntervals(config);
   if (!shifts.length) return [];

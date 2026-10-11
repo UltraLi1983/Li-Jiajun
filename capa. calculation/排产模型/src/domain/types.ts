@@ -87,6 +87,8 @@ export interface Operation {
   description?: string;
   inputStageBomId?: string;
   outputStageBomId?: string;
+  requiredOutputUnitsPerFinishedProduct?: number;
+  quantitySourceVersion?: string;
   predecessorOperationIds?: string[];
   successorOperationIds?: string[];
   digitalTwinNodeId?: string;
@@ -111,6 +113,8 @@ export interface StageBOM {
   inputItems?: string[];
   consumedItems?: string[];
   outputItem: string;
+  requiredOutputUnitsPerFinishedProduct?: number;
+  sourceVersion?: string;
   wipStateId: string;
   effectiveFrom?: string;
   effectiveTo?: string;

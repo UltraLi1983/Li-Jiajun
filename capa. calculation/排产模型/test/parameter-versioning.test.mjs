@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { sampleScenario } from "../dist/domain/sample-data.js";
 import { calculateRequiredCapacityShare } from "../dist/engine/capacity-share-engine.js";
 import { buildProductRoutingConfiguration } from "../dist/engine/routing-configuration-engine.js";
-import { publishParameterVersion, selectEffectiveParameter } from "../dist/engine/parameter-versioning.js";
+import { createLocalBaselineParameter, publishParameterVersion, selectEffectiveParameter } from "../dist/engine/parameter-versioning.js";
 
 const base = sampleScenario.operationStationParameters.find(item => item.stationId === "OP10");
 function confirmed(target, proposedValue, effectiveFrom = "2026-09-27") {
@@ -18,6 +18,69 @@ function confirmed(target, proposedValue, effectiveFrom = "2026-09-27") {
 }
 
 describe("CT/P/Q local publication", () => {
+  it("creates an initial local operation-station baseline with 100% P/Q", () => {
+    const local = createLocalBaselineParameter({
+      operationId: "new-operation", stationId: "NEW-STATION", standardCycleSec: 18.5,
+      piecesPerCycle: 2, parameterId: "local-baseline-1", effectiveFrom: "2026-10-09",
+    });
+    assert.equal(local.parameterSource, "manual");
+    assert.equal(local.approvalStatus, "approved");
+    assert.equal(local.performanceRate, 1);
+    assert.equal(local.qualityRate, 1);
+    assert.equal(selectEffectiveParameter([local], "new-operation", "NEW-STATION", "2026-10-09"), local);
+  });
+
+  it("revises a local baseline without mutating or inheriting calibration evidence", () => {
+    const local = createLocalBaselineParameter({
+      base: { ...base, calibrationRefs: ["old-rnr"] }, operationId: base.operationId,
+      stationId: base.stationId, standardCycleSec: 22, piecesPerCycle: 2,
+      parameterId: "local-baseline-2", effectiveFrom: "2026-10-09",
+    });
+    assert.equal(local.supersedesParameterId, base.parameterId);
+    assert.equal(local.calibrationRefs, undefined);
+    assert.equal(base.standardCycleSec, 24);
+    assert.equal(selectEffectiveParameter([base, local], base.operationId, base.stationId, "2026-10-09"), local);
+  });
+
+  it("uses the local CT and pieces per cycle in planned capacity share", () => {
+    const scenario = structuredClone(sampleScenario);
+    const args = { productId: "A-Housing", operationId: base.operationId, stationId: base.stationId, demandQty: 100, availableMinutes: 480 };
+    const before = calculateRequiredCapacityShare(scenario, args);
+    scenario.operationStationParameters.push(createLocalBaselineParameter({
+      base, operationId: base.operationId, stationId: base.stationId,
+      standardCycleSec: 12, piecesPerCycle: 2,
+      parameterId: "local-baseline-capacity", effectiveFrom: "2020-01-01",
+    }));
+    const after = calculateRequiredCapacityShare(scenario, args);
+    assert.equal(after.requiredMinutes, before.requiredMinutes / 4);
+    assert.equal(buildProductRoutingConfiguration(scenario, "A-Housing", "route-a-housing-v1")
+      .operations[0].assignments[0].parameter.standardCycleSec, 12);
+  });
+
+  it("creates a new planned version from an R&R version without changing the published one", () => {
+    const published = { ...base, parameterId: "published-v2", standardCycleSec: 23,
+      performanceRate: 0.96, qualityRate: 0.98, parameterSource: "runRate",
+      approvalStatus: "effective", effectiveFrom: "2026-09-27" };
+    const next = createLocalBaselineParameter({
+      base: published, operationId: base.operationId, stationId: base.stationId,
+      standardCycleSec: 22, piecesPerCycle: 1,
+      parameterId: "local-baseline-after-rnr", effectiveFrom: "2026-10-09",
+    });
+    assert.equal(next.supersedesParameterId, published.parameterId);
+    assert.equal(next.performanceRate, 0.96);
+    assert.equal(next.qualityRate, 0.98);
+    assert.equal(published.standardCycleSec, 23);
+    assert.equal(selectEffectiveParameter([base, published, next], base.operationId, base.stationId, "2026-10-09"), next);
+  });
+
+  it("rejects invalid local CT and pieces per cycle", () => {
+    const valid = { operationId: base.operationId, stationId: base.stationId,
+      parameterId: "local-baseline-3", effectiveFrom: "2026-10-09" };
+    assert.throws(() => createLocalBaselineParameter({ ...valid, standardCycleSec: 0, piecesPerCycle: 1 }), /positive/);
+    assert.throws(() => createLocalBaselineParameter({ ...valid, standardCycleSec: 24, piecesPerCycle: 1.5 }), /positive/);
+    assert.throws(() => createLocalBaselineParameter({ ...valid, standardCycleSec: 24, piecesPerCycle: 1, performanceRate: 0 }), /P and Q/);
+  });
+
   it("keeps confirmation separate from planned parameters", () => {
     const suggestion = confirmed("qualityRate", 0.95);
     assert.equal(base.qualityRate, 1);

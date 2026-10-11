@@ -2,11 +2,19 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   buildRnrBestActualPreview, buildRnrEvidence, createRnrValidationFixture,
-  reconcileRnrSpeedLoss, reconcileRnrTimeline, RNR_VALIDATION_FIXTURE_ID,
+  placeFixtureActualsOnWindow, reconcileRnrSpeedLoss, reconcileRnrTimeline, RNR_VALIDATION_FIXTURE_ID,
 } from "../dist/index.js";
 
 describe("temporary R&R validation fixture", () => {
   const fixture = createRnrValidationFixture("A-Housing", "OP10");
+
+  it("moves actual records onto the current standard window without changing their durations", () => {
+    const placed = placeFixtureActualsOnWindow(fixture.actual, 510);
+    assert.equal(placed[0].startMinute, 510);
+    assert.equal(placed.at(-1).endMinute, 1950);
+    assert.deepEqual(placed.map(event => event.endMinute - event.startMinute), fixture.actual.map(event => event.endMinute - event.startMinute));
+    assert.equal(placeFixtureActualsOnWindow(fixture.actual, 480)[0].startMinute, 480);
+  });
 
   it("provides a repeatable complete 24-hour planned and actual window", () => {
     assert.equal(fixture.id, RNR_VALIDATION_FIXTURE_ID);
@@ -95,5 +103,59 @@ describe("temporary R&R validation fixture", () => {
     });
     assert.equal(preview.complete, false);
     assert.equal(preview.unrecordedMinutes, 390);
+  });
+
+  it("generates an independent OP10B sample at the station's effective CT", () => {
+    const parallel = createRnrValidationFixture("A-Housing", "OP10B", 25, 1);
+    assert.notEqual(parallel.id, fixture.id);
+    assert.equal(parallel.standardCycleSec, 25);
+    assert.equal(parallel.cycleSamplesSec.length, 20);
+    assert.ok(parallel.cycleSamplesSec.every(value => value === 25));
+    assert.ok(parallel.planned.every(item => item.stationId === "OP10B"));
+    assert.ok(parallel.actual.every(item => item.stationId === "OP10B"));
+    assert.ok(parallel.actual.every(item => !fixture.actual.some(original => original.id === item.id)));
+    assert.equal(reconcileRnrTimeline({
+      stationId: "OP10B", startMinute: 480, endMinute: 1920,
+      planned: parallel.planned, actual: parallel.actual,
+    }).complete, true);
+    const speed = reconcileRnrSpeedLoss(parallel.actual.filter(item => item.kind === "production").map(item => ({
+      id: item.id, productId: "A-Housing", operationId: "op-a-10", stationId: "OP10B",
+      startMinute: item.startMinute, endMinute: item.endMinute,
+      okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
+    })), { verifiedStandardCycleSec: 25 });
+    assert.ok(speed.segments.every(item => item.status !== "faster_than_verified_standard"));
+    assert.equal(buildRnrEvidence({
+      productId: "A-Housing", operationId: "op-a-10", stationId: "OP10B",
+      startMinute: 480, endMinute: 1920,
+      planned: parallel.planned, actual: parallel.actual, speed,
+    }).readyForCalculation, true);
+  });
+
+  it("generates a complete OP20 assembly sample without changing machining evidence", () => {
+    const assembly = createRnrValidationFixture("A-Housing", "OP20", 15, 1);
+    assert.notEqual(assembly.id, fixture.id);
+    assert.equal(assembly.standardCycleSec, 15);
+    assert.equal(assembly.cycleSamplesSec.length, 20);
+    assert.ok(assembly.cycleSamplesSec.every(value => value === 15));
+    assert.ok(assembly.planned.every(item => item.stationId === "OP20"));
+    assert.ok(assembly.actual.every(item => item.stationId === "OP20"));
+    assert.ok(assembly.actual.every(item => !fixture.actual.some(original => original.id === item.id)));
+    assert.equal(reconcileRnrTimeline({
+      stationId: "OP20", startMinute: 480, endMinute: 1920,
+      planned: assembly.planned, actual: assembly.actual,
+    }).complete, true);
+    const speed = reconcileRnrSpeedLoss(assembly.actual.filter(item => item.kind === "production").map(item => ({
+      id: item.id, productId: "A-Housing", operationId: "op-a-20", stationId: "OP20",
+      startMinute: item.startMinute, endMinute: item.endMinute,
+      okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
+    })), { verifiedStandardCycleSec: 15 });
+    assert.ok(speed.segments.every(item => item.status !== "faster_than_verified_standard"));
+    assert.equal(buildRnrEvidence({
+      productId: "A-Housing", operationId: "op-a-20", stationId: "OP20",
+      startMinute: 480, endMinute: 1920,
+      planned: assembly.planned, actual: assembly.actual, speed,
+    }).readyForCalculation, true);
+    assert.equal(fixture.standardCycleSec, 24);
+    assert.equal(fixture.actual[0].stationId, "OP10");
   });
 });

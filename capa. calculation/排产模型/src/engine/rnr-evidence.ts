@@ -8,6 +8,7 @@ export type AbnormalCategory = Extract<EventKind,
 export interface RnrEvidenceEvent extends TimelineEvent {
   evidenceSource?: string;
   isEstimated?: boolean;
+  recoverableMinutes?: number;
 }
 
 export interface RnrEvidenceInput {
@@ -32,6 +33,7 @@ export interface RnrAbnormalEvidence {
   startMinute: number;
   endMinute: number;
   minutes: number;
+  recoverableMinutes: number;
   evidenceSource: string;
   isEstimated: boolean;
   note?: string;
@@ -108,12 +110,14 @@ export function buildRnrEvidence(input: RnrEvidenceInput): RnrEvidenceResult {
     .map(event => {
       const evidenceSource = event.evidenceSource?.trim() ?? "";
       if (!evidenceSource) notices.push({ code: "missing_evidence_source", sourceEventId: event.id });
+      const minutes = event.endMinute - event.startMinute;
+      const recoverableMinutes = Math.min(minutes, Math.max(0, event.recoverableMinutes ?? 0));
       return {
         evidenceId: `evidence-${event.id}`, sourceEventId: event.id,
         productId: input.productId, operationId: input.operationId, stationId: input.stationId,
         category: event.kind as AbnormalCategory,
         startMinute: event.startMinute, endMinute: event.endMinute,
-        minutes: event.endMinute - event.startMinute,
+        minutes, recoverableMinutes,
         evidenceSource, isEstimated: event.isEstimated ?? false,
         ...(event.note ? { note: event.note } : {}),
       };

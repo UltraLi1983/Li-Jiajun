@@ -59,8 +59,8 @@ export const sampleScenario = {
             effectiveFrom: "2026-01-01",
             sourceSystem: "local-validation",
             operations: [
-                { operationId: "op-a-10", processId: "process-machining", outputStageBomId: "bom-a-op10-out", sequence: 10, name: "Machining", processType: "machining", successorOperationIds: ["op-a-20"], digitalTwinNodeId: "dt-node-route-a-op10", logisticsEdgeIds: ["dt-edge-op10-op20"], stationId: "OP10", standardCycleSec: 24, plannedPerformanceRate: 1, plannedQualityRate: 1, partShare: 1 },
-                { operationId: "op-a-20", processId: "process-assembly", inputStageBomId: "bom-a-op10-out", outputStageBomId: "bom-a-op20-out", sequence: 20, name: "Assembly", processType: "assembly", predecessorOperationIds: ["op-a-10"], stationId: "OP20", standardCycleSec: 15, plannedPerformanceRate: 1, plannedQualityRate: 1, partShare: 1 },
+                { operationId: "op-a-10", processId: "process-machining", outputStageBomId: "bom-a-op10-out", requiredOutputUnitsPerFinishedProduct: 1, quantitySourceVersion: "sample-v1", sequence: 10, name: "Machining", processType: "machining", successorOperationIds: ["op-a-20"], digitalTwinNodeId: "dt-node-route-a-op10", logisticsEdgeIds: ["dt-edge-op10-op20"], stationId: "OP10", standardCycleSec: 24, plannedPerformanceRate: 1, plannedQualityRate: 1, partShare: 1 },
+                { operationId: "op-a-20", processId: "process-assembly", inputStageBomId: "bom-a-op10-out", outputStageBomId: "bom-a-op20-out", requiredOutputUnitsPerFinishedProduct: 1, quantitySourceVersion: "sample-v1", sequence: 20, name: "Assembly", processType: "assembly", predecessorOperationIds: ["op-a-10"], stationId: "OP20", standardCycleSec: 15, plannedPerformanceRate: 1, plannedQualityRate: 1, partShare: 1 },
             ],
         },
         {

@@ -163,6 +163,8 @@ current_wip + upstream_actual_state + downstream_demand + risk_profile
 
 正式接口应把工艺路线和阶段 BOM/WIP 作为两个相关但不相互替代的对象传入。路线定义过程顺序，Stage BOM 定义该阶段成立时的物料状态。
 
+后续还需由前置产品工程/阶段 BOM 提供每件目标成品所需的各工序目标产出/WIP 件数。它按产品、路线、工序及输出物料关联，包含来源 ID、版本和生效期；若前置系统缺失，第一阶段验证模式才本地维护同口径数据。此字段不是机台 `piecesPerCycle`（cavities），也不是整车需求换算 EBR/VR。本模块收到的需求已经是独立零件号的成品件数。
+
 ```json
 {
   "routes": [
@@ -177,7 +179,9 @@ current_wip + upstream_actual_state + downstream_demand + risk_profile
           "operationId": "op-a-10",
           "sequence": 10,
           "processId": "machining",
-          "outputStageBomId": "bom-a-op10-out"
+          "outputStageBomId": "bom-a-op10-out",
+          "requiredOutputUnitsPerFinishedProduct": 1,
+          "quantitySourceVersion": "local-validation-v1"
         }
       ]
     }
@@ -189,6 +193,8 @@ current_wip + upstream_actual_state + downstream_demand + risk_profile
       "routeId": "route-a-v1",
       "operationId": "op-a-10",
       "outputItem": "A-machined-wip",
+      "requiredOutputUnitsPerFinishedProduct": 2,
+      "sourceVersion": "stage-bom-v2",
       "wipStateId": "A-wip-op10"
     }
   ]
@@ -200,6 +206,7 @@ current_wip + upstream_actual_state + downstream_demand + risk_profile
 - 未发布或不在生效期内的 Route 不得进入正式产能分析。
 - Stage BOM 不用于推导 Operation 顺序。
 - 当前模块只引用 Stage BOM / WIP 状态做过程追溯，不承担完整 BOM 展开。
+- 本地首段已读取同路线/工序且在观察窗口内有效的 Stage BOM 目标产出用量，优先于路线工序的本地验证值；示例中的结果为 2 件 WIP/成品。缺失、无效或来源不匹配时，路线级成品等效能力不得默认按 1:1 计算。正式上游导入、发布态与版本审批接口仍待开发，不能把本地对象读取当成已完成正式集成。
 
 ## 当前已固化的路线主数据门禁
 

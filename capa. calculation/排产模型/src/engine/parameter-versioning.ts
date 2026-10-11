@@ -16,6 +16,47 @@ export function selectEffectiveParameter(
       !selected || (item.effectiveFrom ?? "") >= (selected.effectiveFrom ?? "") ? item : selected, undefined);
 }
 
+export function createLocalBaselineParameter(input: {
+  base?: OperationStationParameter;
+  operationId: string;
+  stationId: string;
+  standardCycleSec: number;
+  piecesPerCycle: number;
+  performanceRate?: number;
+  qualityRate?: number;
+  parameterId: string;
+  effectiveFrom: string;
+}): OperationStationParameter {
+  const { base, operationId, stationId, standardCycleSec, piecesPerCycle, parameterId, effectiveFrom } = input;
+  const performanceRate = input.performanceRate ?? base?.performanceRate ?? 1;
+  const qualityRate = input.qualityRate ?? base?.qualityRate ?? 1;
+  if (!operationId || !stationId || !parameterId || parameterId === base?.parameterId
+    || (base && (base.operationId !== operationId || base.stationId !== stationId))) {
+    throw new Error("Invalid operation-station baseline identity");
+  }
+  if (!Number.isFinite(standardCycleSec) || standardCycleSec <= 0
+    || !Number.isSafeInteger(piecesPerCycle) || piecesPerCycle <= 0) {
+    throw new RangeError("CT and pieces per cycle must be positive");
+  }
+  if (!Number.isFinite(performanceRate) || performanceRate <= 0 || performanceRate > 1
+    || !Number.isFinite(qualityRate) || qualityRate <= 0 || qualityRate > 1) {
+    throw new RangeError("P and Q must be greater than 0 and at most 100%");
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom)
+    || Number.isNaN(Date.parse(`${effectiveFrom}T00:00:00Z`))
+    || new Date(`${effectiveFrom}T00:00:00Z`).toISOString().slice(0, 10) !== effectiveFrom) {
+    throw new RangeError("Invalid effective date");
+  }
+  return {
+    ...(base ? {
+      setupRuleId: base.setupRuleId, breakRuleId: base.breakRuleId,
+      maintenanceRuleId: base.maintenanceRuleId, plannedStopRuleId: base.plannedStopRuleId,
+    } : {}), parameterId, operationId, stationId, standardCycleSec, piecesPerCycle,
+    ...(base ? { supersedesParameterId: base.parameterId } : {}),
+    performanceRate, qualityRate, parameterSource: "manual", approvalStatus: "approved", effectiveFrom,
+  };
+}
+
 export function publishParameterVersion(
   base: OperationStationParameter, confirmed: ParameterSuggestion[], effectiveFrom: string,
   parameterId: string,

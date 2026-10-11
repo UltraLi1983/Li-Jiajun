@@ -7,6 +7,8 @@
     "check": "tsc --noEmit",
     "build": "tsc",
     "test": "npm run build && node --test",
+    "test:browser": "npm run build && node scripts/browser-navigation-smoke.mjs",
+    "test:browser:week": "npm run build && node scripts/browser-week-ledger-smoke.mjs",
     "serve": "python3 -m http.server 8785 --bind 127.0.0.1"
   },
   "devDependencies": {

@@ -1,6 +1,8 @@
 import type { TimelineEvent } from "../domain/types.js";
 
 export const RNR_VALIDATION_FIXTURE_ID = "rnr-validation-op10-24h-v1";
+export const RNR_VALIDATION_ANCHOR_MINUTE = 480;
+export const RNR_VALIDATION_WINDOW_MINUTES = 1440;
 
 export interface FixtureActualEvent extends TimelineEvent {
   okQty?: number;
@@ -19,8 +21,29 @@ export interface RnrValidationFixture {
   piecesPerCycle: number;
 }
 
+export function placeFixtureActualsOnWindow<T extends { startMinute: number; endMinute: number }>(
+  events: T[],
+  windowStartMinute: number,
+): T[] {
+  if (!Number.isFinite(windowStartMinute)) throw new RangeError("Validation sample window start is invalid");
+  const delta = windowStartMinute - RNR_VALIDATION_ANCHOR_MINUTE;
+  return events.map(event => ({
+    ...event,
+    startMinute: event.startMinute + delta,
+    endMinute: event.endMinute + delta,
+  }));
+}
+
 // A relative 24-hour observation window; the UI anchors minute zero to today's date.
-export function createRnrValidationFixture(productId: string, stationId: string): RnrValidationFixture {
+export function createRnrValidationFixture(
+  productId: string, stationId: string, standardCycleSec = 24, piecesPerCycle = 1,
+): RnrValidationFixture {
+  if (!Number.isFinite(standardCycleSec) || standardCycleSec <= 0
+    || !Number.isSafeInteger(piecesPerCycle) || piecesPerCycle <= 0) {
+    throw new RangeError("Validation fixture requires a positive CT and whole pieces per cycle");
+  }
+  const outputScale = 24 / standardCycleSec * piecesPerCycle;
+  const fixturePrefix = stationId === "OP10" ? "validation" : `validation-${stationId.toLowerCase()}`;
   const planned = [
     ["production", 480, 660], ["break", 660, 690], ["production", 690, 1020],
     ["break", 1020, 1050], ["production", 1050, 1140], ["setup", 1140, 1200],
@@ -35,19 +58,25 @@ export function createRnrValidationFixture(productId: string, stationId: string)
     ["production", 1530, 1920, 966, 9],
   ] as const;
   return {
-    id: RNR_VALIDATION_FIXTURE_ID,
+    id: stationId === "OP10" && standardCycleSec === 24 && piecesPerCycle === 1
+      ? RNR_VALIDATION_FIXTURE_ID
+      : `rnr-validation-${stationId.toLowerCase()}-ct${standardCycleSec}-p${piecesPerCycle}-24h-v1`,
     planned: planned.map(([kind, startMinute, endMinute], index) => ({
-      id: `validation-plan-${index + 1}`, productId, stationId, kind,
+      id: `${fixturePrefix}-plan-${index + 1}`, productId, stationId, kind,
       startMinute, endMinute, source: "template", label: `Validation ${kind}`,
     })),
     actual: actual.map(([kind, startMinute, endMinute, okQty, nokQty], index) => ({
-      id: `validation-actual-${index + 1}`, productId, stationId, kind,
+      id: `${fixturePrefix}-actual-${index + 1}`, productId, stationId, kind,
       startMinute, endMinute, source: "runRate", label: `Validation ${kind}`,
-      ...(kind === "production" ? { okQty, nokQty, piecesPerCycle: 1 } : {}),
+      ...(kind === "production" ? (() => {
+        const total = Math.floor((okQty + nokQty) * outputScale);
+        const rejects = Math.min(total, Math.round(nokQty * outputScale));
+        return { okQty: total - rejects, nokQty: rejects, piecesPerCycle };
+      })() : {}),
       ...(kind === "equipmentFailure" ? { evidenceSource: "Validation fixture: equipment alarm", isEstimated: false } : {}),
     })),
-    cycleSamplesSec: Array(20).fill(24) as number[],
-    standardCycleSec: 24,
-    piecesPerCycle: 1,
+    cycleSamplesSec: Array(20).fill(standardCycleSec) as number[],
+    standardCycleSec,
+    piecesPerCycle,
   };
 }
