@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>内部产能决策报告 - A4 预览</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #17212b; background: #e9eef0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button { font: inherit; }
+    .toolbar { min-height: 64px; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #fff; border-bottom: 1px solid #d8e1e6; }
+    .toolbar-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+    .toolbar-title strong { font-size: 15px; }
+    .toolbar-title span { color: #637281; font-size: 13px; }
+    .print-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 15px; border: 0; border-radius: 6px; color: #fff; background: #226b70; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .print-button:hover { background: #18575b; }
+    .print-button:focus-visible { outline: 3px solid #8fc9cf; outline-offset: 2px; }
+    .sheet { width: 210mm; min-height: 297mm; margin: 25px auto 36px; padding: 15mm 16mm 11mm; background: #fff; box-shadow: 0 8px 30px #21313a22; }
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 12px; border-bottom: 3px solid #226b70; }
+    .kicker { margin: 0 0 6px; color: #226b70; font-size: 10px; font-weight: 800; }
+    h1 { margin: 0; font-size: 25px; line-height: 1.2; }
+    .subtitle { margin: 6px 0 0; color: #637281; font-size: 11px; }
+    .report-id { text-align: right; font-size: 10px; color: #637281; line-height: 1.55; white-space: nowrap; }
+    .report-id strong { display: block; color: #17212b; font-size: 11px; }
+    .draft { display: inline-block; padding: 3px 7px; border: 1px solid #b9d7de; color: #226b70; background: #eef9fb; border-radius: 4px; font-weight: 700; }
+    .meta { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10px; padding: 14px 0; border-bottom: 1px solid #d8e1e6; }
+    .meta-item small, .metric small { display: block; margin-bottom: 4px; color: #637281; font-size: 10px; font-weight: 700; }
+    .meta-item strong { display: block; font-size: 11px; line-height: 1.35; }
+    .section { margin-top: 11px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+    h2 { margin: 0; font-size: 14px; line-height: 1.2; }
+    .section-head span { color: #637281; font-size: 11px; }
+    .decision { display: grid; grid-template-columns: 1.15fr .85fr; border: 1px solid #d8e1e6; border-left: 4px solid #b23b3b; background: #fbfcfc; }
+    .decision-main { padding: 13px 15px; }
+    .decision-label { color: #9d3030; font-size: 10px; font-weight: 800; }
+    .decision-main strong { display: block; margin-top: 3px; font-size: 19px; line-height: 1.25; }
+    .decision-main p { margin: 6px 0 0; color: #4c5a65; font-size: 11px; line-height: 1.5; }
+    .decision-gap { display: flex; flex-direction: column; justify-content: center; padding: 12px 15px; border-left: 1px solid #d8e1e6; }
+    .decision-gap small { color: #637281; font-size: 10px; }
+    .decision-gap strong { color: #a72d2d; font-size: 25px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .decision-gap span { color: #637281; font-size: 10px; }
+    .decision.forecast-decision { border-left-color: #177245; }
+    .forecast-decision .decision-label, .forecast-decision .decision-gap strong { color: #177245; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 9px; }
+    .metric { min-height: 64px; padding: 8px 9px; border: 1px solid #d8e1e6; }
+    .metric strong { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+    .metric em { font-size: 10px; font-style: normal; color: #177245; }
+    .metric em.negative { color: #a72d2d; }
+    .compare { padding: 9px 12px 7px; border: 1px solid #d8e1e6; }
+    .compare-row { display: grid; grid-template-columns: 83px 1fr 72px; align-items: center; gap: 10px; margin: 0 0 7px; font-size: 11px; }
+    .compare-row > strong { text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .bar-track { position: relative; height: 13px; background: #edf2f4; }
+    .bar-track::after { content: ""; position: absolute; top: -3px; bottom: -3px; left: var(--demand); width: 1px; background: #17212b; }
+    .bar { display: block; height: 100%; }
+    .bar.best { width: var(--best); background: #226b70; }
+    .bar.likely { width: var(--likely); background: #2367a8; }
+    .bar.outcome { width: var(--outcome); background: #b23b3b; }
+    .bar.demand { width: var(--demand); background: #5a6873; }
+    .legend { color: #637281; font-size: 10px; text-align: right; }
+    .spq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .spq > div { padding: 8px 9px; border: 1px solid #d8e1e6; border-top: 3px solid #226b70; }
+    .spq > div:nth-child(2) { border-top-color: #2367a8; }
+    .spq > div:nth-child(3) { border-top-color: #b27a21; }
+    .spq small { display: block; color: #637281; font-size: 10px; }
+    .spq-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+    .spq-values > div { min-width: 0; padding-top: 5px; border-top: 1px solid #dfe7eb; }
+    .spq-values span { display: block; color: #637281; font-size: 10px; }
+    .spq-values strong { display: block; margin-top: 2px; font-size: 15px; }
+    .spq-note { margin: 6px 0 0; color: #4c5a65; font-size: 10px; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+    th { padding: 6px 7px; color: #5c6b77; background: #f3f7f8; font-weight: 700; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    td { padding: 6px 7px; border-bottom: 1px solid #dfe7eb; text-align: right; }
+    tr:last-child td { border-bottom: 0; }
+    .bottleneck { color: #a72d2d; font-weight: 700; }
+    .evidence { margin-top: 8px; padding: 8px 10px; border: 1px solid #d8e1e6; color: #4c5a65; font-size: 10px; line-height: 1.5; }
+    .evidence strong { color: #17212b; }
+    .findings { margin: 0; padding-left: 16px; color: #34434e; font-size: 11px; line-height: 1.65; }
+    .basis { padding: 10px 12px; background: #f3f7f8; color: #45535e; font-size: 10px; line-height: 1.6; }
+    .basis strong { color: #17212b; }
+    .source-list { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 14px; border-top: 1px solid #d8e1e6; }
+    .source-list div { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid #d8e1e6; font-size: 11px; }
+    .source-list dt { color: #637281; }
+    .source-list dd { margin: 0; font-weight: 700; text-align: right; }
+    .footer { margin-top: 13px; padding-top: 8px; border-top: 1px solid #d8e1e6; display: flex; justify-content: space-between; gap: 16px; color: #637281; font-size: 9px; }
+    @page { size: A4 portrait; margin: 0; }
+    @media print {
+      :root { background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .toolbar { display: none; }
+      .sheet { margin: 0; box-shadow: none; break-after: page; }
+      .sheet:last-child { break-after: auto; }
+    }
+    @media screen and (max-width: 820px) {
+      .sheet { width: 100%; min-height: 0; margin: 0; padding: 24px 18px; box-shadow: none; }
+      .toolbar { padding: 10px 14px; }
+      .meta { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media screen and (max-width: 520px) {
+      .toolbar-title span { display: none; }
+      .decision { grid-template-columns: 1fr; }
+      .decision-gap { border-left: 0; border-top: 1px solid #d8e1e6; }
+      .metrics, .spq { grid-template-columns: repeat(2, 1fr); }
+      .report-id { white-space: normal; }
+      .compare-row { grid-template-columns: 75px 1fr 60px; gap: 5px; }
+      .table-scroll { overflow-x: auto; }
+      table { min-width: 565px; }
+      .source-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="toolbar-title"><strong>内部产能决策报告</strong><span>同模板双周期对照 · A4 纵向 · 目标态演示</span></div>
+    <button class="print-button" type="button" onclick="window.print()" title="打印或另存为 PDF">打印 / PDF</button>
+  </div>
+  <main class="report-stack" aria-label="A4 内部产能决策报告预览">
+    <article class="sheet review" style="--demand:80.0%;--likely:79.2%;--outcome:78.7%;--best:86.4%" aria-label="上周回顾">
+      <header class="report-header">
+        <div>
+          <p class="kicker">CAPACITY ASSESSMENT / INTERNAL</p>
+          <h1>上周回顾</h1>
+          <p class="subtitle">产品 A 壳体 · route-a-housing-v1 · 路线等效良品件</p>
+        </div>
+        <div class="report-id"><strong>示例报告 RPT-001</strong><span class="draft">目标态示意</span><br>报告快照 2026-10-19 08:30<br>第 1 / 2 页</div>
+      </header>
+
+      <div class="meta">
+        <div class="meta-item"><small>产品 / 版本</small><strong>A-Housing / V1</strong></div>
+        <div class="meta-item"><small>生产周</small><strong>10 月 12 日 08:30 至 19 日 08:30</strong></div>
+        <div class="meta-item"><small>数据状态</small><strong>完整周期 · Actual 回顾</strong></div>
+      </div>
+
+      <section class="section" aria-labelledby="review-decision">
+        <div class="section-head"><h2 id="review-decision">决策结论</h2><span>与下页使用同一指标顺序</span></div>
+        <div class="decision">
+          <div class="decision-main"><span class="decision-label">实际良品未覆盖需求</span><strong>OP20 是路线瓶颈</strong><p>原 Most likely 排产计划低于需求 93 件；执行中额外故障使实际良品再低于计划 58 件。</p></div>
+          <div class="decision-gap"><small>实际产出对需求差额</small><strong>-151 件</strong><span>9,449 - 9,600</span></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><small>本周需求</small><strong>9,600 件</strong></div>
+          <div class="metric"><small>排产计划 · ML</small><strong>9,507 件</strong><em class="negative">对需求 -93</em></div>
+          <div class="metric"><small>本周结果 · Actual</small><strong>9,449 件</strong><em class="negative">对计划 -58</em></div>
+          <div class="metric"><small>Best case 挑战</small><strong>10,371 件</strong><em>非默认排产目标</em></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="review-compare">
+        <div class="section-head"><h2 id="review-compare">需求 / 计划 / 结果 / 挑战</h2><span>两页同用 0–12,000 件刻度</span></div>
+        <div class="compare" role="img" aria-label="上周需求 9,600 件，Most likely 计划 9,507 件，Actual 9,449 件，Best case 10,371 件">
+          <div class="compare-row"><span>需求</span><div class="bar-track"><span class="bar demand"></span></div><strong>9,600</strong></div>
+          <div class="compare-row"><span>计划 · ML</span><div class="bar-track"><span class="bar likely"></span></div><strong>9,507</strong></div>
+          <div class="compare-row"><span>结果 · Actual</span><div class="bar-track"><span class="bar outcome"></span></div><strong>9,449</strong></div>
+          <div class="compare-row"><span>挑战 · Best</span><div class="bar-track"><span class="bar best"></span></div><strong>10,371</strong></div>
+          <div class="legend">竖线为本周需求；两页横轴刻度一致</div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="review-route">
+        <div class="section-head"><h2 id="review-route">工序能力对照</h2><span>按工序件数关系折为成品</span></div>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">工序</th><th scope="col">计划 · ML</th><th scope="col">结果 · Actual</th><th scope="col">挑战 · Best</th><th scope="col">结果－需求</th></tr></thead>
+          <tbody>
+            <tr><td>OP10 机加工</td><td>10,020</td><td>9,940</td><td>10,800</td><td>+340</td></tr>
+            <tr><td>OP20 装配 · 瓶颈</td><td>9,507</td><td class="bottleneck">9,449</td><td>10,371</td><td class="bottleneck">-151</td></tr>
+            <tr><td>GP12 检验</td><td>10,500</td><td>10,400</td><td>11,300</td><td>+800</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="section" aria-labelledby="review-spq">
+        <div class="section-head"><h2 id="review-spq">关键参数 · OP20</h2><span>实测结论，回看已发生周期</span></div>
+        <div class="spq">
+          <div><small>SA · 时间开动率</small><div class="spq-values"><div><span>计划 · ML</span><strong>82.5%</strong></div><div><span>实际 · Actual</span><strong>82.0%</strong></div></div><p class="spq-note">实际低 0.5 个百分点；额外故障 24 分钟</p></div>
+          <div><small>P · 节拍达成率</small><div class="spq-values"><div><span>计划 · 有效参数</span><strong>97.2%</strong></div><div><span>实际 · Actual</span><strong>97.2%</strong></div></div><p class="spq-note">标准 CT 24.0s；实际平均 CT 24.7s</p></div>
+          <div><small>Q · 良品率</small><div class="spq-values"><div><span>计划 · 有效参数</span><strong>98.8%</strong></div><div><span>实际 · Actual</span><strong>98.8%</strong></div></div><p class="spq-note">实际总产出 9,564 件；NOK 115 件</p></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="review-extra">
+        <div class="section-head"><h2 id="review-extra">周期补充信息</h2><span>解释偏差，不重复扣减</span></div>
+        <dl class="source-list">
+          <div><dt>排班 / 排班分钟</dt><dd>5 天 · 10 × 8H / 4,800 分钟</dd></div>
+          <div><dt>计划动作损失</dt><dd>480 分钟 · Best SA 90.0%</dd></div>
+          <div><dt>非计划停机预留</dt><dd>360 分钟 · ML SA 82.5%</dd></div>
+          <div><dt>CT / 每循环件数</dt><dd>24.0s / 1 件</dd></div>
+          <div><dt>P / Q / 项目份额</dt><dd>97.2% / 98.8% / 100%</dd></div>
+          <div><dt>参数来源</dt><dd>本周计划版 + R&amp;R 实测</dd></div>
+        </dl>
+        <div class="evidence"><strong>本周差异桥：</strong>Most likely 可生产 3,960 分钟；额外故障 24 分钟后，Actual 可生产 3,936 分钟。CT/P/Q 相同，示例良品从 9,507 降至 9,449 件（-58）。</div>
+      </section>
+      <section class="section" aria-labelledby="review-action">
+        <div class="section-head"><h2 id="review-action">内部决策事项</h2></div>
+        <ul class="findings"><li>OP20 的计划缺口 93 件与执行损失 58 件分开处理；核对额外故障记录。</li></ul>
+      </section>
+      <section class="section basis" aria-label="回顾口径"><strong>口径</strong>　OP20 示例按生产分钟 × 60 ÷ CT × P × Q × 每循环件数 × 项目份额取整。Actual 只评价已发生周期，不代表交付量；Best case 是挑战线。路线级实绩与事件均为目标态示意，当前系统尚无整周路线实绩接入。</section>
+      <footer class="footer"><span>内部评估 · 演示数据 · 非客户产能承诺</span><span>报告快照 v0.4 · 第 1 / 2 页</span></footer>
+    </article>
+
+    <article class="sheet outlook" style="--demand:83.3%;--likely:84.0%;--best:91.2%" aria-label="下周预测">
+      <header class="report-header">
+        <div>
+          <p class="kicker">CAPACITY ASSESSMENT / INTERNAL</p>
+          <h1>下周预测</h1>
+          <p class="subtitle">产品 A 壳体 · route-a-housing-v1 · 路线等效良品件</p>
+        </div>
+        <div class="report-id"><strong>示例报告 RPT-001</strong><span class="draft">目标态示意</span><br>报告快照 2026-10-19 08:30<br>第 2 / 2 页</div>
+      </header>
+
+      <div class="meta">
+        <div class="meta-item"><small>产品 / 版本</small><strong>A-Housing / V1</strong></div>
+        <div class="meta-item"><small>生产周</small><strong>10 月 19 日 08:30 至 26 日 08:30</strong></div>
+        <div class="meta-item"><small>数据状态</small><strong>尚未开工 · 计划预测</strong></div>
+      </div>
+
+      <section class="section" aria-labelledby="outlook-decision">
+        <div class="section-head"><h2 id="outlook-decision">决策结论</h2><span>与上页使用同一指标顺序</span></div>
+        <div class="decision forecast-decision">
+          <div class="decision-main"><span class="decision-label">Most likely 计划覆盖需求</span><strong>OP20 仍是路线瓶颈</strong><p>两周排班与 CT/P/Q 相同；下周计划动作损失减少 240 分钟，计划良品增加 576 件。</p></div>
+          <div class="decision-gap"><small>计划产出对需求余量</small><strong>+83 件</strong><span>10,083 - 10,000</span></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><small>下周需求</small><strong>10,000 件</strong></div>
+          <div class="metric"><small>排产计划 · ML</small><strong>10,083 件</strong><em>对需求 +83</em></div>
+          <div class="metric"><small>下周结果 · Actual</small><strong>—</strong><em>尚未发生</em></div>
+          <div class="metric"><small>Best case 挑战</small><strong>10,947 件</strong><em>非默认排产目标</em></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="outlook-compare">
+        <div class="section-head"><h2 id="outlook-compare">需求 / 计划 / 结果 / 挑战</h2><span>两页同用 0–12,000 件刻度</span></div>
+        <div class="compare" role="img" aria-label="下周需求 10,000 件，Most likely 计划 10,083 件，实际结果尚未发生，Best case 10,947 件">
+          <div class="compare-row"><span>需求</span><div class="bar-track"><span class="bar demand"></span></div><strong>10,000</strong></div>
+          <div class="compare-row"><span>计划 · ML</span><div class="bar-track"><span class="bar likely"></span></div><strong>10,083</strong></div>
+          <div class="compare-row"><span>结果 · Actual</span><div class="bar-track"></div><strong>—</strong></div>
+          <div class="compare-row"><span>挑战 · Best</span><div class="bar-track"><span class="bar best"></span></div><strong>10,947</strong></div>
+          <div class="legend">竖线为下周需求；两页横轴刻度一致</div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="outlook-route">
+        <div class="section-head"><h2 id="outlook-route">工序能力对照</h2><span>按工序件数关系折为成品</span></div>
+        <div class="table-scroll"><table>
+          <thead><tr><th scope="col">工序</th><th scope="col">计划 · ML</th><th scope="col">结果 · Actual</th><th scope="col">挑战 · Best</th><th scope="col">计划－需求</th></tr></thead>
+          <tbody>
+            <tr><td>OP10 机加工</td><td>10,550</td><td>—</td><td>11,350</td><td>+550</td></tr>
+            <tr><td>OP20 装配 · 瓶颈</td><td class="bottleneck">10,083</td><td>—</td><td>10,947</td><td>+83</td></tr>
+            <tr><td>GP12 检验</td><td>10,900</td><td>—</td><td>11,900</td><td>+900</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="section" aria-labelledby="outlook-spq">
+        <div class="section-head"><h2 id="outlook-spq">关键参数 · OP20</h2><span>下周排产输入，不是实测结果</span></div>
+        <div class="spq">
+          <div><small>SA · 时间开动率</small><div class="spq-values"><div><span>计划 · ML</span><strong>87.5%</strong></div><div><span>实际 · Actual</span><strong>—</strong></div></div><p class="spq-note">尚未发生；计划动作损失较上周减少</p></div>
+          <div><small>P · 节拍达成率</small><div class="spq-values"><div><span>计划 · 有效参数</span><strong>97.2%</strong></div><div><span>实际 · Actual</span><strong>—</strong></div></div><p class="spq-note">尚未发生；标准 CT 24.0s</p></div>
+          <div><small>Q · 良品率</small><div class="spq-values"><div><span>计划 · 有效参数</span><strong>98.8%</strong></div><div><span>实际 · Actual</span><strong>—</strong></div></div><p class="spq-note">尚未发生；采用下周生效版本</p></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="outlook-extra">
+        <div class="section-head"><h2 id="outlook-extra">周期补充信息</h2><span>预测前提与版本来源</span></div>
+        <dl class="source-list">
+          <div><dt>排班 / 排班分钟</dt><dd>5 天 · 10 × 8H / 4,800 分钟</dd></div>
+          <div><dt>计划动作损失</dt><dd>240 分钟 · Best SA 95.0%</dd></div>
+          <div><dt>非计划停机预留</dt><dd>360 分钟 · ML SA 87.5%</dd></div>
+          <div><dt>CT / 每循环件数</dt><dd>24.0s / 1 件</dd></div>
+          <div><dt>P / Q / 项目份额</dt><dd>97.2% / 98.8% / 100%</dd></div>
+          <div><dt>参数来源</dt><dd>param-v3 · 已发布生效</dd></div>
+        </dl>
+        <div class="evidence"><strong>下周差异桥：</strong>排班同为 4,800 分钟；计划动作损失从 480 减至 240 分钟，非计划停机预留仍为 360 分钟。Most likely 可生产分钟从 3,960 增至 4,200；在同一 CT/P/Q 下，计划良品从 9,507 增至 10,083 件（+576）。</div>
+      </section>
+      <section class="section" aria-labelledby="outlook-action">
+        <div class="section-head"><h2 id="outlook-action">内部决策事项</h2></div>
+        <ul class="findings"><li>OP20 余量仅 83 件；确认减少换型的排布确能执行，开工后继续跟踪 SA、P、Q。</li></ul>
+      </section>
+      <section class="section basis" aria-label="预测口径"><strong>口径</strong>　下周 Most likely 使用下周日历、停机预留和届时已发布生效的 CT/P/Q，既是计划也是产出预测；Best case 为挑战能力。尚未发生的 Actual 留空，计划产出不等于可交付量。仅确认未发布的参数只可做方案预览。示例数值不用于真实产能验算；正式报告生成尚未开发。</section>
+      <footer class="footer"><span>内部评估 · 演示数据 · 非客户产能承诺</span><span>报告快照 v0.4 · 第 2 / 2 页</span></footer>
+    </article>
+  </main>
+</body>
+</html>

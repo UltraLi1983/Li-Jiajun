@@ -27,7 +27,9 @@ macOS 可直接双击项目根目录的 `启动排产产能工具.command`：脚
 - `docs/00-product-position.md`：产品定位与四阶段业务口径。
 - `docs/06-local-access-runbook.md`：当前目录、启动命令与浏览器入口。
 - `docs/07-smoke-test-runbook.md`：人工烟测步骤。
-- `docs/12-cursor-week-month-capacity.md`：当前工站周/月 Best case 与 Most likely 排产件数。代码已接入，5.13 待人工烟测。
+- `docs/14-cursor-weekly-route-report.md`：路线周计划汇总与 A4 内部双页报告。代码已接入，5.15 待人工烟测。`report-preview.html` 仍只是静态版式示意。
+- `docs/13-cursor-cycle-samples-ct-policy.md`：逐次节拍样本与 CT/P 建议边界。5.14 已于 2026-10-12 通过。窄屏不在本包。
+- `docs/12-cursor-week-month-capacity.md`：当前工站周/月 Best case 与 Most likely 排产件数，5.13 已验收。
 - `docs/11-cursor-independent-week-planning.md`：另编整周的原任务包。页面已改成平稳日与整月重复，5.12 已于 2026-10-11 通过。Most likely 的排产件数不在本包。
 - `docs/10-cursor-operation-navigation-route-capacity.md`：上一轮工序导航与同窗路线能力任务包，5.8 已验收。
 - `docs/06-cursor-task-packages.md`、`docs/08-cursor-task-packages.md`、`docs/09-rr-mvp-task-sequence.md`：历史任务包，不能代替当前工程计划。

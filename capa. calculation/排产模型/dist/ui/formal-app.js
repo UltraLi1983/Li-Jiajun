@@ -2,7 +2,8 @@ import { sampleScenario } from "../domain/sample-data.js";
 import { calculateProductionSegment } from "../engine/run-rate-segment.js";
 import { buildParameterSuggestions, confirmParameterSuggestion } from "../engine/parameter-calibration.js";
 import { buildRouteWindowCapacityView, collectRouteWindowCandidates, listRouteOperations, nextStationId, resolveRouteObservationWindow, routeWindowKey, stationActualKey, stationPlanKey, } from "./route-navigation.js";
-import { createLocalBaselineParameter, publishParameterVersion, selectEffectiveParameter } from "../engine/parameter-versioning.js";
+import { addCycleSample, diagnosePlannedCycle, emptyCycleSampleDraft, formatStopwatch, migrateLegacyCycleDraft, removeCycleSample, replaceCycleSample, setCycleSampleMark, setCycleSampleReason, stopwatchCode, summarizeCycleSamples, } from "../engine/cycle-samples.js";
+import { correctPlannedCycleFromCheck, createLocalBaselineParameter, establishInitialLocalPreset, performanceAgainstCycle, publishParameterVersion, selectEffectiveParameter } from "../engine/parameter-versioning.js";
 import { resolveOperationOutputRequirement } from "../engine/operation-output-requirement.js";
 import { createRnrValidationFixture, placeFixtureActualsOnWindow, RNR_VALIDATION_WINDOW_MINUTES } from "../engine/rnr-validation-fixture.js";
 import { buildRnrBestActualPreview } from "../engine/rnr-best-actual-preview.js";
@@ -10,6 +11,8 @@ import { freezeStandardWindow, isFrozenStandardWindowCurrent } from "../engine/s
 import { copyStandardWindowToWeek } from "../engine/standard-window-projection.js";
 import { ledgerShiftCount, mostLikelyMonthProduction, observeShiftAllowance, summarizeMostLikely } from "../engine/most-likely-allowance.js";
 import { buildPeriodCapacity } from "../engine/week-month-capacity.js";
+import { buildRouteWeekPlan } from "../engine/route-week-plan.js";
+import { renderRouteWeekSheets } from "./route-week-report.js";
 import { buildWeekMinuteLedger, maxShiftsForLength, repeatWeekForMonth, validateManualMinutes } from "../engine/week-minute-ledger.js";
 import { buildStandardSaSampleSlots, findStandardSaDayGaps, intervalCoveredByShifts, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../engine/standard-sa-day.js";
 import { formatNumber, formatOutputUnits } from "./number-format.js";
@@ -70,7 +73,7 @@ const workflowCopy = {
         calibrationTitle: "标准基准与现场草稿对比",
         calibrationNote: "下列结果由当前页面记录计算；原因待查不阻止 Best/Actual SA。参数建议不会自动覆盖标准基准。",
         baselineSaMetric: "标准 SA（含休息）", draftPerformanceMetric: "草稿性能率", draftQualityMetric: "草稿良率",
-        capacityPreviewOnly: "同窗跨工站能力仅为本地试算；长周期投影与正式排产产能尚未接入。",
+        capacityPreviewOnly: "同窗跨工站能力仍是本地试算。路线周报告读取已生成周账，是内部草稿，不是已发布的正式排产。",
         readyForCapacity: "工艺参数预检通过", blockedBeforeCapacity: "工艺参数预检被阻止",
         canEnterCapacityAnalysis: "工艺参数预检通过",
     },
@@ -99,7 +102,7 @@ const workflowCopy = {
         calibrationTitle: "Standard baseline vs on-site draft",
         calibrationNote: "These figures use current records. An unknown cause does not block Best/Actual SA. Suggestions do not automatically change the planned baseline.",
         baselineSaMetric: "Standard SA (including breaks)", draftPerformanceMetric: "Draft performance rate", draftQualityMetric: "Draft quality rate",
-        capacityPreviewOnly: "Same-window multi-station capacity is a local simulation; long-horizon projection and formal planning capacity are not yet connected.",
+        capacityPreviewOnly: "Same-window route capacity remains a local simulation. The route week report reads generated ledgers and is an internal draft, not a published plan.",
         readyForCapacity: "Parameter preflight passed", blockedBeforeCapacity: "Parameter preflight blocked",
         canEnterCapacityAnalysis: "parameter preflight passed",
     },
@@ -165,7 +168,6 @@ const copy = {
         windowStart: "窗口开始",
         windowEnd: "窗口结束",
         addTimeBlock: "新增时间段",
-        resetTimeBlockStart: "重置起点",
         intervalFirst: "先选时间段",
         addTimeBlockNote: "先定义起末日期和时间，再定义这一段的状态。持续分钟由系统计算，不作为主输入。计划动作只允许换型、休息、维护保养、计划停机。现场异常损失后续进入R&R观察记录，不写入计划SA基准。",
         rrAbnormalScope: "R&R异常损失范围：设备故障、工装问题、物流等待、质量隔离、人员问题。",
@@ -306,7 +308,7 @@ const copy = {
         rnrStatus: "记录状态",
         notStarted: "尚未开始",
         realityTimeWindowNote: "时间窗口模式记录实际生产、计划活动、非计划中断，并输出真实SA和异常损失结构。",
-        cycleCheckNote: "节拍检查不以时间轴为主，按目标样本数记录实测CT、标准CT、性能率和节拍稳定性。",
+        cycleCheckNote: "纸上勾过的循环序号，在同一行标 N.OK 或 Stopping。Stopping 不进平均，算作去除；N.OK 仍进平均。慢于这次平均的拍会标出，异常原因可以后补。已有计划 CT 时不提出新的标准 CT。手机截屏识别尚未接入。",
         productionSegmentRequiresQty: "生产段必须录入 OK / NOK 数量，系统计算实测CT、标准应产、隐藏损失和性能率。",
         timelineSplitNote: "真实追踪可把计划生产拆分为：生产 + 非计划停机 + 生产。",
         unplannedStopScope: "非计划停机范围",
@@ -332,8 +334,8 @@ const copy = {
         sampleCount: "样本数",
         averageCt: "平均CT",
         cycleCheckResult: "节拍检查结果",
-        modeTimeWindowHint: "用于校准 SA：记录一段真实生产时间、产出数量和异常损失。",
-        modeCycleCheckHint: "用于校准性能率：达到目标样本数即可输出节拍结论。",
+        modeTimeWindowHint: "记录一段真实生产时间、产出数量和异常损失，用于矫正 SA，同时矫正 P 和 Q。",
+        modeCycleCheckHint: "逐次录入循环样本，原则上只核对并矫正 CT。",
         capacityAnalysisSeparated: "完成现场记录后，在第四阶段复核参数并进行产能预检。",
     },
     en: {
@@ -396,7 +398,6 @@ const copy = {
         windowStart: "Window start",
         windowEnd: "Window end",
         addTimeBlock: "Add time block",
-        resetTimeBlockStart: "Reset start",
         intervalFirst: "interval first",
         addTimeBlockNote: "Define start date/time and end date/time first, then define the state of the interval. Duration is calculated by the system and is not a primary input. Planned activity only allows setup / break / maintenance / plannedStop. Actual abnormal loss belongs to R&R observation and is not written into Planned SA baseline.",
         rrAbnormalScope: "R&R abnormal loss scope: equipmentFailure / toolingIssue / logisticsWaiting / qualityHold / laborIssue.",
@@ -537,7 +538,7 @@ const copy = {
         rnrStatus: "Recording status",
         notStarted: "Not started",
         realityTimeWindowNote: "Time-window mode records actual production, planned activities and unplanned interruptions, then outputs real / actual SA and abnormal loss structure.",
-        cycleCheckNote: "Cycle Check is not timeline-first. It records observed CT, standard CT, performance rate and cycle stability against a target sample count.",
+        cycleCheckNote: "Mark the same cycle index N.OK or Stopping from the paper sheet. A stop stays out of the average and counts as excluded. N.OK stays in the average. Laps slower than that average are flagged. A reason can be added later. An existing planned CT is not replaced. Phone-screenshot reading is not available yet.",
         productionSegmentRequiresQty: "Production segments must capture OK / NOK / actual qty. The system calculates observed CT, expected qty, hidden loss and performance rate.",
         timelineSplitNote: "Reality tracking can split planned production into production + unplanned stop + production.",
         unplannedStopScope: "Unplanned stop scope",
@@ -563,8 +564,8 @@ const copy = {
         sampleCount: "Sample count",
         averageCt: "Average CT",
         cycleCheckResult: "Cycle Check result",
-        modeTimeWindowHint: "For SA calibration: record a real production window, output quantity and abnormal losses.",
-        modeCycleCheckHint: "For performance calibration: output CT once the target sample count is reached.",
+        modeTimeWindowHint: "Record a real production interval, output quantity and abnormal losses. This corrects SA, and also P and Q.",
+        modeCycleCheckHint: "Enter one cycle at a time. In principle this only checks and corrects CT.",
         capacityAnalysisSeparated: "Review observations and capacity readiness in stage four.",
     },
 };
@@ -586,6 +587,7 @@ const plannedSaContexts = new Map();
 const standardSaDayConfigs = new Map();
 const frozenStandardWindows = new Map();
 const copyProjectionDrafts = new Map();
+const stationWeekSnapshots = new Map();
 let plannedSaEventsAreDefault = false;
 let standardWindowFreezeError = "";
 let plannedBlockDraft = {
@@ -610,12 +612,8 @@ let rnrSegmentDraft = {
     isEstimated: false,
     recoverableMinutes: 0,
 };
-let cycleCheckDraft = {
-    samples: "",
-    targetSamples: 20,
-    standardCycleSec: 24,
-    acceptableSlowDeviationPercent: undefined,
-};
+let cycleCheckDraft = emptyCycleSampleDraft();
+let editingCycleSampleId = "";
 let rnrContextKey = "";
 const rnrActualEventsByContext = new Map();
 const validationFixtureContexts = new Set();
@@ -623,6 +621,7 @@ let rnrSelectedEventId = "";
 let rnrActualKind = "production";
 let rnrEventNote = "";
 let rnrDraftError = "";
+let pendingCycleCorrection;
 const rnrActualKinds = [
     "production", "setup", "break", "maintenance", "plannedStop",
     "equipmentFailure", "toolingIssue", "logisticsWaiting", "qualityHold", "laborIssue", "unscheduled",
@@ -776,7 +775,7 @@ function render(productId) {
     syncStationSelector(selectedOperation);
     updateScopeStrip(routingConfig, selectedOperation);
     for (const operation of routingConfig.operations) {
-        for (const assignment of operation.assignments.filter(item => item.planningStatus === "available")) {
+        for (const assignment of workflowStationViews(operation)) {
             restoreAutoSavedRnrEvidence({
                 productId: assignment.assignment.productId,
                 operationId: operation.operation.operationId,
@@ -809,10 +808,13 @@ function syncOperationSelector(operations) {
     operationSelect.value = selectedOperationId;
 }
 function syncStationSelector(selectedOperation) {
-    const assignments = selectedOperation?.assignments.filter(item => item.planningStatus === "available") ?? [];
+    const assignments = workflowStationViews(selectedOperation);
     selectedWorkflowStationId = nextStationId(selectedWorkflowStationId, assignments.map(item => item.assignment.stationId));
     stationSelect.innerHTML = assignments.length
-        ? assignments.map(item => `<option value="${escapeHtml(item.assignment.stationId)}">${escapeHtml(formatKnownText(item.station?.name ?? item.assignment.stationId))} / ${escapeHtml(item.assignment.stationId)}</option>`).join("")
+        ? assignments.map(item => {
+            const gap = item.planningStatus === "missingParameter" ? (locale === "zh" ? " · 无计划 CT" : " · no planned CT") : "";
+            return `<option value="${escapeHtml(item.assignment.stationId)}">${escapeHtml(formatKnownText(item.station?.name ?? item.assignment.stationId))} / ${escapeHtml(item.assignment.stationId)}${gap}</option>`;
+        }).join("")
         : `<option value="">${escapeHtml(t("stationRequired"))}</option>`;
     stationSelect.disabled = assignments.length <= 1;
     stationSelect.value = selectedWorkflowStationId;
@@ -929,7 +931,8 @@ function bindProductEditing(currentProductId) {
         windowDemandByRoute.clear();
         routeWindowMemory.clear();
         calibrationActionError = "";
-        cycleCheckDraft = { samples: "", targetSamples: 20, standardCycleSec: 24, acceptableSlowDeviationPercent: undefined };
+        cycleCheckDraft = emptyCycleSampleDraft();
+        editingCycleSampleId = "";
         rnrMode = "timeWindow";
         rnrSelectedEventId = "";
         rnrContextKey = "";
@@ -1298,7 +1301,8 @@ function applyLocalBaseline(form) {
             parameterId: `local-baseline-${Date.now()}-${++localBaselineVersionCounter}`,
             effectiveFrom: todayDateValue(),
         });
-        if ((hasObservations || hasPublishedVersion) && !globalThis.confirm(locale === "zh"
+        const ctChanged = !base || base.standardCycleSec !== next.standardCycleSec;
+        if ((ctChanged || hasObservations || hasPublishedVersion) && !globalThis.confirm(locale === "zh"
             ? `将新建本地预设版本：CT ${formatNumber(next.standardCycleSec)} 秒、P ${percent(next.performanceRate)}、Q ${percent(next.qualityRate)}。请确认 P 已按新 CT 复核；已有 R&R 记录和已发布版本不改写，当前对比与建议将按新基线重算。继续吗？`
             : `Create a local planned version: CT ${formatNumber(next.standardCycleSec)}s, P ${percent(next.performanceRate)}, Q ${percent(next.qualityRate)}? Confirm P was reviewed against the new CT. Existing records stay unchanged; current comparisons will recalculate.`))
             return;
@@ -1308,7 +1312,6 @@ function applyLocalBaseline(form) {
         if (!hasObservations && contextKey === rnrContextKey) {
             rnrSegmentDraft.standardCycleSec = next.standardCycleSec;
             rnrSegmentDraft.piecesPerCycle = next.piecesPerCycle;
-            cycleCheckDraft.standardCycleSec = next.standardCycleSec;
         }
         localBaselineErrors.delete(key);
     }
@@ -1362,17 +1365,25 @@ function clearLocalBaselines() {
     }
     catch { /* Browser storage may be disabled. */ }
 }
+function cycleDraftHasSamples(cycle) {
+    if (!cycle || !Array.isArray(cycle.samples))
+        return false;
+    return cycle.samples.length > 0;
+}
+function workflowStationViews(operation) {
+    return operation?.assignments.filter(item => item.planningStatus === "available" || item.planningStatus === "missingParameter") ?? [];
+}
 function hasRnrObservations(productId, operationId, stationId) {
     const contextKey = `${productId}::${operationId}::${stationId}`;
     const cycleDraft = contextKey === rnrContextKey ? cycleCheckDraft : rnrDrafts.get(contextKey)?.cycle;
-    if ((rnrActualEventsByContext.get(contextKey)?.length ?? 0) > 0 || Boolean(cycleDraft?.samples.trim()))
+    if ((rnrActualEventsByContext.get(contextKey)?.length ?? 0) > 0 || cycleDraftHasSamples(cycleDraft))
         return true;
     try {
         const raw = localStorage.getItem(evidenceStorageKeyForScope({ productId, operationId, stationId }));
         if (!raw)
             return false;
         const saved = JSON.parse(raw);
-        return saved.snapshot.actualEvents.length > 0 || Boolean(saved.cycleDraft.samples.trim());
+        return (saved.snapshot?.actualEvents?.length ?? 0) > 0 || cycleDraftHasSamples(migrateLegacyCycleDraft(saved.cycleDraft).draft);
     }
     catch {
         return true;
@@ -1515,7 +1526,7 @@ function renderPlannedSaInput(routingConfig, selectedOperation) {
     ${currentStationHead(t("plannedSaEyebrow"), t("plannedSaTitle"), `<span class="section-label">${t("bestCaseSaInput")}</span><button class="button secondary" type="button" id="generatePlannedSample">${locale === "zh" ? "重置为测试样例" : "Reset to test sample"}</button><button class="button" type="button" id="fillPlannedGaps">${t("fillGaps")}</button>`)}
     <div class="field-grid shift-config-grid">
       <div class="field"><label for="standardDayStartDate">${locale === "zh" ? "生产日日期" : "Production-day date"}</label><input id="standardDayStartDate" type="date" value="${escapeHtml(minuteToDateValue(dayConfig.startMinute))}" /></div>
-      <div class="field"><label>${locale === "zh" ? "白班开班时间" : "First-shift start"}</label><div class="time-pair"><select id="standardDayStartHour" aria-label="${locale === "zh" ? "白班开班时" : "First-shift hour"}">${numberOptions(0, 23, Math.floor((dayConfig.startMinute % MINUTE_PER_DAY) / 60))}</select><select id="standardDayStartMinute" aria-label="${locale === "zh" ? "白班开班分" : "First-shift minute"}">${numberOptions(0, 59, dayConfig.startMinute % 60)}</select></div></div>
+      <div class="field"><label>${locale === "zh" ? "白班开班时间" : "First-shift start"}</label><div class="time-pair"><select id="standardDayStartHour" aria-label="${locale === "zh" ? "白班开班时" : "First-shift hour"}">${numberOptions(0, 23, Math.floor(minuteOfDay(dayConfig.startMinute) / 60))}</select><select id="standardDayStartMinute" aria-label="${locale === "zh" ? "白班开班分" : "First-shift minute"}">${numberOptions(0, 59, minuteOfDay(dayConfig.startMinute) % 60)}</select></div></div>
       <div class="field"><label for="standardShiftMinutes">${locale === "zh" ? "班次时长" : "Shift length"}</label><select id="standardShiftMinutes"><option value="720" ${dayConfig.shiftMinutes === 720 ? "selected" : ""}>12H / 720 min</option><option value="480" ${dayConfig.shiftMinutes === 480 ? "selected" : ""}>8H / 480 min</option></select></div>
       <div class="field"><label for="standardShiftsPerDay">${locale === "zh" ? "每日班数" : "Shifts per day"}</label><select id="standardShiftsPerDay">${Array.from({ length: MINUTE_PER_DAY / dayConfig.shiftMinutes }, (_, i) => `<option value="${i + 1}" ${dayConfig.shiftsPerDay === i + 1 ? "selected" : ""}>${i + 1}</option>`).join("")}</select></div>
       <div class="field"><label for="standardDayCount">${locale === "zh" ? "生产日数" : "Production days"}</label><select id="standardDayCount"><option value="1" ${dayConfig.dayCount === 1 ? "selected" : ""}>1</option><option value="2" ${dayConfig.dayCount === 2 ? "selected" : ""}>2</option></select></div>
@@ -1624,7 +1635,6 @@ function renderPlannedBlockForm() {
       <div class="action-bar">
         <span>${t("submitCreatesEvent")}</span>
         <div class="panel-actions">
-          <button class="button secondary" type="button" id="resetPlannedTimeBlockStart">${t("resetTimeBlockStart")}</button>
           <button class="button" type="button" id="addPlannedTimeBlock">${t("addTimeBlock")}</button>
         </div>
       </div>
@@ -1690,6 +1700,25 @@ function plannedKindsForCategory(category) {
         return ["unscheduled"];
     return ["production"];
 }
+let pendingStandardSaDayConfig;
+function standardSaDayConfigFromControls(root, fallback) {
+    const date = root.querySelector("#standardDayStartDate")?.value ?? "";
+    const hour = root.querySelector("#standardDayStartHour")?.value;
+    const minute = root.querySelector("#standardDayStartMinute")?.value;
+    const shiftRaw = Number(root.querySelector("#standardShiftMinutes")?.value);
+    const shiftsRaw = Number(root.querySelector("#standardShiftsPerDay")?.value);
+    const dayRaw = Number(root.querySelector("#standardDayCount")?.value);
+    const shiftMinutes = shiftRaw === 480 || shiftRaw === 720 ? shiftRaw : fallback.shiftMinutes;
+    const maxShifts = MINUTE_PER_DAY / shiftMinutes;
+    const shiftsPerDay = Number.isInteger(shiftsRaw) && shiftsRaw >= 1 && shiftsRaw <= maxShifts
+        ? shiftsRaw
+        : Math.min(fallback.shiftsPerDay, maxShifts);
+    const dayCount = dayRaw === 1 || dayRaw === 2 ? dayRaw : fallback.dayCount;
+    const fallbackClock = minuteOfDay(fallback.startMinute);
+    const clock = `${String(Number(hour ?? Math.floor(fallbackClock / 60))).padStart(2, "0")}:${String(Number(minute ?? (fallbackClock % 60))).padStart(2, "0")}`;
+    const startMinute = /^\d{4}-\d{2}-\d{2}$/.test(date) ? combineDateTimeMinute(date, clock) : fallback.startMinute;
+    return { startMinute, shiftMinutes, shiftsPerDay, dayCount };
+}
 function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
     const dayConfig = getStandardSaDayConfig(productId, stationId);
     const updateDayConfig = (next) => {
@@ -1713,23 +1742,29 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
         getCopyProjectionDraft(productId, stationId).generated = false;
         render(selectedProductId);
     };
-    plannedSaRoot.querySelector("#generatePlannedSample")?.addEventListener("click", () => {
+    const resetButton = plannedSaRoot.querySelector("#generatePlannedSample");
+    resetButton?.addEventListener("mousedown", () => {
+        pendingStandardSaDayConfig = standardSaDayConfigFromControls(plannedSaRoot, getStandardSaDayConfig(productId, stationId));
+    });
+    resetButton?.addEventListener("click", () => {
         if (!plannedSaEventsAreDefault && !window.confirm(locale === "zh"
             ? "重置为测试样例会替换当前手工计划。继续吗？"
             : "Resetting to the test sample replaces the current manual plan. Continue?"))
             return;
-        plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, dayConfig);
+        const next = pendingStandardSaDayConfig ?? standardSaDayConfigFromControls(plannedSaRoot, getStandardSaDayConfig(productId, stationId));
+        pendingStandardSaDayConfig = undefined;
+        standardSaDayConfigs.set(`${productId}::${stationId}`, next);
+        plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, next);
         plannedSaEventsAreDefault = true;
         frozenStandardWindows.delete(`${productId}::${stationId}`);
         getCopyProjectionDraft(productId, stationId).generated = false;
         standardWindowFreezeError = "";
         plannedSaDraftError = "";
-        resetPlannedBlockDraft(stationId, horizonMinutes);
+        setPlannedBlockDraftStart(next.startMinute, horizonMinutes);
         render(selectedProductId);
     });
-    plannedSaRoot.querySelector("#standardDayStartDate")?.addEventListener("change", event => {
-        const date = event.currentTarget.value;
-        updateDayConfig({ ...dayConfig, startMinute: combineDateTimeMinute(date, minuteToTimeValue(dayConfig.startMinute)) });
+    plannedSaRoot.querySelector("#standardDayStartDate")?.addEventListener("change", () => {
+        updateDayConfig(standardSaDayConfigFromControls(plannedSaRoot, dayConfig));
     });
     plannedSaRoot.querySelector("#standardDayStartHour")?.addEventListener("change", event => {
         updateDayConfig({ ...dayConfig, startMinute: updateMinuteClockPart(dayConfig.startMinute, "startHour", event.currentTarget.value) });
@@ -1861,7 +1896,7 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
             projectionDraft.builtVersion = frozen.version;
         else
             delete projectionDraft.builtVersion;
-        projectionDraft.builtDayStart = dayConfig.startMinute % MINUTE_PER_DAY;
+        projectionDraft.builtDayStart = minuteOfDay(dayConfig.startMinute);
         if (repeatDates.length && frozen) {
             projectionDraft.copyResult = copyStandardWindowToWeek({
                 source: frozen, currentSourceEvents: plannedSaEvents, currentDayConfig: dayConfig,
@@ -1886,10 +1921,6 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
     });
     plannedSaRoot.querySelector("#addPlannedTimeBlock")?.addEventListener("click", () => {
         addPlannedTimeBlock(stationId, productId, horizonMinutes);
-    });
-    plannedSaRoot.querySelector("#resetPlannedTimeBlockStart")?.addEventListener("click", () => {
-        resetPlannedBlockDraftToStart(horizonMinutes);
-        render(selectedProductId);
     });
     plannedSaRoot.querySelector("#fillPlannedGaps")?.addEventListener("click", () => {
         plannedSaEvents = [...plannedSaEvents, ...findStandardSaDayGaps(plannedSaEvents, dayConfig).map((gap, index) => ({ ...buildTimelineEvent(`planned-unscheduled-${Date.now()}-${index}`, stationId, productId, "unscheduled", gap.startMinute, gap.endMinute, "未排产"), autoFilled: true }))]
@@ -1962,7 +1993,7 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
     const draft = getCopyProjectionDraft(productId, stationId);
     const zh = locale === "zh";
     const dayConfig = getStandardSaDayConfig(productId, stationId);
-    const dayStart = dayConfig.startMinute % MINUTE_PER_DAY;
+    const dayStart = minuteOfDay(dayConfig.startMinute);
     const weekStartClock = minuteToTimeValue(dayConfig.startMinute);
     const choices = draft.dayModes.map(mode => ({
         mode, ...(mode === "manual" && draft.stableSaved ? { manual: draft.stableSaved } : {}),
@@ -1994,6 +2025,15 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
     const weekCapacity = ledger?.summary ? buildPeriodCapacity({
         operationId, stationId, parameters, days: ledger.days.map((day, index) => capacityDay(day, shiftCounts[index] ?? 0)),
     }) : undefined;
+    if (draft.generated && ledger?.summary && draft.weekStartDate) {
+        stationWeekSnapshots.set(`${productId}::${stationId}::${draft.weekStartDate}`, {
+            days: ledger.days.map(day => ({ ...day })),
+            shiftCounts: [...shiftCounts],
+            perShiftUnplanned,
+            ...(ledger.summary.withBreaksSa === undefined ? {} : { withBreaksSa: ledger.summary.withBreaksSa }),
+            ...(mostLikelyWeek?.withBreaksSa === undefined ? {} : { mostLikelySa: mostLikelyWeek.withBreaksSa }),
+        });
+    }
     const monthCapacity = month?.summary && !month.issues.length ? buildPeriodCapacity({
         operationId, stationId, parameters,
         days: month.days.map((day, index) => capacityDay(day, shiftCounts[index % shiftCounts.length] ?? 0)),
@@ -2093,9 +2133,9 @@ function renderPeriodCapacity(result, stationId, allowance, zh, month) {
         ? (zh ? `非计划停机预留已含在 Most likely 分钟中：每班 ${formatNumber(allowance.perShiftMinutes)} 分钟。` : `Unplanned allowance is already inside Most likely minutes: ${formatNumber(allowance.perShiftMinutes)} min per shift.`)
         : (zh ? "无样本，按 0 预留的假设。" : "No sample; assuming a 0-minute allowance.");
     const changeover = month
-        ? (zh ? `月内额外换型 ${formatNumber(result.extraChangeoverMinutes)} 分钟，另扣 ${formatNumber(result.extraChangeoverGoodLossRaw)} 件，不改各周。` : `Extra monthly changeover ${formatNumber(result.extraChangeoverMinutes)} min deducts ${formatNumber(result.extraChangeoverGoodLossRaw)} pieces from the month only.`)
+        ? (zh ? `月内额外换型 ${formatNumber(result.extraChangeoverMinutes)} 分钟，不改各周。Best case 扣 ${formatNumber(result.extraChangeoverGoodLossRaw)} 件；Most likely 按已发布 P、Q 扣 ${formatNumber(result.extraChangeoverMostLikelyLossRaw ?? result.extraChangeoverGoodLossRaw)} 件。` : `Extra monthly changeover ${formatNumber(result.extraChangeoverMinutes)} min stays out of the weeks. Best case deducts ${formatNumber(result.extraChangeoverGoodLossRaw)} pieces; Most likely deducts ${formatNumber(result.extraChangeoverMostLikelyLossRaw ?? result.extraChangeoverGoodLossRaw)} after published P and Q.`)
         : "";
-    return `<section ${month ? "data-month-capacity" : "data-week-capacity"} style="margin-top:14px;"><h4>${zh ? (month ? "当前工站月件数" : "当前工站周件数") : (month ? "Station month pieces" : "Station week pieces")}</h4><p class="note">${escapeHtml(stationId)}。${escapeHtml(reserve)}${changeover ? ` ${escapeHtml(changeover)}` : ""} ${zh ? "周、月件数按未取整日值合计后向下取整。" : "Period pieces floor the sum of unrounded daily values."}</p><div class="field-grid"><div class="field"><span>Best case</span><strong>${pieces(result.bestCaseGoodPieces)}</strong><small>${zh ? "生产" : "Production"} ${formatNumber(result.bestCaseMinutes)} ${zh ? "分钟" : "min"}</small></div><div class="field"><span>Most likely</span><strong>${pieces(result.mostLikelyGoodPieces)}</strong><small>${zh ? "生产" : "Production"} ${formatNumber(result.mostLikelyMinutes)} ${zh ? "分钟" : "min"}</small></div></div>${result.calculable ? "" : `<p class="form-error" role="alert">${escapeHtml(result.reason ?? "")}</p>`}<p class="note">${versions.length ? escapeHtml(versions.join("；")) : (zh ? "没有可追溯的参数版本。" : "No traceable parameter version.")}</p></section>`;
+    return `<section ${month ? "data-month-capacity" : "data-week-capacity"} style="margin-top:14px;"><h4>${zh ? (month ? "当前工站月件数" : "当前工站周件数") : (month ? "Station month pieces" : "Station week pieces")}</h4><p class="note">${escapeHtml(stationId)}。${escapeHtml(reserve)}${changeover ? ` ${escapeHtml(changeover)}` : ""} ${zh ? "Best case 件数不乘 P、Q。Most likely 件数乘已发布的 P、Q。周、月件数按未取整日值合计后向下取整。" : "Best case pieces do not apply P or Q. Most likely pieces apply the published P and Q. Period pieces floor the sum of unrounded daily values."}</p><div class="field-grid"><div class="field"><span>Best case</span><strong>${pieces(result.bestCaseGoodPieces)}</strong><small>${zh ? "生产" : "Production"} ${formatNumber(result.bestCaseMinutes)} ${zh ? "分钟" : "min"}</small></div><div class="field"><span>Most likely</span><strong>${pieces(result.mostLikelyGoodPieces)}</strong><small>${zh ? "生产" : "Production"} ${formatNumber(result.mostLikelyMinutes)} ${zh ? "分钟" : "min"}</small></div></div>${result.calculable ? "" : `<p class="form-error" role="alert">${escapeHtml(result.reason ?? "")}</p>`}<p class="note">${versions.length ? escapeHtml(versions.join("；")) : (zh ? "没有可追溯的参数版本。" : "No traceable parameter version.")}</p></section>`;
 }
 function renderWeekRatios(summary, zh, fourWeek = false) {
     const title = fourWeek ? (zh ? "整月汇总" : "Month total") : (zh ? "周汇总" : "Week total");
@@ -2139,13 +2179,12 @@ function formatStandardWindowIssues(issues) {
     return `Cannot freeze: ${issues.join(", ")}.`;
 }
 function resolvePlannedSaStationId(operations, selectedOperation) {
-    const selectedStation = selectedOperation?.assignments.find(item => item.planningStatus === "available" && item.assignment.stationId === selectedWorkflowStationId)?.assignment.stationId
-        ?? selectedOperation?.assignments.find(item => item.planningStatus === "available")?.assignment.stationId;
+    const selectedStation = workflowStationViews(selectedOperation).find(item => item.assignment.stationId === selectedWorkflowStationId)?.assignment.stationId
+        ?? workflowStationViews(selectedOperation)[0]?.assignment.stationId;
     if (selectedStation)
         return selectedStation;
     const routeStation = operations
-        .flatMap(operation => operation.assignments)
-        .find(item => item.planningStatus === "available")?.assignment.stationId;
+        .flatMap(operation => workflowStationViews(operation))[0]?.assignment.stationId;
     return routeStation ?? "-";
 }
 function buildDefaultPlannedActivityEvents(stationId, productId, config) {
@@ -2391,11 +2430,6 @@ function resetPlannedBlockDraft(stationId, horizonMinutes) {
     const lastEndMinute = stationEvents.length ? Math.max(...stationEvents.map(event => event.endMinute)) : 0;
     setPlannedBlockDraftStart(lastEndMinute, horizonMinutes);
 }
-function resetPlannedBlockDraftToStart(horizonMinutes) {
-    plannedDraftFollowsLatest = false;
-    setPlannedBlockDraftStart(0, horizonMinutes);
-    plannedSaDraftError = "";
-}
 function setPlannedBlockDraftStart(startMinute, _horizonMinutes) {
     const safeStartMinute = Number.isFinite(startMinute) ? startMinute : 0;
     const safeEndMinute = safeStartMinute + 60;
@@ -2410,8 +2444,11 @@ function setPlannedBlockDraftStart(startMinute, _horizonMinutes) {
 function minuteToDateValue(minute) {
     return addDays(PLANNED_SA_BASE_DATE, Math.floor(minute / MINUTE_PER_DAY));
 }
+function minuteOfDay(minute) {
+    return ((minute % MINUTE_PER_DAY) + MINUTE_PER_DAY) % MINUTE_PER_DAY;
+}
 function minuteToTimeValue(minute) {
-    const minuteInDay = ((minute % MINUTE_PER_DAY) + MINUTE_PER_DAY) % MINUTE_PER_DAY;
+    const minuteInDay = minuteOfDay(minute);
     const hours = Math.floor(minuteInDay / 60);
     const minutes = minuteInDay % 60;
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
@@ -2531,7 +2568,7 @@ function renderTimelineGaps(gaps) {
 }
 function renderRnrTracking(selectedOperation) {
     const operation = selectedOperation?.operation;
-    const assignmentView = selectedOperation?.assignments.find(item => item.planningStatus === "available");
+    const assignmentView = workflowStationViews(selectedOperation)[0];
     const stationId = selectedWorkflowStationId || assignmentView?.assignment.stationId || "-";
     const productId = assignmentView?.assignment.productId ?? selectedProductId;
     if (stationId === "-") {
@@ -2566,14 +2603,16 @@ function renderRnrTracking(selectedOperation) {
                 piecesPerCycle: parameter?.piecesPerCycle ?? 1,
                 orderId: "", evidenceSource: "", isEstimated: false,
             };
-            cycleCheckDraft = { samples: "", targetSamples: 20, standardCycleSec: parameter?.standardCycleSec ?? 24, acceptableSlowDeviationPercent: undefined };
+            cycleCheckDraft = emptyCycleSampleDraft();
+            editingCycleSampleId = "";
         }
         else if (parameter) {
             rnrSegmentDraft.standardCycleSec = parameter.standardCycleSec;
             rnrSegmentDraft.piecesPerCycle = parameter.piecesPerCycle;
-            cycleCheckDraft.standardCycleSec = parameter.standardCycleSec;
         }
         rnrContextKey = contextKey;
+        if (!saved)
+            editingCycleSampleId = "";
         rnrSelectedEventId = "";
         rnrActualKind = "production";
         rnrEventNote = "";
@@ -2590,16 +2629,17 @@ function renderRnrTracking(selectedOperation) {
     const unplannedStops = locale === "zh"
         ? "设备故障 / 工装问题 / 物流等待 / 质量隔离 / 人员问题"
         : "equipmentFailure / toolingIssue / logisticsWaiting / qualityHold / laborIssue";
+    const hasActualRecord = (rnrActualEventsByContext.get(rnrContextKey)?.length ?? 0) > 0;
+    const validationSample = validationFixtureContexts.has(rnrContextKey);
+    const trackingStatus = validationSample
+        ? (locale === "zh" ? "验证样本 · 非现场记录" : "Validation sample · not field data")
+        : hasActualRecord
+            ? (locale === "zh" ? "记录中" : "Recording")
+            : t("notStarted");
     rnrRoot.innerHTML = `
-    ${currentStationHead(t("rnrEyebrow"), t("rnrTitle"), `${productId === "A-Housing" && ((operation?.operationId === "op-a-10" && (stationId === "OP10" || stationId === "OP10B")) || (operation?.operationId === "op-a-20" && stationId === "OP20")) ? `<button class="button secondary" type="button" data-load-rnr-validation>${locale === "zh" ? "加载 R&R 验证样本" : "Load R&R validation sample"}</button>` : ""}<span class="pill">${locale === "zh" ? "本机自动保存" : "Auto-saved locally"}</span><span class="pill ${validationFixtureContexts.has(rnrContextKey) ? "warn" : "good"}">${validationFixtureContexts.has(rnrContextKey) ? (locale === "zh" ? "验证样本 · 非现场记录" : "Validation sample · not field data") : (rnrActualEventsByContext.get(rnrContextKey)?.length ?? 0) > 0 ? (locale === "zh" ? "记录中" : "Recording") : t("notStarted")}</span>`)}
+    ${currentStationHead(t("rnrEyebrow"), t("rnrTitle"), `<span class="pill ${validationSample ? "warn" : hasActualRecord ? "good" : ""}">${trackingStatus}</span><span class="pill">${locale === "zh" ? "本机自动保存" : "Auto-saved locally"}</span>`)}
     <p class="note">${t("rnrNote")}</p>
-    ${renderRnrBaselineReference(stationId, productId)}
-    <div class="field-grid">
-      ${field(t("rnrTarget"), operationLabel)}
-      ${field(t("station"), stationId)}
-      ${field(t("unplannedStopScope"), unplannedStops)}
-    </div>
-    <section class="sub-card" style="margin-top:14px;">
+    <section class="sub-card" style="margin-top:14px;" data-rnr-mode-panel>
       <div class="panel-head">
         <h3>${t("rnrMode")}</h3>
         <span class="section-label">${rnrMode === "timeWindow" ? "SA" : "CT / P"}</span>
@@ -2610,9 +2650,14 @@ function renderRnrTracking(selectedOperation) {
         ${field(t("cycleCheck"), t("modeCycleCheckHint"))}
       </div>
     </section>
+    <div class="field-grid">
+      ${field(t("rnrTarget"), operationLabel)}
+      ${field(t("station"), stationId)}
+      ${field(t("unplannedStopScope"), unplannedStops)}
+    </div>
     ${rnrMode === "timeWindow"
-        ? renderRnrActualEditor(stationId, productId, parameter)
-        : renderCycleCheckRecord(parameter)}
+        ? `${renderRnrBaselineReference(stationId, productId)}${renderRnrActualEditor(stationId, productId, parameter, operation)}`
+        : renderCycleCheckRecord(parameter, operation?.operationId ?? "", stationId)}
     <div class="action-bar">
       <span>${t("capacityAnalysisSeparated")}</span>
     </div>
@@ -2633,8 +2678,7 @@ function renderRnrBaselineReference(stationId, productId) {
         ${field(t("baselineSaMetric"), valid ? percent(summary.bestCaseSaWithBreaks) : "-")}
         ${field(t("bestCaseSaWithoutBreaks"), valid ? percent(summary.bestCaseSaWithoutBreaks) : "-")}
       </div>
-      ${renderRnrComparisonTimeline(stationId, events, window, dayConfig)}
-      ${rnrMode === "timeWindow" ? `<p class="note">${locale === "zh" ? "实际轨道由现场记录构成；空白表示待补录，不自动计为停机。推断时间损失只在生产段内扣除，不与显式停机重复。" : "The actual track uses on-site records. Blank time is unrecorded, not downtime. Inferred loss is deducted only within production windows, never double-counted with explicit stops."}</p>` : ""}
+      ${renderRnrTimelineMetrics(stationId, events, window, dayConfig)}
       ${reconcileCurrentRnrSpeed().segments.some(segment => segment.issue === "faster_than_verified_standard") ? `<p class="form-error" role="alert">${locale === "zh" ? "存在快于已校验标准节拍的生产段：请复核 OK/NOK 数量、每循环件数和真实节拍后再出结果。" : "A production interval is faster than the verified standard: review OK/NOK quantity, pieces per cycle and observed cycle before finalizing."}</p>` : ""}
     </section>
   `;
@@ -2642,23 +2686,25 @@ function renderRnrBaselineReference(stationId, productId) {
 function currentRnrActualEvents() {
     return rnrActualEventsByContext.get(rnrContextKey) ?? [];
 }
+function plannedCycleSecFor(operationId, stationId) {
+    const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operationId, stationId);
+    return parameter && parameter.standardCycleSec > 0 ? parameter.standardCycleSec : undefined;
+}
+function speedOptionsForCycle() {
+    // Cycle samples stay diagnostic. They do not switch the parked time-window
+    // speed split, and they do not apply a slow-deviation tolerance.
+    return undefined;
+}
 function reconcileCurrentRnrSpeed() {
     const [, operationId = "", stationId = ""] = rnrContextKey.split("::");
     const [productId = ""] = rnrContextKey.split("::");
     const production = currentRnrActualEvents().filter(event => event.kind === "production");
-    const samples = parseCycleSamples(cycleCheckDraft.samples);
-    const verified = samples.length >= cycleCheckDraft.targetSamples && cycleCheckDraft.standardCycleSec > 0;
     return reconcileRnrSpeedLoss(production.map(event => ({
         id: event.id, productId, operationId, stationId,
         startMinute: event.startMinute, endMinute: event.endMinute,
         okQty: event.okQty ?? 0, nokQty: event.nokQty ?? 0,
         piecesPerCycle: event.piecesPerCycle ?? 0,
-    })), verified ? {
-        verifiedStandardCycleSec: cycleCheckDraft.standardCycleSec,
-        ...(cycleCheckDraft.acceptableSlowDeviationPercent === undefined ? {} : {
-            acceptableSlowDeviationPercent: cycleCheckDraft.acceptableSlowDeviationPercent,
-        }),
-    } : {});
+    })), speedOptionsForCycle() ?? {});
 }
 function currentRnrPaceSummary() {
     const [, operationId = "", stationId = ""] = rnrContextKey.split("::");
@@ -2679,7 +2725,7 @@ function formatPaceVariance(deltaSec, deltaPercent) {
     const sign = deltaSec > 0 ? "+" : "";
     return `${sign}${formatNumber(deltaSec, 1)}s (${sign}${formatNumber(deltaPercent * 100, 1)}%)`;
 }
-function renderRnrComparisonTimeline(stationId, planned, window, dayConfig) {
+function renderRnrTimelineMetrics(stationId, planned, window, dayConfig) {
     const actual = currentRnrActualEvents();
     const start = window.startMinute ?? 0;
     const duration = Math.max(window.durationMinutes, 1);
@@ -2712,15 +2758,27 @@ function renderRnrComparisonTimeline(stationId, planned, window, dayConfig) {
         ${field(locale === "zh" ? "性能损失（分钟）" : "Performance loss (min)", round1(speed.performanceLossMinutes))}
         ${field(locale === "zh" ? "全程平均节拍" : "Full-run average cycle time", pace.averageCycleSec === undefined ? "-" : `${round1(pace.averageCycleSec)}s`)}
       </div>
-      <div class="timeline-wrap rnr-comparison" style="--rnr-timeline-width:${Math.max(960, (ticks.length - 1) * 150)}px;">
-        <div class="rnr-axis">
-          <span class="timeline-station">${t("station")}</span>
-          <div class="rnr-axis-track">${ticks.map((minute, index) => `<span class="${index === ticks.length - 1 ? "end" : ""}" style="left:${(minute / duration * 100).toFixed(2)}%">${formatTimelineTick(start + minute, index === 0 ? undefined : start + ticks[index - 1])}</span>`).join("")}</div>
-        </div>
-        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
-        <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${actual.map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
-      </div>
     </section>
+  `;
+}
+function renderRnrTimelineBars(stationId, productId) {
+    const planned = getPlannedSaEvents(stationId, productId);
+    const dayConfig = getStandardSaDayConfig(productId, stationId);
+    const window = standardSaDayWindow(dayConfig);
+    const actual = currentRnrActualEvents();
+    const start = window.startMinute ?? 0;
+    const duration = Math.max(window.durationMinutes, 1);
+    const ticks = timelineTicks(duration);
+    return `
+    <div class="timeline-wrap rnr-comparison" data-rnr-timeline style="--rnr-timeline-width:${Math.max(960, (ticks.length - 1) * 150)}px;">
+      <div class="rnr-axis">
+        <span class="timeline-station">${t("station")}</span>
+        <div class="rnr-axis-track">${ticks.map((minute, index) => `<span class="${index === ticks.length - 1 ? "end" : ""}" style="left:${(minute / duration * 100).toFixed(2)}%">${formatTimelineTick(start + minute, index === 0 ? undefined : start + ticks[index - 1])}</span>`).join("")}</div>
+      </div>
+      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${actual.map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+    </div>
+    <p class="note">${locale === "zh" ? "实际轨道由现场记录构成；空白表示待补录，不自动计为停机。推断时间损失只在生产段内扣除，不与显式停机重复。" : "The actual track uses on-site records. Blank time is unrecorded, not downtime. Inferred loss is deducted only within production windows, never double-counted with explicit stops."}</p>
   `;
 }
 function renderRnrOffShift(config, startMinute, durationMinutes) {
@@ -2731,14 +2789,17 @@ function renderRnrOffShift(config, startMinute, durationMinutes) {
         return `<span class="timeline-offshift" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${label}">${label}</span>`;
     }).join("");
 }
-function renderRnrActualEditor(stationId, productId, parameter) {
+function renderRnrActualEditor(stationId, productId, parameter, operation) {
     const events = currentRnrActualEvents();
     const window = standardSaDayWindow(getStandardSaDayConfig(productId, stationId));
     const issues = validatePlannedSaEvents(events, window);
     const pace = currentRnrPaceSummary();
+    const loadSample = productId === "A-Housing" && ((operation?.operationId === "op-a-10" && (stationId === "OP10" || stationId === "OP10B")) || (operation?.operationId === "op-a-20" && stationId === "OP20"))
+        ? `<button class="button secondary" type="button" data-load-rnr-validation>${locale === "zh" ? "加载 R&R 验证样本" : "Load R&R validation sample"}</button>`
+        : "";
     return `
     <section class="sub-card" style="margin-top:14px;">
-      <div class="panel-head"><h3>${locale === "zh" ? "实际时间段" : "Actual time intervals"}</h3><span class="section-label">${formatNumber(events.length)}</span></div>
+      <div class="panel-head"><h3>${locale === "zh" ? "实际时间段" : "Actual time intervals"}</h3><div class="panel-actions">${loadSample}<span class="section-label">${formatNumber(events.length)}</span></div></div>
       <p class="note">${locale === "zh" ? "每段记录真实起止时钟；生产段另填 OK / NOK。点击一行编辑，下一段默认紧接上一段终点。" : "Record actual start and end times. Production intervals also need OK / NOK. Select a row to edit; new intervals start at the previous end."}</p>
       <div class="field-grid">
         ${rnrInputField(t("startDate"), "segmentStartDate", minuteToDateValue(rnrSegmentDraft.startMinute), "date")}
@@ -2758,10 +2819,11 @@ function renderRnrActualEditor(stationId, productId, parameter) {
       </div>
       ${rnrDraftError ? `<p class="form-error" role="alert">${escapeHtml(rnrDraftError)}</p>` : ""}
       ${issues.length ? `<p class="form-error" role="alert">${issues.map(issue => escapeHtml(formatKnownText(issue.message))).join("<br>")}</p>` : ""}
-      <div class="action-bar"><span>${rnrSelectedEventId ? (locale === "zh" ? "正在编辑已记录时间段" : "Editing recorded interval") : (locale === "zh" ? "新增实际时间段" : "New actual interval")}</span>
-        <div><button type="button" class="button secondary" data-rnr-new>${locale === "zh" ? "新建" : "New"}</button>
+      <div class="action-bar"><span>${rnrSelectedEventId ? (locale === "zh" ? "正在编辑已记录时间段" : "Editing a recorded interval") : (locale === "zh" ? "填完这一段后加入记录" : "Add this interval to the record")}</span>
+        <div>${rnrSelectedEventId ? `<button type="button" class="button secondary" data-rnr-new>${locale === "zh" ? "取消编辑" : "Cancel edit"}</button>` : ""}
         <button type="button" class="button" data-rnr-save>${rnrSelectedEventId ? (locale === "zh" ? "保存修改" : "Save changes") : (locale === "zh" ? "添加时间段" : "Add interval")}</button></div>
       </div>
+      ${renderRnrTimelineBars(stationId, productId)}
       <div class="table-wrap"><table><thead><tr>
         <th>${locale === "zh" ? "类型" : "Type"}</th><th>${t("startTime")}</th><th>${t("endTime")}</th><th>${t("elapsedMin")}</th><th>OK / NOK</th><th>${locale === "zh" ? "本段平均节拍" : "Segment average CT"}</th><th>${locale === "zh" ? "相对全程差异" : "Vs full-run"}</th><th>${locale === "zh" ? "原因 / 证据" : "Reason / evidence"}</th><th>${locale === "zh" ? "操作" : "Actions"}</th>
       </tr></thead><tbody>${events.length ? events.map(event => `<tr>
@@ -2917,33 +2979,108 @@ function renderProductionSegmentRecord(stationId, productId, parameter) {
     </section>
   `;
 }
-function renderCycleCheckRecord(parameter) {
-    const standardCycleSec = cycleCheckDraft.standardCycleSec || parameter?.standardCycleSec || 1;
-    const samples = parseCycleSamples(cycleCheckDraft.samples);
-    const average = samples.length ? samples.reduce((sum, item) => sum + item, 0) / samples.length : 0;
-    const performance = average > 0 ? standardCycleSec / average : 0;
-    const complete = samples.length >= cycleCheckDraft.targetSamples;
+function renderCycleCheckRecord(parameter, operationId, stationId) {
+    const zh = locale === "zh";
+    const summary = summarizeCycleSamples(cycleCheckDraft);
+    const diagnosis = diagnosePlannedCycle(summary, parameter && parameter.standardCycleSec > 0 ? parameter.standardCycleSec : undefined);
+    const statusLabel = summary.legacyUnparsed
+        ? (zh ? "原文待处理" : "Unparsed text kept")
+        : summary.validCount > 0
+            ? (zh ? "已算出均值" : "Mean ready")
+            : summary.status === "empty"
+                ? (zh ? "尚未录入" : "No samples")
+                : (zh ? "尚无有效节拍" : "No valid laps");
+    const slower = new Set(summary.slowerSampleIds);
+    const rows = cycleCheckDraft.samples.map((sample, index) => {
+        const editing = sample.id === editingCycleSampleId;
+        const slow = slower.has(sample.id);
+        const needsReason = sample.lineStop === true || sample.nok === true || slow;
+        return `<li class="cycle-sample-row${sample.lineStop ? " is-stop" : ""}${slow ? " is-slow" : ""}">
+      <span class="cycle-sample-index">${formatNumber(index + 1)}</span>
+      ${editing
+            ? `<input data-cycle-edit-input="${escapeHtml(sample.id)}" inputmode="numeric" value="${escapeHtml(String(stopwatchCode(sample.seconds)))}" aria-label="${zh ? "修改秒表数字" : "Edit stopwatch digits"}" />
+           <button class="button" type="button" data-cycle-save="${escapeHtml(sample.id)}">${zh ? "保存" : "Save"}</button>
+           <button class="button secondary" type="button" data-cycle-cancel>${zh ? "取消" : "Cancel"}</button>`
+            : `<span class="cycle-sample-time">${escapeHtml(formatStopwatch(sample.seconds))}</span>
+           <label class="cycle-mark"><input type="checkbox" data-cycle-nok="${escapeHtml(sample.id)}" ${sample.nok ? "checked" : ""} /> N.OK</label>
+           <label class="cycle-mark"><input type="checkbox" data-cycle-stop="${escapeHtml(sample.id)}" ${sample.lineStop ? "checked" : ""} /> Stopping</label>
+           ${slow ? `<span class="status warn">${zh ? "慢于平均" : "Slower than average"}</span>` : ""}
+           ${needsReason ? `<input class="cycle-reason" data-cycle-reason="${escapeHtml(sample.id)}" value="${escapeHtml(sample.reason ?? "")}" placeholder="${zh ? "异常原因，可后补" : "Reason, optional for now"}" aria-label="${zh ? "这一拍的异常原因" : "Reason for this cycle"}" />` : ""}
+           <button class="button secondary" type="button" data-cycle-edit="${escapeHtml(sample.id)}">${zh ? "修改" : "Edit"}</button>
+           <button class="button secondary" type="button" data-cycle-delete="${escapeHtml(sample.id)}">${zh ? "删除" : "Delete"}</button>`}
+    </li>`;
+    }).join("");
     return `
-    <section class="sub-card" style="margin-top:14px;">
+    <section class="sub-card cycle-sample-panel" data-cycle-check>
       <div class="panel-head">
         <h3>${t("cycleCheckRecord")}</h3>
-        <span class="status ${complete ? "good" : "warn"}">${formatNumber(samples.length)}/${formatNumber(cycleCheckDraft.targetSamples)}</span>
+        <span class="status ${summary.validCount > 0 && !summary.legacyUnparsed ? "good" : "warn"}" data-cycle-status>${statusLabel}</span>
       </div>
       <p class="note">${t("cycleCheckNote")}</p>
-      <div class="field-grid">
-        ${rnrInputField(t("cycleSamplesSec"), "cycleSamples", cycleCheckDraft.samples)}
-        ${rnrInputField(t("targetSampleCount"), "targetSamples", String(cycleCheckDraft.targetSamples), "number")}
-        ${rnrInputField(t("stdCt"), "cycleStandardCycleSec", String(standardCycleSec), "number")}
-        <div class="field"><label for="rnr-slow-tolerance">${locale === "zh" ? "可接受的慢速偏差（%，可留空，最多5%）" : "Acceptable slow-speed deviation (%, optional, max 5%)"}</label><input id="rnr-slow-tolerance" data-rnr-field="slowTolerancePercent" type="number" min="0" max="5" step="0.1" value="${cycleCheckDraft.acceptableSlowDeviationPercent ?? ""}" /></div>
+      <div class="field-grid" data-cycle-counts>
+        ${field(zh ? "计划节拍" : "Planned CT", diagnosis.hasPlannedCycle ? formatStopwatch(diagnosis.plannedCycleSec ?? 0) : (zh ? "无" : "None"))}
+        ${field(zh ? "观察均值" : "Observed mean", summary.observedMeanSec === undefined ? "-" : formatStopwatch(summary.observedMeanSec))}
+        ${field(zh ? "采集" : "Collected", formatNumber(summary.recordedCount))}
+        ${field(zh ? "有效" : "Valid", formatNumber(summary.validCount))}
+        ${field(zh ? "去除" : "Excluded", formatNumber(summary.excludedCount))}
+        ${field(zh ? "去除时长" : "Excluded time", formatStopwatch(summary.lineStopSeconds))}
       </div>
+      <p class="note">${zh ? "采集是已经录入的拍。有效的进入平均。去除是勾了 Stopping 的拍数。去除时长是这些拍的秒表时间合计，只记中断，不进平均。" : "Collected means entered laps. Valid laps enter the average. Excluded is the number of Stopping laps. Excluded time is their stopwatch total: an interruption, kept out of the average."}</p>
+      <form class="cycle-sample-add" data-cycle-add>
+        <label>${zh ? "秒表数字" : "Stopwatch digits"}
+          <input name="seconds" inputmode="numeric" autocomplete="off" placeholder="337" aria-label="${zh ? "秒表数字" : "Stopwatch digits"}" />
+        </label>
+        <p class="cycle-entry-hint">${zh ? "只填秒表上的数字，不要写冒号或小数点。337 会显示为 00:03.37，按 3.37 秒计算。超过 1 分钟写成 10337，即 01:03.37。" : "Type only the digits on the stopwatch, without a colon or decimal point. 337 is shown as 00:03.37 and counted as 3.37 seconds. Past one minute, 10337 means 01:03.37."}</p>
+        <button class="button" type="submit">${zh ? "新增" : "Add"}</button>
+      </form>
+      ${summary.legacyUnparsed ? `<p class="form-error" role="alert">${zh ? "旧草稿里有无法解析的节拍原文，已保留且不计入均值：" : "Unparsed cycle text from an older draft was kept and excluded from the mean:"} ${escapeHtml(summary.legacyUnparsed)}</p>` : ""}
+      ${diagnosis.fasterThanPlanned ? `<p class="form-error" role="alert">${zh ? "样本均值快于计划 CT。请先复核循环边界、产出件数和每循环件数。现有 CT 可以保持；只有确认后才会写入。" : "The sample mean is faster than the planned CT. Review the cycle boundary, output count and pieces per cycle first. The current CT can stay; it changes only after confirmation."}</p>` : ""}
+      ${renderCycleCorrection(diagnosis, summary, operationId, stationId)}
       ${rnrDraftError ? `<p class="form-error" role="alert">${escapeHtml(rnrDraftError)}</p>` : ""}
-      <section class="metrics" aria-label="${t("cycleCheckResult")}" style="margin-top:14px;">
-        ${metricCard(t("sampleCount"), formatNumber(samples.length), complete ? t("ready") : t("warning"), complete ? "good" : "warn")}
-        ${metricCard(t("averageCt"), samples.length ? `${round1(average)}s` : "-", t("calculatedTile"), performance >= 0.94 ? "good" : "warn")}
-        ${metricCard(t("performanceRate"), samples.length ? percent(performance) : "-", t("calculatedTile"), performance >= 0.94 ? "good" : "warn")}
-      </section>
+      ${rows ? `<ol class="cycle-sample-list" data-cycle-sample-list>${rows}</ol>` : `<p class="note" data-cycle-sample-list>${zh ? "还没有已提交的样本。未提交的输入不会保存。" : "No committed samples yet. An unsubmitted entry is not saved."}</p>`}
+      ${diagnosis.hasPlannedCycle ? "" : renderInitialPresetPanel(operationId, stationId, summary)}
     </section>
   `;
+}
+function renderCycleCorrection(diagnosis, summary, operationId, stationId) {
+    const zh = locale === "zh";
+    const mean = summary.observedMeanSec;
+    if (!diagnosis.hasPlannedCycle) {
+        return `<p class="note">${zh ? "当前没有有效计划 CT，不会用默认秒数代替。有计入平均的节拍后，在下面确认 CT、每循环件数和 P。P 默认 100%，改成其他有效值时会提示这是人工判断，并再确认一次才写入。不必为了写入再进入第四阶段。" : "No effective planned CT. A default number of seconds is not used. After at least one lap is in the average, confirm CT, pieces per cycle and P below. P defaults to 100%. Another valid value warns that it is a judgement, then asks for a second confirmation. Stage 4 is not required for the write."}</p>`;
+    }
+    const delta = diagnosis.deltaSec === undefined ? "-" : `${diagnosis.deltaSec > 0 ? "+" : ""}${formatNumber(diagnosis.deltaSec, 1)} ${zh ? "秒" : "s"}`;
+    const proposed = mean === undefined ? undefined : Math.round(mean * 100) / 100;
+    const unchanged = proposed !== undefined && Math.abs(proposed - (diagnosis.plannedCycleSec ?? 0)) < 0.005;
+    if (mean === undefined || proposed === undefined) {
+        const stoppedAll = summary.excludedCount > 0;
+        return `${stoppedAll
+            ? `<p class="note">${zh ? `N.OK 算有效节拍，会进入平均。Stopping 不进平均。这些拍都勾了 Stopping 之后，没有剩下的有效节拍，所以不能矫正计划 CT。取消 Stopping 后，只要还有有效节拍，矫正会回到这里。` : `N.OK counts as a valid lap and stays in the average. Stopping stays out. Every lap is Stopping, so no valid lap remains and planned CT cannot be corrected. Clear Stopping and the correction returns when a valid lap remains.`}</p>`
+            : `<p class="note">${zh ? `当前计划 CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} 秒。还没有可计入平均的节拍，不能矫正。N.OK 算有效节拍。` : `Planned CT is ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} s. There is no lap in the average yet, so CT cannot be corrected. N.OK counts as a valid lap.`}</p>`}
+      <div class="action-bar" data-correct-planned-ct-hold><button class="button secondary" type="button" disabled>${zh ? "矫正计划 CT" : "Correct planned CT"}</button></div>`;
+    }
+    if (unchanged) {
+        return `<p class="note">${summary.excludedCount > 0
+            ? (zh ? `N.OK 仍算有效节拍。去掉 Stopping 后，剩下的有效节拍均值与计划 CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} 秒一致，所以不必矫正。` : `N.OK still counts as a valid lap. After Stopping is removed, the remaining mean matches planned CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} s, so no correction is needed.`)
+            : (zh ? `当前计划 CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} 秒，与观察均值一致，无需矫正。N.OK 算有效节拍。` : `Planned CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} s already matches the observed mean. N.OK counts as a valid lap.`)}</p>
+      <div class="action-bar" data-correct-planned-ct-hold><button class="button secondary" type="button" disabled>${zh ? "矫正计划 CT" : "Correct planned CT"}</button></div>`;
+    }
+    const linkedWindow = performanceAgainstCycle(proposed, productionLapsFor(operationId, stationId));
+    const windowNote = linkedWindow
+        ? (zh ? "这一工站已有时间窗生产记录。确认写入后，按这些记录和新 CT 重算 P。Q 和每循环件数不变，时间窗的时钟、数量和停机原因保留。" : "This station already has time-window production. After confirmation, P is recalculated from those records and the new CT. Q and pieces per cycle stay unchanged. Clocks, quantities and stop reasons stay as recorded.")
+        : (zh ? "这一工站还没有可重算的时间窗生产记录，P、Q 和每循环件数不变。" : "This station has no time-window production to recalculate, so P, Q and pieces per cycle stay unchanged.");
+    return `<p class="note">${zh ? `当前计划 CT ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} 秒，与观察均值相差 ${delta}。现有 CT 可以保持。点「矫正计划 CT」后，还要在弹出框里再确认一次才会写入；取消则不变。${windowNote}不必进入第四阶段。` : `Planned CT is ${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} s, delta ${delta}. The current CT can stay. Correct planned CT opens a confirmation; it is written only if that popup is confirmed. ${windowNote} Stage 4 is not required.`}</p>
+    <form data-correct-planned-ct data-operation-id="${escapeHtml(operationId)}" data-station-id="${escapeHtml(stationId)}" data-planned-cycle-sec="${diagnosis.plannedCycleSec ?? 0}">
+      <div class="field" style="max-width:280px;"><label>${zh ? "若矫正，采用的 CT（秒）" : "CT to use if correcting (sec)"}</label><input name="standardCycleSec" type="number" min="0.0001" step="any" required value="${proposed}" /></div>
+      <div class="action-bar"><button class="button secondary" type="submit">${zh ? "矫正计划 CT" : "Correct planned CT"}</button></div>
+      <dialog class="ct-confirm" data-ct-confirm>
+        <h3>${zh ? "确认写入计划 CT" : "Confirm the planned CT write"}</h3>
+        <p data-ct-confirm-copy></p>
+        <div class="action-bar">
+          <button class="button secondary" type="button" data-ct-cancel>${zh ? "取消" : "Cancel"}</button>
+          <button class="button" type="button" data-ct-commit>${zh ? "确认写入" : "Write it"}</button>
+        </div>
+      </dialog>
+    </form>`;
 }
 function rnrInputField(label, fieldName, value, type = "text") {
     return `
@@ -3019,9 +3156,10 @@ function bindRnrTracking() {
         confirmedSuggestions.clear();
         calibrationActionError = "";
         cycleCheckDraft = {
-            samples: fixture.cycleSamplesSec.join(", "), targetSamples: fixture.cycleSamplesSec.length,
-            standardCycleSec: fixture.standardCycleSec, acceptableSlowDeviationPercent: undefined,
+            samples: fixture.cycleSamplesSec.map((seconds, index) => ({ id: `fixture-${stationId}-${index + 1}`, seconds })),
+            targetSamples: fixture.cycleSamplesSec.length,
         };
+        editingCycleSampleId = "";
         rnrSegmentDraft.standardCycleSec = fixture.standardCycleSec;
         rnrSegmentDraft.piecesPerCycle = fixture.piecesPerCycle;
         rnrMode = "timeWindow";
@@ -3060,6 +3198,235 @@ function bindRnrTracking() {
             updateRnrDraft(input.dataset.rnrField ?? "", input.dataset.rnrField === "isEstimated" && input instanceof HTMLInputElement ? String(input.checked) : input.value);
         });
     });
+    rnrRoot.querySelector("[data-cycle-add]")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const input = event.currentTarget.querySelector("input[name='seconds']");
+        const next = addCycleSample(cycleCheckDraft, input?.value ?? "");
+        if (next.error) {
+            rnrDraftError = locale === "zh" ? "请输入秒表上的数字，例如 337 表示 00:03.37。空值或小数不会进入均值。" : "Type the stopwatch digits, for example 337 for 00:03.37. Empty values and decimals stay out of the mean.";
+        }
+        else {
+            cycleCheckDraft = next.draft;
+            rnrDraftError = "";
+        }
+        render(selectedProductId);
+    });
+    rnrRoot.querySelectorAll("[data-cycle-edit]").forEach(button => button.addEventListener("click", () => {
+        editingCycleSampleId = button.dataset.cycleEdit ?? "";
+        rnrDraftError = "";
+        render(selectedProductId);
+    }));
+    rnrRoot.querySelector("[data-cycle-cancel]")?.addEventListener("click", () => {
+        editingCycleSampleId = "";
+        render(selectedProductId);
+    });
+    rnrRoot.querySelectorAll("[data-cycle-save]").forEach(button => button.addEventListener("click", () => {
+        const id = button.dataset.cycleSave ?? "";
+        const input = rnrRoot.querySelector(`[data-cycle-edit-input="${CSS.escape(id)}"]`);
+        const next = replaceCycleSample(cycleCheckDraft, id, input?.value ?? "");
+        if (next.error) {
+            rnrDraftError = locale === "zh" ? "请输入秒表上的数字，例如 337 表示 00:03.37。空值或小数不会进入均值。" : "Type the stopwatch digits, for example 337 for 00:03.37. Empty values and decimals stay out of the mean.";
+        }
+        else {
+            cycleCheckDraft = next.draft;
+            editingCycleSampleId = "";
+            rnrDraftError = "";
+        }
+        render(selectedProductId);
+    }));
+    rnrRoot.querySelectorAll("[data-cycle-delete]").forEach(button => button.addEventListener("click", () => {
+        cycleCheckDraft = removeCycleSample(cycleCheckDraft, button.dataset.cycleDelete ?? "");
+        if (editingCycleSampleId === button.dataset.cycleDelete)
+            editingCycleSampleId = "";
+        rnrDraftError = "";
+        render(selectedProductId);
+    }));
+    rnrRoot.querySelectorAll("[data-cycle-nok], [data-cycle-stop]").forEach(input => {
+        input.addEventListener("change", () => {
+            const mark = input.dataset.cycleNok !== undefined ? "nok" : "lineStop";
+            const id = input.dataset.cycleNok ?? input.dataset.cycleStop ?? "";
+            cycleCheckDraft = setCycleSampleMark(cycleCheckDraft, id, mark, input.checked);
+            render(selectedProductId);
+        });
+    });
+    rnrRoot.querySelectorAll("[data-cycle-reason]").forEach(input => {
+        input.addEventListener("change", () => {
+            cycleCheckDraft = setCycleSampleReason(cycleCheckDraft, input.dataset.cycleReason ?? "", input.value);
+            render(selectedProductId);
+        });
+    });
+    rnrRoot.querySelector("[data-correct-planned-ct]")?.addEventListener("submit", event => {
+        event.preventDefault();
+        openPlannedCycleCorrection(event.currentTarget);
+    });
+    rnrRoot.querySelector("[data-initial-preset]")?.addEventListener("submit", event => {
+        event.preventDefault();
+        submitInitialPreset(event.currentTarget);
+    });
+}
+function productionLapsFor(operationId, stationId) {
+    return (rnrActualEventsByContext.get(`${selectedProductId}::${operationId}::${stationId}`) ?? [])
+        .filter(event => event.kind === "production")
+        .map(event => ({
+        startMinute: event.startMinute,
+        endMinute: event.endMinute,
+        okQty: event.okQty ?? 0,
+        nokQty: event.nokQty ?? 0,
+        piecesPerCycle: event.piecesPerCycle ?? 0,
+    }));
+}
+function openPlannedCycleCorrection(form) {
+    const fields = new FormData(form);
+    const operation = form.dataset.operationId ?? "";
+    const station = form.dataset.stationId ?? "";
+    const dialog = form.querySelector("[data-ct-confirm]");
+    const copy = form.querySelector("[data-ct-confirm-copy]");
+    if (!dialog || !copy)
+        return;
+    const samplesBefore = cycleCheckDraft.samples.map(sample => ({ ...sample }));
+    const plannedBefore = JSON.stringify(getPlannedSaEvents(station, selectedProductId));
+    const laps = productionLapsFor(operation, station);
+    const previous = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operation, station);
+    try {
+        const next = correctPlannedCycleFromCheck({
+            operationId: operation,
+            stationId: station,
+            existingParameters: scenarioState.operationStationParameters ?? [],
+            standardCycleSec: Number(fields.get("standardCycleSec")),
+            ctConfirmed: true,
+            samples: cycleCheckDraft,
+            evidenceRef: `cycle-check:${selectedProductId}:${operation}:${station}`,
+            parameterId: `local-baseline-${Date.now()}-${++localBaselineVersionCounter}`,
+            effectiveFrom: todayDateValue(),
+            timeWindowProduction: laps,
+            windowEvidenceRef: `time-window:${selectedProductId}:${operation}:${station}`,
+        });
+        if (JSON.stringify(getPlannedSaEvents(station, selectedProductId)) !== plannedBefore) {
+            throw new Error(locale === "zh" ? "标准 SA 时间轴不应改变。" : "The planned SA timeline must stay unchanged.");
+        }
+        const plannedSec = Number(form.dataset.plannedCycleSec);
+        const linked = performanceAgainstCycle(next.standardCycleSec, laps);
+        const previousP = previous?.performanceRate ?? next.performanceRate;
+        const pSentence = linked
+            ? (linked.fasterThanCorrectedCt
+                ? (locale === "zh"
+                    ? `上一轮时间窗快于新 CT，观察节拍 ${formatStopwatch(linked.observedCycleSec)}。P 从 ${percent(previousP)} 改为 ${percent(linked.performanceRate)}，不超过 100%。请复核产出数量和循环边界。`
+                    : `The previous time window is faster than the new CT; observed cycle ${formatStopwatch(linked.observedCycleSec)}. P changes from ${percent(previousP)} to ${percent(linked.performanceRate)} and is not raised above 100%. Review output quantity and the cycle boundary.`)
+                : (locale === "zh"
+                    ? `上一轮时间窗按新 CT 重算：观察节拍 ${formatStopwatch(linked.observedCycleSec)}，P 从 ${percent(previousP)} 改为 ${percent(linked.performanceRate)}。`
+                    : `The previous time window is recalculated against the new CT: observed cycle ${formatStopwatch(linked.observedCycleSec)}, P changes from ${percent(previousP)} to ${percent(linked.performanceRate)}.`))
+            : (locale === "zh"
+                ? `这一工站还没有可重算的时间窗生产记录，P 保持 ${percent(previousP)}。`
+                : `This station has no time-window production to recalculate, so P stays ${percent(previousP)}.`);
+        copy.textContent = locale === "zh"
+            ? `现有计划 CT 是 ${formatStopwatch(plannedSec)}。确认后改为 ${formatStopwatch(next.standardCycleSec)}（${formatNumber(next.standardCycleSec)} 秒）。${pSentence}Q 和每循环件数不变。时间窗的时钟、数量和停机原因保留。先前按旧 CT 确认过的 P 不再沿用。这不是上游主数据批准。原始节拍样本和标准 SA 时间轴保持不变。`
+            : `Planned CT is ${formatStopwatch(plannedSec)}. After confirmation it becomes ${formatStopwatch(next.standardCycleSec)} (${formatNumber(next.standardCycleSec)} s). ${pSentence} Q and pieces per cycle stay unchanged. Time-window clocks, quantities and stop reasons stay as recorded. A P previously confirmed against the old CT is not kept. This is not upstream master-data approval. Raw samples and the planned SA timeline stay unchanged.`;
+        pendingCycleCorrection = next;
+        const commitButton = form.querySelector("[data-ct-commit]");
+        const cancelButton = form.querySelector("[data-ct-cancel]");
+        const detach = () => {
+            commitButton?.removeEventListener("click", commit);
+            cancelButton?.removeEventListener("click", cancel);
+            dialog.removeEventListener("cancel", dismiss);
+        };
+        const commit = () => {
+            const saving = pendingCycleCorrection;
+            pendingCycleCorrection = undefined;
+            detach();
+            dialog.close();
+            if (!saving)
+                return;
+            localStorage.setItem(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(saving));
+            scenarioState.operationStationParameters ??= [];
+            scenarioState.operationStationParameters.push(saving);
+            for (const [id, saved] of confirmedSuggestions) {
+                if (saved.suggestion.operationId === operation && saved.suggestion.stationId === station && saved.suggestion.target === "performanceRate") {
+                    confirmedSuggestions.delete(id);
+                }
+            }
+            cycleCheckDraft = { ...cycleCheckDraft, samples: samplesBefore };
+            rnrDraftError = "";
+            calibrationActionError = "";
+            render(selectedProductId);
+        };
+        const dismiss = () => {
+            pendingCycleCorrection = undefined;
+            detach();
+        };
+        const cancel = () => {
+            dismiss();
+            dialog.close();
+        };
+        commitButton?.addEventListener("click", commit);
+        cancelButton?.addEventListener("click", cancel);
+        dialog.addEventListener("cancel", dismiss);
+        setTimeout(() => {
+            if (pendingCycleCorrection !== next || dialog.open)
+                return;
+            dialog.showModal();
+        }, 0);
+    }
+    catch (error) {
+        pendingCycleCorrection = undefined;
+        rnrDraftError = error instanceof Error ? error.message : String(error);
+        render(selectedProductId);
+    }
+}
+function submitInitialPreset(form) {
+    const fields = new FormData(form);
+    const operation = form.dataset.operationId ?? "";
+    const station = form.dataset.stationId ?? "";
+    const samplesBefore = cycleCheckDraft.samples.map(sample => ({ ...sample }));
+    const plannedBefore = JSON.stringify(getPlannedSaEvents(station, selectedProductId));
+    try {
+        const performancePercent = Number(fields.get("performanceRatePercent"));
+        const performanceRate = performancePercent / 100;
+        const manualOverride = Math.abs(performanceRate - 1) > 1e-9;
+        if (manualOverride) {
+            const warning = locale === "zh"
+                ? `P ${formatNumber(performancePercent, 1)}% 是人工判断，尚非时间窗实跑推导。取消则不写入。要继续确认吗？`
+                : `P ${formatNumber(performancePercent, 1)}% is a manual judgement, not derived from a time window. Cancel writes nothing. Continue to the confirmation?`;
+            if (!globalThis.confirm(warning))
+                return;
+        }
+        const next = establishInitialLocalPreset({
+            operationId: operation,
+            stationId: station,
+            existingParameters: scenarioState.operationStationParameters ?? [],
+            standardCycleSec: Number(fields.get("standardCycleSec")),
+            piecesPerCycle: Number(fields.get("piecesPerCycle")),
+            performanceRate,
+            performanceReviewed: true,
+            performanceOverrideConfirmed: manualOverride,
+            samples: cycleCheckDraft,
+            evidenceRef: `cycle-check:${selectedProductId}:${operation}:${station}`,
+            parameterId: `local-baseline-${Date.now()}-${++localBaselineVersionCounter}`,
+            effectiveFrom: todayDateValue(),
+        });
+        if (JSON.stringify(getPlannedSaEvents(station, selectedProductId)) !== plannedBefore) {
+            throw new Error(locale === "zh" ? "标准 SA 时间轴不应改变。" : "The planned SA timeline must stay unchanged.");
+        }
+        const confirmation = locale === "zh"
+            ? `建立本地初始预设？\nCT ${formatNumber(next.standardCycleSec)} 秒，每循环 ${formatNumber(next.piecesPerCycle)} 件。P ${percent(next.performanceRate)}${manualOverride ? "，人工判断，不是时间窗实跑推导" : "，默认 100%"}。\n这不是上游主数据批准。原始节拍样本和标准 SA 时间轴保持不变。生效后，周/月件数从生效日起按新参数计算。`
+            : `Establish a local initial preset?\nCT ${formatNumber(next.standardCycleSec)}s, ${formatNumber(next.piecesPerCycle)} pcs/cycle. P ${percent(next.performanceRate)}${manualOverride ? ", a manual judgement rather than a time-window result" : ", the 100% default"}.\nThis is not upstream master-data approval. Raw samples and the planned SA timeline stay unchanged. Week and month pieces use the new parameter from its effective date.`;
+        if (!globalThis.confirm(confirmation))
+            return;
+        localStorage.setItem(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(next));
+        scenarioState.operationStationParameters ??= [];
+        scenarioState.operationStationParameters.push(next);
+        cycleCheckDraft = { ...cycleCheckDraft, samples: samplesBefore };
+        rnrDraftError = "";
+        calibrationActionError = "";
+        render(selectedProductId);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (form.closest("[data-cycle-check]"))
+            rnrDraftError = message;
+        else
+            calibrationActionError = message;
+        render(selectedProductId);
+    }
 }
 function updateRnrDraft(fieldName, value) {
     if (fieldName === "segmentStartDate") {
@@ -3086,51 +3453,173 @@ function updateRnrDraft(fieldName, value) {
     else if (fieldName === "isEstimated") {
         rnrSegmentDraft.isEstimated = value === "true";
     }
-    else if (fieldName === "cycleSamples") {
-        cycleCheckDraft.samples = value;
-    }
-    else if (fieldName === "targetSamples") {
-        cycleCheckDraft.targetSamples = Math.max(1, Number(value) || 1);
-    }
-    else if (fieldName === "cycleStandardCycleSec") {
-        cycleCheckDraft.standardCycleSec = Math.max(0.0001, Number(value) || 0.0001);
-    }
-    else if (fieldName === "slowTolerancePercent") {
-        const parsed = value.trim() === "" ? undefined : Number(value);
-        if (parsed !== undefined && (!Number.isFinite(parsed) || parsed < 0 || parsed > 5)) {
-            rnrDraftError = locale === "zh" ? "可接受的慢速偏差只能为0%至5%。" : "Acceptable slow-speed deviation must be between 0% and 5%.";
-            render(selectedProductId);
-            return;
-        }
-        cycleCheckDraft.acceptableSlowDeviationPercent = parsed;
-        rnrDraftError = "";
-    }
     render(selectedProductId);
-}
-function parseCycleSamples(value) {
-    return value
-        .split(/[，,\s/]+/)
-        .map(item => Number(item.trim()))
-        .filter(item => Number.isFinite(item) && item > 0);
 }
 function round1(value) {
     return formatNumber(value, 1);
 }
+function renderRouteWeekReportPanel(routingConfig) {
+    const zh = locale === "zh";
+    const product = routingConfig.product;
+    const stationId = routingConfig.operations.flatMap(operation => operation.assignments).find(view => view.planningStatus === "available")?.assignment.stationId ?? selectedWorkflowStationId;
+    const draftWeek = stationId && stationId !== "-" ? getCopyProjectionDraft(routingConfig.productId, stationId).weekStartDate : "";
+    const demandDefault = product?.weeklyDemand === undefined ? "" : String(product.weeklyDemand);
+    return `<section class="sub-card" style="margin-top:14px;" data-route-week-report>
+    <div class="panel-head"><h3>${zh ? "路线周计划报告" : "Route week plan report"}</h3><span class="pill warn">${zh ? "内部草稿 · 当前参数回算" : "Internal draft · current-parameter recalculation"}</span></div>
+    <p class="note">${zh ? "两页分别读取各工站已生成的那一周周账，不共用一套动作损失。48 小时 R&R 不会被扩成整周 Actual。没有历史计划快照，件数按当前已发布参数回算。刷新后周账快照不保留。静态 report-preview.html 的示例数字不会进入这里。" : "Each page reads the week ledger generated for that week. A 48-hour R&R is not expanded into a week actual. Pieces are recalculated with current published parameters. Refresh drops the week snapshots. Demo numbers in report-preview.html are not used."}</p>
+    <div class="field-grid">
+      <div class="field"><label>${zh ? "下周起始日期" : "Next week start"}</label><input type="date" data-report-week value="${escapeHtml(draftWeek)}" /></div>
+      <div class="field"><label>${zh ? "周需求（件）" : "Weekly demand (pcs)"}</label><input type="number" min="0" step="1" data-report-demand value="${escapeHtml(demandDefault)}" /></div>
+    </div>
+    <p class="note">${zh ? "回顾页用这个日期的前一周。需求默认取产品主数据的周需求，可以改；留空则不计算余量。" : "The review page uses the previous week. Demand defaults to the product master weekly demand and can be changed. Leave it blank to skip the margin."}</p>
+    <div class="action-bar"><button class="button" type="button" data-route-week-open>${zh ? "查看 / 打印 PDF" : "View / print PDF"}</button></div>
+    <p class="form-error" data-route-week-error hidden></p>
+    <dialog class="route-week-report" data-route-week-dialog>
+      <div class="report-toolbar"><strong>${zh ? "内部产能决策报告" : "Internal capacity report"}</strong><div class="action-bar">
+        <button class="button" type="button" data-route-week-print>${zh ? "打印 / PDF" : "Print / PDF"}</button>
+        <button class="button secondary" type="button" data-route-week-close>${zh ? "关闭" : "Close"}</button>
+      </div></div>
+      <div data-route-week-body></div>
+    </dialog>
+  </section>`;
+}
+function bindRouteWeekReport(routingConfig) {
+    const dialog = calibrationRoot.querySelector("[data-route-week-dialog]");
+    calibrationRoot.querySelector("[data-route-week-open]")?.addEventListener("click", () => {
+        openRouteWeekReport(routingConfig, dialog);
+    });
+    dialog?.querySelector("[data-route-week-close]")?.addEventListener("click", () => dialog.close());
+    dialog?.querySelector("[data-route-week-print]")?.addEventListener("click", () => {
+        const body = dialog.querySelector("[data-route-week-body]");
+        const printRoot = document.querySelector("#routeWeekPrintRoot");
+        if (!body || !printRoot)
+            return;
+        printRoot.innerHTML = body.innerHTML;
+        printRoot.hidden = false;
+        document.body.classList.add("printing-week-report");
+        const done = () => {
+            document.body.classList.remove("printing-week-report");
+            printRoot.hidden = true;
+            printRoot.innerHTML = "";
+            window.removeEventListener("afterprint", done);
+        };
+        window.addEventListener("afterprint", done);
+        window.print();
+    });
+}
+function openRouteWeekReport(routingConfig, dialog) {
+    const zh = locale === "zh";
+    const error = calibrationRoot.querySelector("[data-route-week-error]");
+    const weekStart = calibrationRoot.querySelector("[data-report-week]")?.value ?? "";
+    const demandRaw = calibrationRoot.querySelector("[data-report-demand]")?.value ?? "";
+    const fail = (message) => {
+        if (!error)
+            return;
+        error.hidden = false;
+        error.textContent = message;
+    };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+        fail(zh ? "请先选择下周起始日期。" : "Choose the next week start date.");
+        return;
+    }
+    const demandQty = demandRaw === "" ? undefined : Number(demandRaw);
+    if (demandQty !== undefined && (!Number.isSafeInteger(demandQty) || demandQty < 0)) {
+        fail(zh ? "周需求必须是非负整数，或留空。" : "Weekly demand must be a nonnegative integer, or blank.");
+        return;
+    }
+    if (error)
+        error.hidden = true;
+    const review = routeWeekPlanFor(routingConfig, addDays(weekStart, -7), "review", demandQty);
+    const outlook = routeWeekPlanFor(routingConfig, weekStart, "outlook", demandQty);
+    const product = routingConfig.product;
+    const html = renderRouteWeekSheets({
+        zh, review, outlook,
+        productName: product?.name ?? routingConfig.productId,
+        productVersion: product?.version ?? "",
+        routeId: routingConfig.route?.routeId ?? "-",
+        generatedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+        weekEnd: start => addDays(start, 7),
+    });
+    const body = dialog?.querySelector("[data-route-week-body]");
+    if (!dialog || !body)
+        return;
+    body.innerHTML = html;
+    dialog.showModal();
+}
+function routeWeekPlanFor(routingConfig, weekStart, role, demandQty) {
+    const zh = locale === "zh";
+    const routeId = routingConfig.route?.routeId ?? "";
+    const parameters = scenarioState.operationStationParameters ?? [];
+    const stations = routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => {
+        const stationId = view.assignment.stationId;
+        const operationId = operation.operation.operationId;
+        const snap = stationWeekSnapshots.get(`${routingConfig.productId}::${stationId}::${weekStart}`);
+        const capacity = snap ? buildPeriodCapacity({
+            operationId, stationId, parameters,
+            days: snap.days.map((day, index) => ({
+                date: day.date, workingDay: day.workingDay, stale: day.stale,
+                bestCaseProductionMinutes: day.productionMinutes,
+                mostLikelyProductionMinutes: day.workingDay && !day.stale
+                    ? Math.max(0, day.productionMinutes - snap.perShiftUnplanned * (snap.shiftCounts[index] ?? 0)) : 0,
+            })),
+        }) : undefined;
+        return {
+            productId: routingConfig.productId,
+            routeId,
+            operationId,
+            stationId,
+            weekStartDate: weekStart,
+            ledgerPresent: Boolean(snap),
+            ...(capacity ? { capacity } : {}),
+            ...(view.assignment.plannedShare === undefined ? {} : { plannedShare: view.assignment.plannedShare }),
+            ...(view.assignment.allocationMode ? { allocationMode: view.assignment.allocationMode } : {}),
+            ...(snap?.withBreaksSa === undefined ? {} : { withBreaksSa: snap.withBreaksSa }),
+            ...(snap?.mostLikelySa === undefined ? {} : { mostLikelySa: snap.mostLikelySa }),
+            planBasis: "currentParameterRecalc",
+        };
+    }));
+    const requirements = routingConfig.route ? routingConfig.operations.map(item => resolveOperationOutputRequirement(scenarioState, routingConfig.route, item.operation, weekStart, addDays(weekStart, 6))) : [];
+    const issueText = {
+        stage_bom_missing: zh ? "缺少阶段 BOM" : "Stage BOM missing",
+        stage_bom_mismatch: zh ? "阶段 BOM 不匹配" : "Stage BOM mismatch",
+        source_not_effective: zh ? "来源版本未生效" : "Source not effective",
+        quantity_missing: zh ? "缺少工序用量" : "Quantity missing",
+        quantity_invalid: zh ? "工序用量无效" : "Invalid quantity",
+    };
+    return buildRouteWeekPlan({
+        productId: routingConfig.productId,
+        routeId,
+        weekStartDate: weekStart,
+        role,
+        ...(demandQty === undefined ? {} : { demandQty }),
+        stations,
+        operationOrder: routingConfig.operations.map(item => item.operation.operationId),
+        operationUnits: requirements.map(item => ({
+            operationId: item.operationId,
+            ...(item.unitsPerFinishedProduct === undefined ? {} : { unitsPerFinishedProduct: item.unitsPerFinishedProduct }),
+            ...(item.issue ? { issue: issueText[item.issue] ?? item.issue } : {}),
+        })),
+        ...(role === "review" ? { actual: { completeSameWeek: false, note: zh ? "本机每工站只有一份草稿，不是历史整周归档。48 小时 R&R 不能按比例扩成整周 Actual。" : "Each station has one local draft, not a historical full-week archive. A 48-hour R&R is not scaled up to a week actual." } } : {}),
+    });
+}
 function renderCalibration(selectedOperation, routingConfig) {
     const routePanel = renderRouteWindowCapacityPanel(routingConfig);
+    const reportPanel = renderRouteWeekReportPanel(routingConfig);
     const assignment = selectedOperation?.assignments.find(item => item.assignment.stationId === selectedWorkflowStationId)
         ?? selectedOperation?.assignments.find(item => item.planningStatus === "available");
     const stationId = selectedWorkflowStationId || "-";
     if (stationId === "-") {
-        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("stationRequired"))}${routePanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
+        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("stationRequired"))}${routePanel}${reportPanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
         bindRouteWindowControls(selectedOperation, routingConfig);
+        bindRouteWeekReport(routingConfig);
         return;
     }
     const productId = assignment?.assignment.productId ?? selectedProductId;
     const events = getPlannedSaEvents(stationId, productId);
     if (!events.length) {
-        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("baselineRequired"))}${routePanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
+        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("baselineRequired"))}${routePanel}${reportPanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
         bindRouteWindowControls(selectedOperation, routingConfig);
+        bindRouteWeekReport(routingConfig);
         return;
     }
     const dayConfig = getStandardSaDayConfig(productId, stationId);
@@ -3143,8 +3632,8 @@ function renderCalibration(selectedOperation, routingConfig) {
     const actualQty = productionEvents.reduce((sum, event) => sum + (event.okQty ?? 0) + (event.nokQty ?? 0), 0);
     const okQty = productionEvents.reduce((sum, event) => sum + (event.okQty ?? 0), 0);
     const qualityRate = actualQty > 0 ? okQty / actualQty : undefined;
-    const samples = parseCycleSamples(cycleCheckDraft.samples);
-    const sampleAverage = samples.length ? samples.reduce((sum, value) => sum + value, 0) / samples.length : 0;
+    const cycleSummary = summarizeCycleSamples(cycleCheckDraft);
+    const samples = cycleSummary.orderedSeconds;
     const speed = reconcileCurrentRnrSpeed();
     let reconciliation;
     let reconciliationError = "";
@@ -3177,6 +3666,12 @@ function renderCalibration(selectedOperation, routingConfig) {
                 windowStartMinute: window.startMinute, windowEndMinute: window.endMinute, offShiftIntervals,
                 standardCycleSec: parameter.standardCycleSec, piecesPerCycle: parameter.piecesPerCycle,
                 plannedQualityRate: parameter.qualityRate,
+                publishedPerformanceRate: parameter.performanceRate,
+                acceptedUnplannedMinutes: observeShiftAllowance({
+                    stationId,
+                    shifts: standardSaShiftIntervals(dayConfig),
+                    actual: actualEvents,
+                })?.planningUnplannedMinutes ?? 0,
                 inferredSaLossMinutes: speed.inferredSaLossMinutes,
             });
         }
@@ -3187,7 +3682,7 @@ function renderCalibration(selectedOperation, routingConfig) {
     const suggestions = evidence ? buildParameterSuggestions({
         productId, operationId: selectedOperation?.operation.operationId ?? "", stationId,
         planned: events, actual: actualEvents, ...(parameter ? { parameter } : {}),
-        cycleSamplesSec: samples, targetSampleCount: cycleCheckDraft.targetSamples, speed, evidence,
+        cycleSamplesSec: samples, targetSampleCount: 0, speed, evidence,
     }) : [];
     const evidencePackage = buildRnrEvidencePackageSnapshot({
         productId,
@@ -3204,37 +3699,13 @@ function renderCalibration(selectedOperation, routingConfig) {
     });
     const evidenceDraft = captureRnrEvidenceDraft(evidencePackage, dayConfig);
     syncAutoSavedRnrEvidence(evidenceDraft);
-    const ctSuggestion = suggestions.find(item => item.target === "standardCycleSec");
-    const pSuggestion = suggestions.find(item => item.target === "performanceRate");
-    if (ctSuggestion && pSuggestion && ctSuggestion.proposedValue !== parameter?.standardCycleSec) {
-        const rechecked = reconcileRnrSpeedLoss(productionEvents.map(event => ({
-            id: event.id, productId, operationId, stationId,
-            startMinute: event.startMinute, endMinute: event.endMinute,
-            okQty: event.okQty ?? 0, nokQty: event.nokQty ?? 0,
-            piecesPerCycle: event.piecesPerCycle ?? 0,
-        })), {
-            verifiedStandardCycleSec: ctSuggestion.proposedValue,
-            ...(cycleCheckDraft.acceptableSlowDeviationPercent === undefined ? {} : {
-                acceptableSlowDeviationPercent: cycleCheckDraft.acceptableSlowDeviationPercent,
-            }),
-        });
-        if (rechecked.readyForCalibration) {
-            const minutes = productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0);
-            const effective = minutes - rechecked.inferredSaLossMinutes;
-            if (effective > 0)
-                pSuggestion.proposedValue = Math.max(0, Math.min(1, (effective - rechecked.performanceLossMinutes) / effective));
-        }
-        else {
-            pSuggestion.eligibleForConfirmation = false;
-            ctSuggestion.eligibleForConfirmation = false;
-        }
-    }
+    const cycleDiagnosis = diagnosePlannedCycle(cycleSummary, parameter && parameter.standardCycleSec > 0 ? parameter.standardCycleSec : undefined);
     const suggestionFingerprint = JSON.stringify({ events, actualEvents, samples, speed, evidence, parameter });
     const observationFingerprint = JSON.stringify({ events, actualEvents, samples, speed, evidence });
     const performance = speed.readyForCalibration && actualEvents.length > 0
-        ? (productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0) - speed.inferredSaLossMinutes - speed.performanceLossMinutes)
-            / Math.max(productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0) - speed.inferredSaLossMinutes, 0.0001)
-        : (samples.length >= cycleCheckDraft.targetSamples && sampleAverage > 0 ? cycleCheckDraft.standardCycleSec / sampleAverage : undefined);
+        ? Math.max(0, Math.min(1, (productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0) - speed.inferredSaLossMinutes - speed.performanceLossMinutes)
+            / Math.max(productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0) - speed.inferredSaLossMinutes, 0.0001)))
+        : undefined;
     calibrationRoot.innerHTML = `
     ${currentStationHead(t("stageCalibration"), t("calibrationTitle"), `<span class="pill">${t("observedDraft")}</span>`)}
     <p class="note">${t("calibrationNote")}</p>
@@ -3267,14 +3738,18 @@ function renderCalibration(selectedOperation, routingConfig) {
     </section>
     ${renderRnrEvidencePanel(evidence)}
     ${renderRnrBestActualPreviewPanel(bestActualPreview, validationFixtureContexts.has(`${productId}::${selectedOperation?.operation.operationId ?? ""}::${stationId}`))}
+    ${renderCycleDiagnosisPanel(cycleDiagnosis, cycleSummary)}
+    ${parameter ? "" : renderInitialPresetPanel(operationId, stationId, cycleSummary)}
     ${renderParameterSuggestionsPanel(suggestions, suggestionFingerprint, observationFingerprint, evidence, parameter, versions, events)}
     ${renderRnrEvidencePackagePanel(evidenceDraft)}
     ${routePanel}
+    ${reportPanel}
     <p class="note">${t("capacityPreviewOnly")}</p>
   `;
     bindRouteWindowControls(selectedOperation, routingConfig);
+    bindRouteWeekReport(routingConfig);
     calibrationRoot.querySelectorAll("[data-recoverable-event]").forEach(input => {
-        const applyRecoverableLimit = () => {
+        input.addEventListener("input", () => {
             const max = Number(input.max);
             const raw = Number(input.value);
             if (Number.isFinite(raw) && Number.isFinite(max) && raw > max) {
@@ -3285,22 +3760,22 @@ function renderCalibration(selectedOperation, routingConfig) {
             else {
                 input.setCustomValidity("");
             }
-            const planning = input.closest("td")?.nextElementSibling;
-            const accepted = Number(input.value);
-            if (planning)
-                planning.textContent = formatNumber(Math.max(0, max - (Number.isFinite(accepted) ? accepted : 0)), 1);
-        };
-        input.addEventListener("input", applyRecoverableLimit);
-        input.addEventListener("change", () => {
-            applyRecoverableLimit();
-            const eventId = input.dataset.recoverableEvent ?? "";
+            const saved = Number(input.dataset.savedRecoverable ?? "0");
+            const current = boundedRecoverableMinutes(Number(input.value), max);
+            input.parentElement?.querySelector("button")?.classList.toggle("is-confirmed", input.dataset.recoverableConfirmed === "1" && current === saved);
+        });
+    });
+    calibrationRoot.querySelectorAll("[data-confirm-recoverable]").forEach(button => {
+        button.addEventListener("click", () => {
+            const eventId = button.dataset.confirmRecoverable ?? "";
+            const input = calibrationRoot.querySelector(`[data-recoverable-event="${CSS.escape(eventId)}"]`);
             const key = `${productId}::${operationId}::${stationId}`;
             const current = rnrActualEventsByContext.get(key) ?? [];
             const target = current.find(event => event.id === eventId);
-            if (!target)
+            if (!input || !target)
                 return;
             const recoverableMinutes = boundedRecoverableMinutes(Number(input.value), target.endMinute - target.startMinute);
-            rnrActualEventsByContext.set(key, current.map(event => event.id === eventId ? { ...event, recoverableMinutes } : event));
+            rnrActualEventsByContext.set(key, current.map(event => event.id === eventId ? { ...event, recoverableMinutes, recoverableConfirmed: true } : event));
             render(selectedProductId);
         });
     });
@@ -3378,6 +3853,10 @@ function renderCalibration(selectedOperation, routingConfig) {
             renderCalibration(selectedOperation, routingConfig);
         });
     });
+    calibrationRoot.querySelector("[data-initial-preset]")?.addEventListener("submit", event => {
+        event.preventDefault();
+        submitInitialPreset(event.currentTarget);
+    });
     calibrationRoot.querySelector("[data-publish-parameters]")?.addEventListener("click", () => {
         try {
             if (!parameter)
@@ -3440,6 +3919,24 @@ function buildRnrEvidencePackageSnapshot(input) {
         plannedEvents: input.planned,
         actualEvents: input.actual,
         cycleSamplesSec: input.cycleSamplesSec,
+        cycleSampleRecord: {
+            schemaVersion: 2,
+            samples: cycleCheckDraft.samples.map((sample, index) => ({
+                sequence: index + 1, id: sample.id, seconds: sample.seconds, display: formatStopwatch(sample.seconds),
+                ...(sample.nok ? { nok: true } : {}),
+                ...(sample.lineStop ? { lineStop: true } : {}),
+                ...(sample.reason ? { reason: sample.reason } : {}),
+            })),
+            recordedCount: cycleCheckDraft.samples.filter(sample => sample.seconds > 0).length,
+            validCount: input.cycleSamplesSec.length,
+            excludedCount: cycleCheckDraft.samples.filter(sample => sample.seconds > 0 && sample.lineStop === true).length,
+            observedMeanSec: input.cycleSamplesSec.length
+                ? input.cycleSamplesSec.reduce((sum, value) => sum + value, 0) / input.cycleSamplesSec.length
+                : null,
+            status: input.cycleSamplesSec.length ? "verified" : cycleCheckDraft.samples.some(sample => sample.seconds > 0) ? "below-target" : "empty",
+            basis: "mean of non-stop laps, converted from stopwatch digits such as 337 = 00:03.37",
+            legacyUnparsed: cycleCheckDraft.legacyUnparsed ?? null,
+        },
         speedSummary: input.speed,
         evidence: input.evidence ?? null,
         parameterSuggestions: input.suggestions.map(suggestion => ({
@@ -3460,7 +3957,7 @@ function buildRnrEvidencePackageSnapshot(input) {
 }
 function captureRnrEvidenceDraft(snapshot, dayConfig) {
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         snapshot,
         dayConfig: { ...dayConfig },
         cycleDraft: { ...cycleCheckDraft },
@@ -3562,20 +4059,20 @@ function parseRnrEvidenceDraft(raw, expected) {
             startMinute: event.startMinute - config.startMinute,
             endMinute: event.endMinute - config.startMinute,
         })), PLANNED_SA_HORIZON_MINUTES).every(issue => issue.severity !== "error");
-    if (draft.schemaVersion !== 1 || !scope || !validConfig
+    const cycleSamples = draft.cycleDraft && typeof draft.cycleDraft === "object"
+        ? draft.cycleDraft.samples : undefined;
+    if ((draft.schemaVersion !== 1 && draft.schemaVersion !== 2) || !scope || !validConfig
+        || (typeof cycleSamples !== "string" && !Array.isArray(cycleSamples))
         || scope.productId !== expected.productId || scope.operationId !== expected.operationId || scope.stationId !== expected.stationId
         || scope.startMinute !== config.startMinute || scope.endMinute !== config.startMinute + config.dayCount * MINUTE_PER_DAY
         || !validEvents(draft.snapshot.plannedEvents) || !validEvents(draft.snapshot.actualEvents)
         || !timelineValid(draft.snapshot.plannedEvents) || !timelineValid(draft.snapshot.actualEvents)
-        || !draft.cycleDraft || typeof draft.cycleDraft.samples !== "string"
-        || !Number.isFinite(draft.cycleDraft.targetSamples) || draft.cycleDraft.targetSamples < 1
-        || !Number.isFinite(draft.cycleDraft.standardCycleSec) || draft.cycleDraft.standardCycleSec <= 0
         || !draft.snapshot.actualEvents.every(event => event.kind !== "production" ||
             (Number.isFinite(event.okQty) && (event.okQty ?? -1) >= 0 && Number.isFinite(event.nokQty) && (event.nokQty ?? -1) >= 0
                 && Number.isFinite(event.piecesPerCycle) && (event.piecesPerCycle ?? 0) > 0))) {
         throw new Error(locale === "zh" ? "证据包与当前工站不匹配，或时间轴/节拍输入无效。" : "Package scope or timeline/cycle inputs are invalid.");
     }
-    return draft;
+    return { ...draft, schemaVersion: 2, cycleDraft: migrateLegacyCycleDraft(draft.cycleDraft).draft };
 }
 function isValidationFixturePlan(events) {
     return events.length > 0 && events.every(event => event.source === "template" && event.id.startsWith("validation"));
@@ -3670,7 +4167,8 @@ function clearCurrentRnrEvidence(draft) {
     rnrMode = "timeWindow";
     rnrDraftError = "";
     standardWindowFreezeError = "";
-    cycleCheckDraft = { samples: "", targetSamples: 20, standardCycleSec: 24, acceptableSlowDeviationPercent: undefined };
+    cycleCheckDraft = emptyCycleSampleDraft();
+    editingCycleSampleId = "";
     evidenceDraftMessage = locale === "zh" ? "本机草稿已清除。" : "Local draft cleared.";
     render(selectedProductId);
 }
@@ -3711,7 +4209,7 @@ function renderRnrBestActualPreviewPanel(preview, isValidationFixture) {
     const zh = locale === "zh";
     return `<section class="sub-card" style="margin-top:14px;">
     <div class="panel-head"><h3>${zh ? "Best case 与实跑对比" : "Best case versus actual"}</h3><div class="panel-actions"><span class="pill" data-current-station-scope>${zh ? "当前工站" : "Current station"}</span><span class="pill warn">${isValidationFixture ? (zh ? "验证样本 · 草稿预览" : "Validation sample · draft preview") : (zh ? "草稿预览" : "Draft preview")}</span></div></div>
-    <p class="note">${zh ? "仅比较当前工站的完整观察窗口：Best case = 标准计划生产分钟 × 标准 CT 计算理论总产出，并按 Planned Q 拆分理论 OK/NOK；Actual = 实际生产分钟、现场 OK/NOK 与回算 Actual CT/Q。不含需求份额和多工站分配。" : "Station-level complete-window preview only: Best case uses planned production minutes and standard CT for ideal gross units, then splits ideal OK/NOK by planned Q. Actual uses recorded production minutes and OK/NOK to derive actual CT/Q. Demand share and multi-station allocation are excluded."}</p>
+    <p class="note">${zh ? "仅比较当前工站的完整观察窗口：Best case = 计划生产分钟 × 标准 CT × 每循环件数，不乘 P、Q。计划停机、休息、换型和维护已从计划生产分钟扣除。Actual = 实际生产分钟、现场 OK/NOK 与回算 Actual CT/Q。不含需求份额和多工站分配。" : "Station-level complete-window preview only: Best case is planned production minutes × standard CT × pieces per cycle, without P or Q. Breaks, changeover, maintenance and planned stops are already out of those minutes. Actual uses recorded production minutes and OK/NOK. Demand share and multi-station allocation are excluded."}</p>
     ${preview?.complete ? `<div class="field-grid">
       ${field(zh ? "标准时间开动率（扣计划休息/停机）" : "Planned time availability (excl. planned breaks/stops)", percent(preview.plannedSa))}
       ${field(zh ? "Actual 时间开动率（扣实际休息/停机/推断）" : "Actual time availability (excl. actual breaks/stops/inference)", percent(preview.actualSa))}
@@ -3739,6 +4237,29 @@ function renderRnrBestActualPreviewPanel(preview, isValidationFixture) {
     </div>` : ""}
     ${preview?.complete && preview.paceGapUnits < 0 ? `<p class="form-error">${zh ? "实跑节拍快于当前标准 CT，请先复核数量和 CT。" : "Actual output is faster than standard CT; review quantities and CT."}</p>` : ""}
     <p class="note">${zh ? "按当前节拍容差规则，推断时间损失计入 Actual SA；原因待查不妨碍计算，也不重复扣减。" : "Inferred time loss enters Actual SA under the current cycle-tolerance rule. An unknown cause does not block calculation or create a second deduction."}</p>
+    ${preview?.complete ? renderMostLikelyActualComparison(preview) : ""}
+  </section>`;
+}
+function renderMostLikelyActualComparison(preview) {
+    const zh = locale === "zh";
+    const rateDelta = (actual, published) => actual === undefined ? "-" : percent(actual - published);
+    return `<section class="sub-card" style="margin-top:14px;" data-most-likely-actual>
+    <div class="panel-head"><h3>${zh ? "Most likely 与实跑对比" : "Most likely versus actual"}</h3></div>
+    <p class="note">${zh ? "只比较已发布的 P、Q，以及已接受的非计划中断对时间开动率的影响。未发布的建议不进入这档。实跑 P = 标准 CT / 实跑节拍，最高 100%。差额 = 实跑 − Most likely。" : "Compares published P, published Q, and the SA effect of accepted unplanned interruptions. Unpublished suggestions stay out. Actual P is standard CT / actual cycle, capped at 100%. Delta = actual − Most likely."}</p>
+    <div class="field-grid">
+      ${field(zh ? "已发布 P" : "Published P", percent(preview.publishedPerformanceRate))}
+      ${field(zh ? "实跑 P" : "Actual P", preview.actualPerformanceRate === undefined ? "-" : percent(preview.actualPerformanceRate))}
+      ${field(zh ? "P 差额" : "P delta", rateDelta(preview.actualPerformanceRate, preview.publishedPerformanceRate))}
+      ${field(zh ? "已接受非计划中断（分钟）" : "Accepted unplanned (min)", formatNumber(preview.acceptedUnplannedMinutes, 1))}
+      ${field(zh ? "已发布 Q" : "Published Q", percent(preview.plannedQualityRate))}
+      ${field(zh ? "实跑 Q" : "Actual Q", preview.actualQualityRate === undefined ? "-" : percent(preview.actualQualityRate))}
+      ${field(zh ? "Q 差额" : "Q delta", rateDelta(preview.actualQualityRate, preview.plannedQualityRate))}
+      ${field(zh ? "Most likely 时间开动率" : "Most likely availability", percent(preview.mostLikelySa))}
+      ${field(zh ? "Actual 时间开动率" : "Actual availability", percent(preview.actualSa))}
+      ${field(zh ? "SA 差额" : "SA delta", percent(preview.actualSa - preview.mostLikelySa))}
+      ${field(zh ? "Most likely 良品（件）" : "Most likely good units", formatOutputUnits(preview.mostLikelyGoodUnits))}
+      ${field(zh ? "实跑良品（件）" : "Actual good units", formatOutputUnits(preview.actualGoodUnits))}
+    </div>
   </section>`;
 }
 function currentStationHead(eyebrow, title, actions = "") {
@@ -3757,15 +4278,7 @@ function collectRouteStationObservations(routingConfig) {
         const operationId = operation.operation.operationId;
         const actualKey = stationActualKey(routingConfig.productId, operationId, stationId);
         const cycle = actualKey === rnrContextKey ? cycleCheckDraft : rnrDrafts.get(actualKey)?.cycle;
-        const samples = cycle ? parseCycleSamples(cycle.samples) : [];
-        const speedOptions = cycle && cycle.targetSamples > 0 && samples.length >= cycle.targetSamples && cycle.standardCycleSec > 0
-            ? {
-                verifiedStandardCycleSec: cycle.standardCycleSec,
-                ...(cycle.acceptableSlowDeviationPercent === undefined ? {} : {
-                    acceptableSlowDeviationPercent: cycle.acceptableSlowDeviationPercent,
-                }),
-            }
-            : undefined;
+        const speedOptions = speedOptionsForCycle();
         const dayConfig = getStandardSaDayConfig(routingConfig.productId, stationId);
         const standardWindow = standardSaDayWindow(dayConfig);
         const offShiftIntervals = standardSaOffShiftIntervals(dayConfig);
@@ -3892,6 +4405,49 @@ function renderRouteWindowCapacityPanel(routingConfig) {
     </tbody></table></div>
   </section>`;
 }
+function renderCycleDiagnosisPanel(diagnosis, summary) {
+    const zh = locale === "zh";
+    const mean = diagnosis.observedMeanSec === undefined ? "-" : `${formatNumber(diagnosis.observedMeanSec, 1)} ${zh ? "秒" : "s"}`;
+    const delta = diagnosis.deltaSec === undefined ? "-" : `${diagnosis.deltaSec > 0 ? "+" : ""}${formatNumber(diagnosis.deltaSec, 1)} ${zh ? "秒" : "s"}`;
+    const gate = summary.legacyUnparsed
+        ? (zh ? "原文待处理" : "Unparsed text kept")
+        : summary.validCount > 0
+            ? (zh ? "观察均值已算出" : "Mean is available")
+            : (zh ? "尚无有效节拍" : "No valid laps");
+    return `<section class="sub-card" style="margin-top:14px;" data-cycle-diagnosis>
+    <div class="panel-head"><h3>${zh ? "节拍诊断" : "Cycle diagnosis"}</h3><span class="pill ${summary.validCount > 0 && !summary.legacyUnparsed ? "good" : "warn"}">${gate}</span></div>
+    <div class="field-grid">
+      ${field(zh ? "当前计划 CT" : "Planned CT", diagnosis.hasPlannedCycle ? `${formatNumber(diagnosis.plannedCycleSec ?? 0, 1)} ${zh ? "秒" : "s"}` : (zh ? "无有效计划 CT" : "No planned CT"))}
+      ${field(zh ? "样本均值" : "Sample mean", mean)}
+      ${field(zh ? "均值 − 计划 CT" : "Mean − planned CT", delta)}
+      ${field(zh ? "采集 / 有效 / 去除" : "Collected / valid / excluded", `${formatNumber(summary.recordedCount)} / ${formatNumber(summary.validCount)} / ${formatNumber(summary.excludedCount)}`)}
+    </div>
+    ${diagnosis.hasPlannedCycle ? `<p class="note">${zh ? "这里对照当前计划 CT 和检查均值。已有 CT 可以保持，也可以在节拍检查里经确认后矫正。建议表不会自动另提一条标准节拍。" : "This compares the planned CT with the check mean. An existing CT can stay, or be corrected in Cycle Check after confirmation. No extra CT suggestion row is created."}</p>` : `<p class="note">${zh ? "没有有效计划 CT。初始预设可在节拍检查里确认，本阶段也会保留同一入口。" : "There is no effective planned CT. The initial preset can be confirmed in Cycle Check. This stage keeps the same entry."}</p>`}
+    ${diagnosis.fasterThanPlanned ? `<p class="form-error" role="alert">${zh ? "样本快于计划 CT。请先复核循环边界、产出件数和每循环件数，再决定是否调整记录。P 不会自动超过 100%。" : "Samples are faster than the planned CT. Review the cycle boundary, output count and pieces per cycle before changing records. P is not raised above 100%."}</p>` : ""}
+  </section>`;
+}
+function renderInitialPresetPanel(operationId, stationId, summary) {
+    const zh = locale === "zh";
+    const ready = summary.validCount > 0 && !summary.legacyUnparsed && summary.legacyIssues.length === 0 && summary.observedMeanSec !== undefined;
+    const blocked = !ready
+        ? (summary.legacyUnparsed || summary.legacyIssues.length
+            ? (zh ? "旧样本里还有无法解析的原文，不能建立初始预设。" : "Unparsed legacy sample text is still present, so an initial preset cannot be created.")
+            : (zh ? "还没有可计入平均的节拍，不能建立初始预设。" : "There is no lap in the average yet, so an initial preset cannot be created."))
+        : "";
+    return `<section class="sub-card" style="margin-top:14px;" data-initial-preset-panel>
+    <div class="panel-head"><h3>${zh ? "建立本地初始预设" : "Establish local initial preset"}</h3><span class="pill warn">${zh ? "本机验证 · 不是主数据批准" : "Local validation · not master-data approval"}</span></div>
+    <p class="note">${zh ? "只在没有有效计划 CT 时使用。确认 CT 和每循环件数。P 默认 100%，可以改成大于 0 且不超过 100% 的其他值；非默认值会提示这是人工判断，并再确认一次才写入。原始节拍样本不会被改写，标准 SA 时间轴也不变。Q 仍单独走建议和确认。" : "Use this only when no effective planned CT exists. Confirm CT and pieces per cycle. P defaults to 100% and may be changed to another value above 0 and at most 100%. A non-default value warns that it is a judgement and needs a second confirmation. Raw samples and the planned SA timeline stay unchanged. Q keeps its own suggestion flow."}</p>
+    ${blocked ? `<p class="note">${blocked}</p>` : `<form data-initial-preset data-operation-id="${escapeHtml(operationId)}" data-station-id="${escapeHtml(stationId)}">
+      <div class="field-grid">
+        <div class="field"><label>${zh ? "确认 CT（秒）" : "Confirm CT (sec)"}</label><input name="standardCycleSec" type="number" min="0.0001" step="any" required value="${summary.observedMeanSec ?? ""}" /></div>
+        <div class="field"><label>${zh ? "每循环件数" : "Pieces per cycle"}</label><input name="piecesPerCycle" type="number" min="1" step="1" required /></div>
+        <div class="field"><label>${zh ? "P (%)" : "P (%)"}</label><input name="performanceRatePercent" type="number" min="0.1" max="100" step="any" required value="100" /></div>
+      </div>
+      <div class="action-bar"><span>${zh ? `证据 ${escapeHtml(`cycle-check:${selectedProductId}:${operationId}:${stationId}`)}` : `Evidence ${escapeHtml(`cycle-check:${selectedProductId}:${operationId}:${stationId}`)}`}</span>
+        <button class="button" type="submit">${zh ? "建立本地初始预设" : "Establish local initial preset"}</button></div>
+    </form>`}
+  </section>`;
+}
 function renderParameterSuggestionsPanel(suggestions, fingerprint, observationFingerprint, evidence, parameter, versions, planned) {
     const names = {
         setupMinutes: ["换型总分钟", "Total setup minutes"],
@@ -3906,8 +4462,7 @@ function renderParameterSuggestionsPanel(suggestions, fingerprint, observationFi
     const plannedProductionMinutes = planned.filter(item => item.kind === "production")
         .reduce((sum, item) => sum + item.endMinute - item.startMinute, 0);
     const plannedGoodUnits = parameter && parameter.standardCycleSec > 0
-        ? plannedProductionMinutes * 60 / parameter.standardCycleSec * parameter.piecesPerCycle
-            * parameter.performanceRate * parameter.qualityRate : undefined;
+        ? plannedProductionMinutes * 60 / parameter.standardCycleSec * parameter.piecesPerCycle : undefined;
     const published = versions.some(item => item.supersedesParameterId);
     const contextPublished = publishedSuggestions.filter(entry => versions.some(item => item.parameterId === entry.versionId));
     const publishableTargets = ["standardCycleSec", "performanceRate", "qualityRate"];
@@ -3930,7 +4485,7 @@ function renderParameterSuggestionsPanel(suggestions, fingerprint, observationFi
     const format = (item, value) => item.unit === "rate" ? percent(value) : `${formatNumber(value, 1)}${item.unit === "seconds" ? (zh ? " 秒" : " s") : (zh ? " 分钟" : " min")}`;
     return `<section class="sub-card" style="margin-top:14px;">
     <div class="panel-head"><h3>${zh ? "参数更新建议" : "Parameter suggestions"}</h3><span class="pill warn">${zh ? "当前会话草稿" : "Session draft"}</span></div>
-    <p class="note">${zh ? "先本地确认，再明确发布 CT/P/Q 到计划参数。确认不改计划；本地发布只影响生效日之后的当前会话计划计算，刷新后消失。休息超时、维保、计划停机及换型差异只进入 Actual SA 和待纠偏，不作为标准时间参数发布。" : "Confirm locally, then explicitly publish CT/P/Q to planned parameters. Confirmation changes no plan; session-only publication affects calculations from its effective date and is lost on refresh. Break overruns, maintenance, planned stops and setup deltas enter Actual SA and corrective follow-up only; they are not published as standard-time parameters."}</p>
+    <p class="note">${zh ? "先本地确认，再明确发布 CT/P/Q 到计划参数。已有计划 CT 时，普通 R&R 不会因为样本均值要求确认新 CT。若在第一阶段主动新建 CT 版本，仍要确认 P 已按新 CT 复核。确认不改计划；发布只影响生效日之后的当前会话件数，标准 SA 时间轴不变。休息超时、维保、计划停机及换型差异只进入 Actual SA 和待纠偏。" : "Confirm locally, then explicitly publish CT/P/Q. An ordinary R&R does not ask for a new CT just because the sample mean differs. A CT version created in stage 1 still requires P reviewed against that CT. The planned SA timeline stays unchanged. Break overruns, maintenance, planned stops and setup deltas stay in Actual SA."}</p>
     <div class="field-grid">
       ${field(zh ? "当前生效参数版本" : "Active parameter version", parameter?.parameterId ?? "-")}
       ${field(zh ? "当前 CT / P / Q" : "Current CT / P / Q", parameter ? `${formatNumber(parameter.standardCycleSec, 1)}s / ${percent(parameter.performanceRate)} / ${percent(parameter.qualityRate)}` : "-")}
@@ -3989,7 +4544,7 @@ function renderRnrEvidencePanel(evidence) {
         unexplained_inferred_loss: ["推断损失原因待查（不影响 SA 计算）", "Inferred loss cause unknown (SA can still be calculated)"],
     };
     const rows = [
-        ...evidence.explicit.map(item => `<tr><td>${locale === "zh" ? "已记录异常" : "Recorded abnormal"}</td><td>${escapeHtml(formatTimelineKind(item.category))}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.minutes, 1)}</td><td><input data-recoverable-event="${escapeHtml(item.sourceEventId)}" type="number" min="0" max="${item.minutes}" step="1" value="${item.recoverableMinutes}" aria-label="${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}" /></td><td>${formatNumber(item.minutes - item.recoverableMinutes, 1)}</td><td>${escapeHtml(item.evidenceSource || "-")}</td><td>${item.isEstimated ? (locale === "zh" ? "是" : "Yes") : (locale === "zh" ? "否" : "No")}</td><td>${escapeHtml(item.sourceEventId)}</td></tr>`),
+        ...evidence.explicit.map(item => `<tr><td>${locale === "zh" ? "已记录异常" : "Recorded abnormal"}</td><td>${escapeHtml(formatTimelineKind(item.category))}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.minutes, 1)}</td><td><div class="recoverable-edit"><input data-recoverable-event="${escapeHtml(item.sourceEventId)}" data-saved-recoverable="${item.recoverableMinutes}" data-recoverable-confirmed="${item.recoverableConfirmed ? "1" : "0"}" type="number" min="0" max="${item.minutes}" step="1" value="${item.recoverableMinutes}" aria-label="${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}" /><button type="button" class="button secondary${item.recoverableConfirmed ? " is-confirmed" : ""}" data-confirm-recoverable="${escapeHtml(item.sourceEventId)}">${locale === "zh" ? "确认" : "Confirm"}</button></div></td><td>${formatNumber(item.minutes - item.recoverableMinutes, 1)}</td><td>${escapeHtml(item.evidenceSource || "-")}</td><td>${item.isEstimated ? (locale === "zh" ? "是" : "Yes") : (locale === "zh" ? "否" : "No")}</td><td>${escapeHtml(item.sourceEventId)}</td></tr>`),
         ...evidence.inferred.map(item => `<tr><td>${locale === "zh" ? "推断损失" : "Inferred loss"}</td><td>${locale === "zh" ? "待归因" : "Unclassified"}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.estimatedMinutes, 1)}</td><td>-</td><td>-</td><td>${locale === "zh" ? "产出反推" : "Output inference"}</td><td>${locale === "zh" ? "是" : "Yes"}</td><td>${escapeHtml(item.sourceProductionEventId)}</td></tr>`),
     ].join("");
     return `
@@ -4002,7 +4557,7 @@ function renderRnrEvidencePanel(evidence) {
       ${rows ? `<div class="table-wrap"><table><thead><tr><th>${locale === "zh" ? "来源类型" : "Evidence type"}</th><th>${locale === "zh" ? "类别" : "Category"}</th><th>${locale === "zh" ? "起止时钟" : "Time window"}</th><th>${locale === "zh" ? "分钟" : "Minutes"}</th><th>${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}</th><th>${locale === "zh" ? "进入排产" : "Into planning"}</th><th>${locale === "zh" ? "证据来源" : "Source"}</th><th>${locale === "zh" ? "估算" : "Estimated"}</th><th>${locale === "zh" ? "原始事件ID" : "Source event ID"}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note">${locale === "zh" ? "暂无异常证据或推断损失。" : "No abnormal evidence or inferred loss yet."}</p>`}
       ${evidence.blockers.length ? `<ul class="message-list">${evidence.blockers.map(blocker => `<li>${escapeHtml(blockerLabels[blocker.code][locale === "zh" ? 0 : 1])}${blocker.sourceEventId ? ` · ${escapeHtml(blocker.sourceEventId)}` : ""}</li>`).join("")}</ul>` : ""}
       ${evidence.notices.length ? `<ul class="message-list">${evidence.notices.map(notice => `<li>${escapeHtml(noticeLabels[notice.code][locale === "zh" ? 0 : 1])}${notice.sourceEventId ? ` · ${escapeHtml(notice.sourceEventId)}` : ""}</li>`).join("")}</ul>` : ""}
-      <p class="note">${locale === "zh" ? "可补救分钟不能超过该段已记录分钟，也不改这条实跑记录。Most likely 只使用剩余分钟。推断损失仍只计入 Actual SA，不进入班次预留。" : "Recoverable minutes cannot exceed the recorded interval and do not change it. Most likely uses only the remainder. Inferred loss stays in Actual SA."}</p>
+      <p class="note">${locale === "zh" ? "可补救分钟不能超过该段已记录分钟。填好后点该行「确认」，进入排产和 Most likely 才改变；未确认的输入不会生效。实跑记录本身不改。推断损失不进入班次预留。" : "Recoverable minutes cannot exceed the recorded interval. Confirm the row before Most likely changes. The recorded interval stays unchanged."}</p>
     </section>
   `;
 }

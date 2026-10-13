@@ -72,7 +72,7 @@ export function findStandardSaDayGaps(events: TimelineEvent[], config: StandardS
 }
 
 export function standardSaShiftIntervals(config: StandardSaDayConfig): Array<{ startMinute: number; endMinute: number }> {
-  if (!Number.isInteger(config.startMinute) || config.startMinute < 0
+  if (!Number.isInteger(config.startMinute)
     || ![1, 2].includes(config.dayCount) || ![480, 720].includes(config.shiftMinutes)
     || !Number.isInteger(config.shiftsPerDay) || config.shiftsPerDay < 1
     || config.shiftsPerDay * config.shiftMinutes > DAY_MINUTES) return [];

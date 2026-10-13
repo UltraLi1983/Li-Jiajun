@@ -9,6 +9,7 @@ export interface RnrEvidenceEvent extends TimelineEvent {
   evidenceSource?: string;
   isEstimated?: boolean;
   recoverableMinutes?: number;
+  recoverableConfirmed?: boolean;
 }
 
 export interface RnrEvidenceInput {
@@ -34,6 +35,7 @@ export interface RnrAbnormalEvidence {
   endMinute: number;
   minutes: number;
   recoverableMinutes: number;
+  recoverableConfirmed: boolean;
   evidenceSource: string;
   isEstimated: boolean;
   note?: string;
@@ -117,7 +119,7 @@ export function buildRnrEvidence(input: RnrEvidenceInput): RnrEvidenceResult {
         productId: input.productId, operationId: input.operationId, stationId: input.stationId,
         category: event.kind as AbnormalCategory,
         startMinute: event.startMinute, endMinute: event.endMinute,
-        minutes, recoverableMinutes,
+        minutes, recoverableMinutes, recoverableConfirmed: event.recoverableConfirmed ?? false,
         evidenceSource, isEstimated: event.isEstimated ?? false,
         ...(event.note ? { note: event.note } : {}),
       };

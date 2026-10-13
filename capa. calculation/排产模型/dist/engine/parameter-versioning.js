@@ -1,3 +1,4 @@
+import { summarizeCycleSamples } from "./cycle-samples.js";
 export function localDateValue(date = new Date()) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -36,6 +37,96 @@ export function createLocalBaselineParameter(input) {
         ...(base ? { supersedesParameterId: base.parameterId } : {}),
         performanceRate, qualityRate, parameterSource: "manual", approvalStatus: "approved", effectiveFrom,
     };
+}
+export function establishInitialLocalPreset(input) {
+    const existing = selectEffectiveParameter(input.existingParameters ?? [], input.operationId, input.stationId, input.asOfDate);
+    if (existing)
+        throw new Error("An effective planned CT already exists");
+    const summary = summarizeCycleSamples(input.samples);
+    if (summary.validCount < 1 || summary.observedMeanSec === undefined || summary.legacyUnparsed || summary.legacyIssues.length) {
+        throw new Error("Cycle samples are not ready for an initial preset");
+    }
+    if (!input.performanceReviewed)
+        throw new Error("P must be explicitly reviewed against the confirmed CT");
+    if (!input.evidenceRef.trim())
+        throw new Error("Sample evidence reference is required");
+    const manualOverride = Math.abs(input.performanceRate - 1) > 1e-9;
+    if (manualOverride && input.performanceOverrideConfirmed !== true) {
+        throw new Error("A non-default P requires a separate override confirmation");
+    }
+    const created = createLocalBaselineParameter({
+        operationId: input.operationId,
+        stationId: input.stationId,
+        standardCycleSec: input.standardCycleSec,
+        piecesPerCycle: input.piecesPerCycle,
+        performanceRate: input.performanceRate,
+        parameterId: input.parameterId,
+        effectiveFrom: input.effectiveFrom,
+    });
+    return {
+        ...created,
+        performanceInputSource: manualOverride ? "manualJudgement" : "defaultHundred",
+        calibrationRefs: manualOverride
+            ? [input.evidenceRef, "manual-p-override-confirmed:not-derived-from-time-window"]
+            : [input.evidenceRef],
+    };
+}
+/** P = corrected CT / observed cycle of the same production intervals, capped at 100%. */
+export function performanceAgainstCycle(standardCycleSec, production) {
+    if (!Number.isFinite(standardCycleSec) || standardCycleSec <= 0)
+        return undefined;
+    const valid = production.filter(item => Number.isFinite(item.startMinute) && Number.isFinite(item.endMinute)
+        && item.endMinute > item.startMinute
+        && Number.isInteger(item.okQty) && item.okQty >= 0
+        && Number.isInteger(item.nokQty) && item.nokQty >= 0
+        && item.okQty + item.nokQty > 0
+        && Number.isFinite(item.piecesPerCycle) && item.piecesPerCycle > 0);
+    const minutes = valid.reduce((sum, item) => sum + item.endMinute - item.startMinute, 0);
+    const cycles = valid.reduce((sum, item) => sum + (item.okQty + item.nokQty) / item.piecesPerCycle, 0);
+    if (minutes <= 0 || cycles <= 0)
+        return undefined;
+    const observedCycleSec = minutes * 60 / cycles;
+    const raw = standardCycleSec / observedCycleSec;
+    return {
+        observedCycleSec,
+        performanceRate: Math.min(1, raw),
+        fasterThanCorrectedCt: raw > 1 + 1e-9,
+    };
+}
+export function correctPlannedCycleFromCheck(input) {
+    const existing = selectEffectiveParameter(input.existingParameters ?? [], input.operationId, input.stationId, input.asOfDate);
+    if (!existing || existing.standardCycleSec <= 0)
+        throw new Error("No planned CT is available to correct");
+    const summary = summarizeCycleSamples(input.samples);
+    if (summary.validCount < 1 || summary.observedMeanSec === undefined || summary.legacyUnparsed || summary.legacyIssues.length) {
+        throw new Error("Cycle samples are not ready to correct CT");
+    }
+    if (!input.ctConfirmed)
+        throw new Error("CT correction requires explicit confirmation");
+    if (!input.evidenceRef.trim())
+        throw new Error("Sample evidence reference is required");
+    if (!Number.isFinite(input.standardCycleSec) || input.standardCycleSec <= 0) {
+        throw new RangeError("Corrected CT must be positive");
+    }
+    if (Math.abs(input.standardCycleSec - existing.standardCycleSec) < 0.005) {
+        throw new Error("The confirmed CT matches the current planned CT");
+    }
+    const linked = performanceAgainstCycle(input.standardCycleSec, input.timeWindowProduction ?? []);
+    const created = createLocalBaselineParameter({
+        base: existing,
+        operationId: input.operationId,
+        stationId: input.stationId,
+        standardCycleSec: input.standardCycleSec,
+        piecesPerCycle: existing.piecesPerCycle,
+        performanceRate: linked?.performanceRate ?? existing.performanceRate,
+        qualityRate: existing.qualityRate,
+        parameterId: input.parameterId,
+        effectiveFrom: input.effectiveFrom,
+    });
+    const calibrationRefs = [input.evidenceRef];
+    if (linked && input.windowEvidenceRef?.trim())
+        calibrationRefs.push(input.windowEvidenceRef.trim());
+    return { ...created, calibrationRefs };
 }
 export function publishParameterVersion(base, confirmed, effectiveFrom, parameterId) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveFrom)

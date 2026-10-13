@@ -50,7 +50,7 @@ export function buildRnrEvidence(input) {
             productId: input.productId, operationId: input.operationId, stationId: input.stationId,
             category: event.kind,
             startMinute: event.startMinute, endMinute: event.endMinute,
-            minutes, recoverableMinutes,
+            minutes, recoverableMinutes, recoverableConfirmed: event.recoverableConfirmed ?? false,
             evidenceSource, isEstimated: event.isEstimated ?? false,
             ...(event.note ? { note: event.note } : {}),
         };

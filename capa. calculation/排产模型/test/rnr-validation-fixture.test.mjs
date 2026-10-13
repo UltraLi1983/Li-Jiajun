@@ -36,14 +36,21 @@ describe("temporary R&R validation fixture", () => {
       stationId: "OP10", planned: fixture.planned, actual: fixture.actual,
       standardCycleSec: fixture.standardCycleSec, piecesPerCycle: fixture.piecesPerCycle,
       plannedQualityRate: 0.98,
+      publishedPerformanceRate: 0.9,
+      acceptedUnplannedMinutes: 30,
       inferredSaLossMinutes: 4,
     });
     assert.equal(preview.complete, true);
     assert.equal(preview.standardCycleSec, 24);
     assert.equal(preview.bestCaseIdealUnits, 3225);
     assert.equal(preview.plannedQualityRate, 0.98);
-    assert.equal(preview.bestCaseOkUnits, 3160.5);
-    assert.equal(preview.bestCaseNokUnits, 64.5);
+    assert.equal(preview.bestCaseOkUnits, 3225);
+    assert.equal(preview.bestCaseNokUnits, 0);
+    assert.equal(preview.mostLikelyProductionMinutes, 1260);
+    assert.equal(preview.mostLikelySa, 1260 / 1440);
+    assert.equal(preview.mostLikelyGoodUnits, 1260 * 60 / 24 * 0.9 * 0.98);
+    assert.equal(preview.publishedPerformanceRate, 0.9);
+    assert.ok(Math.abs((preview.actualPerformanceRate ?? 0) - Math.min(1, 24 / preview.actualCycleSec)) < 1e-9);
     assert.equal(preview.actualGrossUnits, 3065);
     assert.equal(preview.actualGoodUnits, 3035);
     assert.equal(Math.round(preview.actualCycleSec * 10) / 10, 24.1);

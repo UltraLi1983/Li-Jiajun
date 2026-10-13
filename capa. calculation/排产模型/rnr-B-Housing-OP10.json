@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "snapshot": {
+    "packageId": "rnr-B-Housing-op-b-10-OP10-510-1950",
+    "status": "draft-incomplete",
+    "generatedAt": "2026-10-12T09:28:09.884Z",
+    "scope": {
+      "productId": "B-Housing",
+      "operationId": "op-b-10",
+      "stationId": "OP10",
+      "startMinute": 510,
+      "endMinute": 1950,
+      "durationMinutes": 1440
+    },
+    "plannedEvents": [
+      {
+        "id": "planned-production-1",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "production",
+        "startMinute": 510,
+        "endMinute": 660,
+        "source": "manual",
+        "label": "生产 08:30-11:00"
+      },
+      {
+        "id": "planned-break-1",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "break",
+        "startMinute": 660,
+        "endMinute": 690,
+        "source": "manual",
+        "label": "休息 11:00-11:30"
+      },
+      {
+        "id": "planned-production-2",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "production",
+        "startMinute": 690,
+        "endMinute": 1020,
+        "source": "manual",
+        "label": "生产 11:30-17:00"
+      },
+      {
+        "id": "planned-break-2",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "break",
+        "startMinute": 1020,
+        "endMinute": 1050,
+        "source": "manual",
+        "label": "休息 17:00-17:30"
+      },
+      {
+        "id": "planned-production-3",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "production",
+        "startMinute": 1050,
+        "endMinute": 1140,
+        "source": "manual",
+        "label": "生产 17:30-19:00"
+      },
+      {
+        "id": "planned-setup-1",
+        "stationId": "OP10",
+        "productId": "B-Housing",
+        "kind": "setup",
+        "startMinute": 1140,
+        "endMinute": 1230,
+        "source": "manual",
+        "label": "换型 19:00-20:30"
+      }
+    ],
+    "actualEvents": [],
+    "cycleSamplesSec": [
+      24,
+      25,
+      26
+    ],
+    "cycleSampleRecord": {
+      "schemaVersion": 2,
+      "samples": [
+        {
+          "sequence": 1,
+          "id": "cycle-1791797268489-1",
+          "seconds": 24,
+          "display": "00:24.00"
+        },
+        {
+          "sequence": 2,
+          "id": "cycle-1791797268489-2",
+          "seconds": 25,
+          "display": "00:25.00"
+        },
+        {
+          "sequence": 3,
+          "id": "cycle-1791797268489-3",
+          "seconds": 26,
+          "display": "00:26.00"
+        }
+      ],
+      "recordedCount": 3,
+      "validCount": 3,
+      "excludedCount": 0,
+      "observedMeanSec": 25,
+      "status": "verified",
+      "basis": "mean of non-stop laps, converted from stopwatch digits such as 337 = 00:03.37",
+      "legacyUnparsed": "24, 25，bad / 26"
+    },
+    "speedSummary": {
+      "segments": [],
+      "inferredSaLossMinutes": 0,
+      "performanceLossMinutes": 0,
+      "readyForCalibration": false
+    },
+    "evidence": {
+      "explicit": [],
+      "inferred": [],
+      "explicitMinutes": 0,
+      "inferredMinutes": 0,
+      "blockers": [
+        {
+          "code": "unrecorded_time"
+        },
+        {
+          "code": "no_production"
+        }
+      ],
+      "notices": [],
+      "readyForCalculation": false
+    },
+    "parameterSuggestions": [],
+    "notes": [
+      "Local browser draft. Not persisted to upstream master data.",
+      "Derived results are recalculated from restored inputs; parameter publication is not restored."
+    ]
+  },
+  "dayConfig": {
+    "startMinute": 510,
+    "dayCount": 1,
+    "shiftMinutes": 720,
+    "shiftsPerDay": 1
+  },
+  "cycleDraft": {
+    "samples": [
+      {
+        "id": "cycle-1791797268489-1",
+        "seconds": 24
+      },
+      {
+        "id": "cycle-1791797268489-2",
+        "seconds": 25
+      },
+      {
+        "id": "cycle-1791797268489-3",
+        "seconds": 26
+      }
+    ],
+    "targetSamples": 12,
+    "legacyUnparsed": "24, 25，bad / 26",
+    "legacyIssues": [
+      "bad"
+    ]
+  },
+  "validationFixture": false,
+  "decisions": {
+    "confirmedTargets": [],
+    "publishedVersionIds": []
+  },
+  "savedAt": "2026-10-12T09:34:21.020Z"
+}

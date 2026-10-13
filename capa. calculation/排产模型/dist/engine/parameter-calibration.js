@@ -32,10 +32,8 @@ export function buildParameterSuggestions(input) {
         && input.cycleSamplesSec.every(value => Number.isFinite(value) && value > 0);
     const production = actual.filter(event => event.kind === "production");
     const productionRefs = production.map(event => event.id);
-    if (verifiedCycle) {
-        const observedCycle = input.cycleSamplesSec.reduce((sum, value) => sum + value, 0) / input.cycleSamplesSec.length;
-        add("standardCycleSec", parameter.parameterId, parameter.standardCycleSec, observedCycle, "seconds", [`cycle-check:${productId}:${operationId}:${stationId}`]);
-    }
+    // An existing planned CT stays the standard. Sample averages are diagnostic only;
+    // the same pace gap must not also be proposed as a new CT.
     if (verifiedCycle && speed.readyForCalibration && productionRefs.length) {
         const productionMinutes = duration(production);
         const effectiveMinutes = productionMinutes - speed.inferredSaLossMinutes;

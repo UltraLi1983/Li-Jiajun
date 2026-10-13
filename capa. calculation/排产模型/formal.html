@@ -171,7 +171,34 @@
     .load-warning { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #e6c887; border-radius: 8px; background: #fff8e8; color: var(--amber); font-weight: 700; }
     .load-warning[hidden] { display: none; }
     table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4ebef; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4ebef; font-size: 13px; vertical-align: middle; }
+    .recoverable-edit { display: flex; align-items: center; gap: 8px; }
+    .recoverable-edit input { width: 72px; min-width: 72px; height: 34px; flex: 0 0 72px; }
+    .recoverable-edit .button { padding: 6px 10px; white-space: nowrap; }
+    .recoverable-edit .button.is-confirmed { background: var(--green); }
+    .cycle-sample-panel { display: grid; gap: 12px; }
+    .cycle-sample-add, .cycle-sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .cycle-sample-add label { display: grid; gap: 6px; font-weight: 800; flex: 0 1 180px; min-width: min(100%, 140px); }
+    .cycle-entry-hint { margin: 0; flex: 1 1 240px; max-width: 36rem; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.45; }
+    .cycle-sample-add input, .cycle-sample-row input:not([type="checkbox"]) { width: 120px; max-width: 100%; height: 34px; }
+    .cycle-sample-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .cycle-sample-row { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .cycle-sample-index { min-width: 2.5ch; font-weight: 800; }
+    .cycle-sample-row .button, .cycle-sample-add .button { padding: 8px 12px; white-space: nowrap; }
+    .cycle-sample-time { min-width: 7ch; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .cycle-mark { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; font-weight: 700; white-space: nowrap; }
+    .cycle-mark input { width: 16px; min-width: 16px; height: 16px; margin: 0; padding: 0; flex: 0 0 16px; }
+    .cycle-reason { width: min(100%, 180px); height: 34px; }
+    .cycle-sample-row.is-slow { background: #fff6f6; }
+    .cycle-sample-row.is-stop { background: #f4f7f8; }
+    .cycle-sample-row.is-stop .cycle-sample-time { text-decoration: line-through; }
+    dialog.ct-confirm { width: min(440px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 8px; padding: 18px; background: #fff; color: var(--text); box-shadow: 0 16px 40px rgba(23, 33, 43, 0.18); }
+    dialog.ct-confirm::backdrop { background: rgba(23, 33, 43, 0.38); }
+    dialog.ct-confirm h3 { margin: 0 0 8px; font-size: 18px; }
+    dialog.ct-confirm p { margin: 0; line-height: 1.5; }
+    dialog.ct-confirm .action-bar { justify-content: flex-end; }
+    .cycle-review-check { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: var(--text); font-size: 14px; font-weight: 800; cursor: pointer; }
+    .cycle-review-check input { width: 16px; min-width: 16px; height: 16px; margin: 0; padding: 0; flex: 0 0 16px; }
     th { color: var(--muted); background: #f8fbfc; font-weight: 800; }
     tr:last-child td { border-bottom: 0; }
     @media (max-width: 1180px) {
@@ -187,6 +214,48 @@
       .control-card { margin-top: 12px; }
       .page-head { display: block; }
       .badge { margin-top: 10px; }
+    }
+    dialog.route-week-report { width: min(920px, calc(100% - 24px)); max-height: calc(100vh - 24px); overflow: auto; border: 0; padding: 16px; background: #e9eef0; }
+    dialog.route-week-report::backdrop { background: rgba(23, 33, 43, 0.45); }
+    .route-week-report .report-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .route-week-report .sheet, #routeWeekPrintRoot .sheet { width: 210mm; max-width: 100%; margin: 0 auto 16px; padding: 12mm 14mm; background: #fff; }
+    .route-week-report .report-header, #routeWeekPrintRoot .report-header { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 3px solid var(--teal); }
+    .route-week-report .kicker, #routeWeekPrintRoot .kicker { margin: 0 0 6px; color: var(--teal); font-size: 10px; font-weight: 800; }
+    .route-week-report h1, #routeWeekPrintRoot h1 { margin: 0; font-size: 24px; }
+    .route-week-report .subtitle, #routeWeekPrintRoot .subtitle, .route-week-report .report-id, #routeWeekPrintRoot .report-id { color: var(--muted); font-size: 11px; }
+    .route-week-report .report-id, #routeWeekPrintRoot .report-id { text-align: right; line-height: 1.5; }
+    .route-week-report .draft, #routeWeekPrintRoot .draft { display: inline-block; padding: 2px 6px; border: 1px solid #b9d7de; color: var(--teal); background: #eef9fb; }
+    .route-week-report .meta, #routeWeekPrintRoot .meta, .route-week-report .metrics, #routeWeekPrintRoot .metrics, .route-week-report .spq, #routeWeekPrintRoot .spq { display: grid; gap: 8px; }
+    .route-week-report .meta, #routeWeekPrintRoot .meta { grid-template-columns: 1.1fr 1fr 1fr; padding: 12px 0; }
+    .route-week-report .metrics, #routeWeekPrintRoot .metrics, .route-week-report .spq, #routeWeekPrintRoot .spq { grid-template-columns: repeat(3, 1fr); }
+    .route-week-report .metrics, #routeWeekPrintRoot .metrics { grid-template-columns: repeat(4, 1fr); }
+    .route-week-report .metric, #routeWeekPrintRoot .metric, .route-week-report .spq > div, #routeWeekPrintRoot .spq > div { padding: 8px; border: 1px solid var(--line); }
+    .route-week-report .section, #routeWeekPrintRoot .section { margin-top: 12px; }
+    .route-week-report .section-head, #routeWeekPrintRoot .section-head, .route-week-report .footer, #routeWeekPrintRoot .footer { display: flex; justify-content: space-between; gap: 12px; }
+    .route-week-report h2, #routeWeekPrintRoot h2 { margin: 0; font-size: 14px; }
+    .route-week-report .decision, #routeWeekPrintRoot .decision { display: grid; grid-template-columns: 1.15fr .85fr; border: 1px solid var(--line); border-left: 4px solid var(--red); }
+    .route-week-report .forecast-decision, #routeWeekPrintRoot .forecast-decision { border-left-color: var(--green); }
+    .route-week-report .decision-main, #routeWeekPrintRoot .decision-main, .route-week-report .decision-gap, #routeWeekPrintRoot .decision-gap { padding: 12px; }
+    .route-week-report .decision-main strong, #routeWeekPrintRoot .decision-main strong { display: block; margin-top: 4px; font-size: 18px; }
+    .route-week-report .decision-gap strong, #routeWeekPrintRoot .decision-gap strong { font-size: 22px; }
+    .route-week-report .compare-row, #routeWeekPrintRoot .compare-row { display: grid; grid-template-columns: 92px 1fr 64px; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 11px; }
+    .route-week-report .bar-track, #routeWeekPrintRoot .bar-track { position: relative; height: 12px; background: #edf2f4; }
+    .route-week-report .bar-track::after, #routeWeekPrintRoot .bar-track::after { content: ""; position: absolute; top: -3px; bottom: -3px; left: var(--demand, 0%); width: 1px; background: #17212b; }
+    .route-week-report .bar, #routeWeekPrintRoot .bar { display: block; height: 100%; }
+    .route-week-report .bar.best, #routeWeekPrintRoot .bar.best { background: var(--teal); }
+    .route-week-report .bar.likely, #routeWeekPrintRoot .bar.likely { background: var(--blue); }
+    .route-week-report .bar.outcome, #routeWeekPrintRoot .bar.outcome { background: var(--red); }
+    .route-week-report .bar.demand, #routeWeekPrintRoot .bar.demand { background: #5a6873; }
+    .route-week-report .spq-values, #routeWeekPrintRoot .spq-values { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .route-week-report .bottleneck, #routeWeekPrintRoot .bottleneck { color: #a72d2d; font-weight: 800; }
+    .route-week-report .evidence, #routeWeekPrintRoot .evidence, .route-week-report .basis, #routeWeekPrintRoot .basis { margin-top: 8px; padding: 8px; background: #f3f7f8; font-size: 11px; line-height: 1.5; }
+    .route-week-report .footer, #routeWeekPrintRoot .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+    #routeWeekPrintRoot[hidden] { display: none; }
+    @media print {
+      body.printing-week-report .app-shell { display: none !important; }
+      body.printing-week-report #routeWeekPrintRoot { display: block !important; }
+      body.printing-week-report #routeWeekPrintRoot .sheet { break-after: page; }
+      body.printing-week-report #routeWeekPrintRoot .sheet:last-child { break-after: auto; }
     }
   </style>
 </head>
@@ -276,6 +345,7 @@
       </div>
     </main>
   </div>
-  <script type="module" src="./dist/ui/formal-app.js?v=20261011-recoverable-cap"></script>
+  <div id="routeWeekPrintRoot" hidden></div>
+  <script type="module" src="./dist/ui/formal-app.js?v=20261013-day-modulo"></script>
 </body>
 </html>

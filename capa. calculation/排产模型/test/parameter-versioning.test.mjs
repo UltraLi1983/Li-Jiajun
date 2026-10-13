@@ -124,4 +124,11 @@ describe("CT/P/Q local publication", () => {
     assert.equal(next.performanceRate, 0.98);
     assert.equal(base.standardCycleSec, 24);
   });
+
+  it("publishes P alone when the planned CT is unchanged", () => {
+    const next = publishParameterVersion(base, [confirmed("performanceRate", 0.97)], "2026-09-27", "v2");
+    assert.equal(next.standardCycleSec, 24);
+    assert.equal(next.performanceRate, 0.97);
+    assert.equal(base.standardCycleSec, 24);
+  });
 });

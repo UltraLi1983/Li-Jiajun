@@ -34,7 +34,7 @@ export function expandWeekToFourWeeks(firstWeek, followingModes) {
 }
 export function copyStandardWindowToWeek(input) {
     const weekStartMinuteOfDay = input.source.dayConfig
-        ? input.source.dayConfig.startMinute % DAY_MINUTES : 0;
+        ? minuteOfDay(input.source.dayConfig.startMinute) : 0;
     const result = {
         mode: "copy", sourceWindowId: input.source.sourceId, sourceWindowVersion: input.source.version,
         weekStartDate: input.weekStartDate, weekStartMinuteOfDay, issues: [], events: [], days: [],
@@ -120,6 +120,9 @@ function summarizeDay(events, weekStartDate, dayIndex, dayStartMinuteOfDay) {
         bestCaseAvailableMinutes: productionMinutes,
         ...(scheduledMinutes > 0 ? { bestCaseSa: productionMinutes / scheduledMinutes } : {}),
     };
+}
+function minuteOfDay(minute) {
+    return ((minute % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
 }
 function parseDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value))

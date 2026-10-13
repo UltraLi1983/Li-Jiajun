@@ -14,6 +14,11 @@ const day = (date, best, most = best, workingDay = true) => ({
 });
 
 describe("week and month station capacity", () => {
+  it("floors genuine fractional pieces without rounding them up", () => {
+    assert.equal(floorGoodPieces(1.9999999), 1);
+    assert.equal(floorGoodPieces(2), 2);
+  });
+
   it("matches the hand calculation and multiplies P and Q once", () => {
     assert.equal(goodPieces(700, base), 700 * 60 / 24);
     const rated = { ...base, performanceRate: 0.9, qualityRate: 0.95 };
@@ -24,7 +29,7 @@ describe("week and month station capacity", () => {
     });
     assert.equal(result.calculable, true);
     assert.equal(result.days[1].status, "off");
-    assert.equal(result.bestCaseGoodPieces, floorGoodPieces(1496.25));
+    assert.equal(result.bestCaseGoodPieces, floorGoodPieces(1750));
     assert.equal(result.mostLikelyGoodPieces, floorGoodPieces(670 * 60 / 24 * 0.9 * 0.95));
     assert.ok(result.mostLikelyGoodPieces <= result.bestCaseGoodPieces);
   });
@@ -84,6 +89,8 @@ describe("week and month station capacity", () => {
     });
     assert.equal(week.extraChangeoverGoodLossRaw, 0);
     assert.equal(month.extraChangeoverGoodLossRaw, 150);
+    assert.equal(month.bestCaseMinutes, 28 * 60 - 60);
+    assert.equal(month.mostLikelyMinutes, 28 * 60 - 60);
     assert.equal(month.bestCaseGoodPieces, floorGoodPieces(28 * 150 - 150));
     const wiped = buildPeriodCapacity({
       operationId: "op-a-10", stationId: "OP10", parameters: [base],

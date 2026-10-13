@@ -2,6 +2,7 @@ import { checkBatchHUCompliance } from "./batch-hu-engine.js";
 import { calculateCapacityScenario } from "./capacity-engine.js";
 import { calculateRequiredCapacityShare, evaluateCapacityShare, findCapacityShareProfile, } from "./capacity-share-engine.js";
 import { checkProductReadiness } from "./readiness-engine.js";
+import { selectEffectiveParameter } from "./parameter-versioning.js";
 export function runCapacityAnalysisPreflight(scenario, input) {
     const readiness = checkProductReadiness(scenario, input.productId);
     const capacityResults = calculateCapacityScenario(scenario);
@@ -36,6 +37,8 @@ function evaluatePlanningAllowedShares(scenario, input) {
         const availableMinutes = input.availableMinutesByStation?.[assignment.stationId];
         const profile = findCapacityShareProfile(scenario, input.productId, assignment.operationId, assignment.stationId);
         if (availableMinutes !== undefined && availableMinutes > 0) {
+            if (!selectEffectiveParameter(scenario.operationStationParameters ?? [], assignment.operationId, assignment.stationId))
+                continue;
             const required = calculateRequiredCapacityShare(scenario, {
                 productId: input.productId,
                 operationId: assignment.operationId,

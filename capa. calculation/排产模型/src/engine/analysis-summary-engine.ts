@@ -9,6 +9,7 @@ import {
   type CapacityShareEvaluationResult,
 } from "./capacity-share-engine.js";
 import { checkProductReadiness, type ProductReadinessResult } from "./readiness-engine.js";
+import { selectEffectiveParameter } from "./parameter-versioning.js";
 
 export interface CapacityAnalysisPreflightInput {
   productId: string;
@@ -75,6 +76,7 @@ function evaluatePlanningAllowedShares(
     const profile = findCapacityShareProfile(scenario, input.productId, assignment.operationId, assignment.stationId);
 
     if (availableMinutes !== undefined && availableMinutes > 0) {
+      if (!selectEffectiveParameter(scenario.operationStationParameters ?? [], assignment.operationId, assignment.stationId)) continue;
       const required = calculateRequiredCapacityShare(scenario, {
         productId: input.productId,
         operationId: assignment.operationId,

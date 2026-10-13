@@ -109,8 +109,7 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
     if (timeline.plannedGapMinutes > 0) result.blockers.push("planned_window_gap");
     if (parameter && !result.blockers.length) {
       result.bestGoodCapacity = timeline.plannedProductionMinutes * 60
-        / parameter.standardCycleSec * parameter.piecesPerCycle
-        * parameter.performanceRate * parameter.qualityRate;
+        / parameter.standardCycleSec * parameter.piecesPerCycle;
     }
     if (!timeline.complete) {
       result.blockers.push("actual_window_incomplete");

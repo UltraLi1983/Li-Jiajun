@@ -27,22 +27,40 @@ function input(overrides = {}) {
 }
 
 describe("R&R parameter suggestions", () => {
-  it("proposes planned activity, CT, P and Q with original evidence references", () => {
+  it("keeps an existing planned CT and proposes P and Q without a new CT row", () => {
     const source = input();
     const suggestions = buildParameterSuggestions(source);
     assert.deepEqual(suggestions.map(item => item.target), [
-      "breakMinutes", "standardCycleSec", "performanceRate", "qualityRate",
+      "breakMinutes", "performanceRate", "qualityRate",
     ]);
+    assert.equal(suggestions.some(item => item.target === "standardCycleSec"), false);
     assert.deepEqual(suggestions[0].evidenceRefs, ["plan-break", "actual-break"]);
     assert.equal(suggestions[0].currentValue, 30);
     assert.equal(suggestions[0].proposedValue, 40);
     assert.equal(suggestions[0].eligibleForConfirmation, false);
-    assert.equal(suggestions[1].proposedValue, 24.5);
-    assert.equal(suggestions[1].eligibleForConfirmation, true);
-    assert.equal(suggestions[2].proposedValue, 0.96);
-    assert.equal(suggestions[3].proposedValue, 0.95);
+    assert.equal(suggestions[1].proposedValue, 0.96);
+    assert.equal(suggestions[1].proposedValue <= 1, true);
+    assert.equal(suggestions[2].proposedValue, 0.95);
     assert.equal(source.parameter.standardCycleSec, 24);
     assert.equal(source.parameter.qualityRate, 1);
+  });
+
+  it("does not turn a faster or slower sample mean into a CT suggestion or a P above 100%", () => {
+    const slower = buildParameterSuggestions(input({ cycleSamplesSec: [30, 30] }));
+    const faster = buildParameterSuggestions(input({
+      cycleSamplesSec: [20, 20],
+      speed: { readyForCalibration: true, inferredSaLossMinutes: 0, performanceLossMinutes: -5, segments: [] },
+    }));
+    assert.equal(slower.some(item => item.target === "standardCycleSec"), false);
+    assert.equal(faster.some(item => item.target === "standardCycleSec"), false);
+    assert.equal(faster.find(item => item.target === "performanceRate").proposedValue <= 1, true);
+    assert.equal(slower.find(item => item.target === "qualityRate").proposedValue, 0.95);
+  });
+
+  it("does not invent a CT suggestion when the station has no planned parameter", () => {
+    const suggestions = buildParameterSuggestions(input({ parameter: undefined, cycleSamplesSec: [24, 24] }));
+    assert.equal(suggestions.some(item => item.target === "standardCycleSec"), false);
+    assert.equal(suggestions.some(item => item.proposedValue === 24), false);
   });
 
   it("does not suggest verified CT or P before the cycle sample target is reached", () => {

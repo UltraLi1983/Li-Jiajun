@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { buildStandardSaSampleSlots } from "../dist/engine/standard-sa-day.js";
 import { freezeStandardWindow } from "../dist/engine/standard-window.js";
 import { copyStandardWindowToWeek, expandWeekToFourWeeks } from "../dist/engine/standard-window-projection.js";
+import { buildWeekMinuteLedger } from "../dist/engine/week-minute-ledger.js";
 
 const event = (id, kind, startMinute, endMinute, productId = "A") => ({
   id, kind, startMinute, endMinute, stationId: "OP10", source: "manual", productId,
@@ -120,5 +122,23 @@ describe("standard window copy to a seven-day plan", () => {
   it("requires a valid first week and three following modes", () => {
     assert.throws(() => expandWeekToFourWeeks(copyStandardWindowToWeek(input({ repeatDates: [] })), ["copy", "off", "off"]));
     assert.throws(() => expandWeekToFourWeeks(copyStandardWindowToWeek(input()), ["copy", "off"]));
+  });
+
+  it("does not treat the next production day as occupied when the source date is before day zero", () => {
+    const dayConfig = { startMinute: -930, dayCount: 1, shiftMinutes: 720, shiftsPerDay: 2 };
+    const events = buildStandardSaSampleSlots(dayConfig).map((slot, index) => event(`slot-${index}`, slot.kind, slot.startMinute, slot.endMinute));
+    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-13", events, dayConfig }).snapshot;
+    const copy = copyStandardWindowToWeek({
+      source: frozen, currentSourceEvents: events, currentDayConfig: dayConfig,
+      weekStartDate: "2026-10-19", repeatDates: ["2026-10-19", "2026-10-20"],
+    });
+    assert.equal(copy.weekStartMinuteOfDay, 510);
+    assert.deepEqual(copy.issues, []);
+    const manual = { shiftMinutes: 720, shiftsPerDay: 1, productionMinutes: 660, breakMinutes: 60, setupMinutes: 0, maintenanceMinutes: 0, plannedStopMinutes: 0, unscheduledMinutes: 0 };
+    const choices = ["copy", "copy", "manual", "manual", "manual", "manual", "off"].map(mode => ({ mode, ...(mode === "manual" ? { manual } : {}) }));
+    const ledger = buildWeekMinuteLedger({
+      weekStartDate: "2026-10-19", dayStartMinute: copy.weekStartMinuteOfDay, choices, copy, sourceCurrent: true,
+    });
+    assert.deepEqual(ledger.issues, []);
   });
 });

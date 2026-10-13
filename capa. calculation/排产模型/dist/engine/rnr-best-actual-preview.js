@@ -25,12 +25,18 @@ export function buildRnrBestActualPreview(input) {
         throw new RangeError("Inferred SA loss exceeds actual production time");
     }
     const plannedQualityRate = input.plannedQualityRate ?? 1;
-    if (!Number.isFinite(plannedQualityRate) || plannedQualityRate < 0 || plannedQualityRate > 1) {
-        throw new RangeError("Planned quality rate must be between 0 and 1");
+    const publishedPerformanceRate = input.publishedPerformanceRate ?? 1;
+    const acceptedUnplannedMinutes = input.acceptedUnplannedMinutes ?? 0;
+    if (!Number.isFinite(plannedQualityRate) || plannedQualityRate <= 0 || plannedQualityRate > 1
+        || !Number.isFinite(publishedPerformanceRate) || publishedPerformanceRate <= 0 || publishedPerformanceRate > 1) {
+        throw new RangeError("Published P and Q must be greater than 0 and at most 100%");
+    }
+    if (!Number.isFinite(acceptedUnplannedMinutes) || acceptedUnplannedMinutes < 0) {
+        throw new RangeError("Accepted unplanned minutes must be nonnegative");
     }
     const bestCaseIdealUnits = timeline.plannedProductionMinutes * unitsPerMinute;
-    const bestCaseOkUnits = bestCaseIdealUnits * plannedQualityRate;
-    const bestCaseNokUnits = bestCaseIdealUnits - bestCaseOkUnits;
+    const bestCaseOkUnits = bestCaseIdealUnits;
+    const bestCaseNokUnits = 0;
     const actualIdealUnits = timeline.actualProductionMinutes * unitsPerMinute;
     const actualGrossUnits = production.reduce((sum, event) => sum + (event.okQty ?? 0) + (event.nokQty ?? 0), 0);
     const actualGoodUnits = production.reduce((sum, event) => sum + (event.okQty ?? 0), 0);
@@ -38,6 +44,10 @@ export function buildRnrBestActualPreview(input) {
         ? timeline.actualProductionMinutes * 60 * input.piecesPerCycle / actualGrossUnits
         : undefined;
     const actualQualityRate = actualGrossUnits > 0 ? actualGoodUnits / actualGrossUnits : undefined;
+    const actualPerformanceRate = actualCycleSec !== undefined && actualCycleSec > 0
+        ? Math.min(1, input.standardCycleSec / actualCycleSec) : undefined;
+    const mostLikelyProductionMinutes = Math.max(0, timeline.plannedProductionMinutes - acceptedUnplannedMinutes);
+    const mostLikelyGoodUnits = mostLikelyProductionMinutes * unitsPerMinute * publishedPerformanceRate * plannedQualityRate;
     return {
         complete: timeline.complete,
         windowMinutes: timeline.windowMinutes,
@@ -56,6 +66,12 @@ export function buildRnrBestActualPreview(input) {
         actualGoodUnits,
         ...(actualCycleSec === undefined ? {} : { actualCycleSec }),
         ...(actualQualityRate === undefined ? {} : { actualQualityRate }),
+        ...(actualPerformanceRate === undefined ? {} : { actualPerformanceRate }),
+        acceptedUnplannedMinutes,
+        mostLikelyProductionMinutes,
+        mostLikelySa: mostLikelyProductionMinutes / timeline.windowMinutes,
+        publishedPerformanceRate,
+        mostLikelyGoodUnits,
         timeGapUnits: bestCaseIdealUnits - actualIdealUnits + inferredSaLossMinutes * unitsPerMinute,
         recordedTimeGapUnits: bestCaseIdealUnits - actualIdealUnits,
         inferredSaGapUnits: inferredSaLossMinutes * unitsPerMinute,

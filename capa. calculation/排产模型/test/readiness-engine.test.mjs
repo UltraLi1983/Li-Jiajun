@@ -456,6 +456,16 @@ describe("capacity analysis preflight smoke test", () => {
     assert.equal(result.warnings.some(item => item.includes("exception approval")), true);
   });
 
+  it("does not throw share calculation when a planning station has minutes but no parameter", () => {
+    const result = runCapacityAnalysisPreflight(sampleScenario, {
+      productId: "B-Housing",
+      availableMinutesByStation: { OP10: 2880 },
+    });
+    assert.equal(result.ready, false);
+    assert.equal(result.blockers.some(item => item.includes("no operation-station parameter")), true);
+    assert.equal(result.shareEvaluations.some(item => item.stationId === "OP10" && item.operationId === "op-b-10"), false);
+  });
+
   it("turns readiness errors into business blockers", () => {
     const scenario = cloneScenario({
       operationStationParameters: sampleScenario.operationStationParameters.filter(

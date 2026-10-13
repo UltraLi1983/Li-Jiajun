@@ -163,6 +163,8 @@ export interface OperationStationParameter {
   plannedStopRuleId?: string;
   performanceRate: number;
   qualityRate: number;
+  /** How the initial preset P was entered. Absent on older parameters. */
+  performanceInputSource?: "defaultHundred" | "manualJudgement";
   parameterSource: ParameterSource;
   approvalStatus: ApprovalStatus;
   effectiveFrom?: string;

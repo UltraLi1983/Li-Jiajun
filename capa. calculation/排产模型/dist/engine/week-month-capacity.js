@@ -6,8 +6,8 @@ export function goodPieces(minutes, parameter) {
     return theoreticalPieces(minutes, parameter) * parameter.performanceRate * parameter.qualityRate;
 }
 export function floorGoodPieces(value) {
-    const stabilized = Math.round(value * 1_000_000) / 1_000_000;
-    return Math.max(0, Math.floor(stabilized));
+    const tolerance = Number.EPSILON * Math.max(1, Math.abs(value)) * 4;
+    return Math.max(0, Math.floor(value + tolerance));
 }
 export function buildPeriodCapacity(input) {
     const extraChangeoverMinutes = Math.max(0, input.extraChangeoverMinutes ?? 0);
@@ -34,17 +34,21 @@ export function buildPeriodCapacity(input) {
     }
     const parameter = parameterIds.length === 1
         ? input.parameters.find(item => item.parameterId === parameterIds[0]) : undefined;
-    const loss = extraChangeoverMinutes > 0 && parameter ? goodPieces(extraChangeoverMinutes, parameter) : 0;
-    const bestRaw = Math.max(0, bestCaseGoodRaw - loss);
-    const mostRaw = Math.max(0, mostLikelyGoodRaw - loss);
+    const bestLoss = extraChangeoverMinutes > 0 && parameter ? theoreticalPieces(extraChangeoverMinutes, parameter) : 0;
+    const mostLoss = extraChangeoverMinutes > 0 && parameter ? goodPieces(extraChangeoverMinutes, parameter) : 0;
+    const bestRaw = Math.max(0, bestCaseGoodRaw - bestLoss);
+    const mostRaw = Math.max(0, mostLikelyGoodRaw - mostLoss);
     return {
         ...base,
         calculable: true,
+        bestCaseMinutes: Math.max(0, bestCaseMinutes - extraChangeoverMinutes),
+        mostLikelyMinutes: Math.max(0, mostLikelyMinutes - extraChangeoverMinutes),
         bestCaseGoodRaw: bestRaw,
         mostLikelyGoodRaw: mostRaw,
         bestCaseGoodPieces: floorGoodPieces(bestRaw),
         mostLikelyGoodPieces: floorGoodPieces(mostRaw),
-        extraChangeoverGoodLossRaw: loss,
+        extraChangeoverGoodLossRaw: bestLoss,
+        extraChangeoverMostLikelyLossRaw: mostLoss,
     };
 }
 function dayResult(day, parameters, operationId, stationId) {
@@ -73,7 +77,7 @@ function dayResult(day, parameters, operationId, stationId) {
         qualityRate: parameter.qualityRate,
         bestCaseMinutes: day.bestCaseProductionMinutes,
         mostLikelyMinutes: day.mostLikelyProductionMinutes,
-        bestCaseGoodRaw: goodPieces(day.bestCaseProductionMinutes, parameter),
+        bestCaseGoodRaw: theoreticalPieces(day.bestCaseProductionMinutes, parameter),
         mostLikelyGoodRaw: goodPieces(day.mostLikelyProductionMinutes, parameter),
     };
 }
