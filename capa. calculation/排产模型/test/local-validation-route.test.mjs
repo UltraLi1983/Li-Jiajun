@@ -1,0 +1,269 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { sampleScenario } from "../dist/domain/sample-data.js";
+import {
+  applyLocalValidation,
+  assessLocalTrial,
+  assignLocalStation,
+  clearLocalValidation,
+  createLocalProcess,
+  createLocalProcessType,
+  createLocalRouteCopy,
+  createLocalStation,
+  createLocalStationGroup,
+  extractLocalValidation,
+  insertLocalOperation,
+  insertLocalOperationAt,
+  listProcessRouteReferences,
+  parseLocalValidationStore,
+  removeLocalOperation,
+  reorderLocalOperations,
+  saveLocalStationParameter,
+  setLocalProcessStationGroups,
+} from "../dist/engine/local-validation-route.js";
+import { validateProductRoutingMasterData } from "../dist/engine/routing-master-data-engine.js";
+
+const clone = () => structuredClone(sampleScenario);
+const sourceRoute = () => clone().routes.find(route => route.routeId === "route-a-housing-v1");
+const addCleaningType = scenario => createLocalProcessType(scenario, { name: "Cleaning", family: "manufacturing" });
+const addWash = scenario => {
+  const type = addCleaningType(scenario);
+  return createLocalProcess(scenario, {
+    name: "Wash",
+    processTypeId: type.processType.processTypeId,
+    description: "local wash",
+    compatibleStationGroupIds: ["grp-machining"],
+    createdAt: "2026-10-18T00:00:00.000Z",
+  });
+};
+
+describe("local validation process and route", () => {
+  it("keeps the existing machining and assembly groups bound to their released processes", () => {
+    const scenario = clone();
+    const machining = scenario.processMasters.find(item => item.processId === "process-machining");
+    const assembly = scenario.processMasters.find(item => item.processId === "process-assembly");
+    assert.deepEqual(machining.compatibleStationGroupIds, ["grp-machining"]);
+    assert.deepEqual(assembly.compatibleStationGroupIds, ["grp-assembly"]);
+    assert.equal(setLocalProcessStationGroups(scenario, machining.processId, ["grp-assembly"]).issues[0].code, "not_local_draft");
+    assert.deepEqual(machining.compatibleStationGroupIds, ["grp-machining"]);
+  });
+  it("requires process-library station-group qualification before adding a die-casting station", () => {
+    const scenario = clone();
+    const type = createLocalProcessType(scenario, { name: "Die casting", family: "manufacturing" });
+    const process = createLocalProcess(scenario, { name: "Die casting", processTypeId: type.processType.processTypeId });
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    assert.equal(insertLocalOperationAt(scenario, { routeId: copy.route.routeId, processId: process.process.processId, index: 1 }).issues[0].code, "process_group_unbound");
+    assert.equal(createLocalStationGroup(scenario, { name: "Orphan", processId: "process-machining" }).issues[0].code, "not_local_draft");
+    assert.equal(scenario.stationGroups.some(item => item.name === "Orphan"), false);
+    const group = createLocalStationGroup(scenario, { name: "Casting", processId: process.process.processId });
+    assert.deepEqual(process.process.compatibleStationGroupIds, [group.group.stationGroupId]);
+    const inserted = insertLocalOperationAt(scenario, { routeId: copy.route.routeId, processId: process.process.processId, index: 1 });
+    const input = { routeId: copy.route.routeId, operationId: inserted.operation.operationId, stationId: "OP10", role: "primary" };
+    assert.equal(assignLocalStation(scenario, input).issues[0].code, "station_incompatible");
+    assert.equal(setLocalProcessStationGroups(scenario, process.process.processId, ["grp-missing"]).issues[0].code, "station_incompatible");
+    assert.equal(assignLocalStation(scenario, input).issues[0].code, "station_incompatible");
+    const casting = createLocalStation(scenario, { stationId: "CAST-01", name: "Casting 01", stationGroupId: group.group.stationGroupId });
+    assert.equal(casting.station.stationGroupId, group.group.stationGroupId);
+    assert.equal(assignLocalStation(scenario, { ...input, stationId: "CAST-01" }).assignment.stationId, "CAST-01");
+    const restored = clone();
+    applyLocalValidation(restored, extractLocalValidation(scenario));
+    assert.equal(restored.stationGroups.some(item => item.stationGroupId === group.group.stationGroupId), true);
+    assert.deepEqual(restored.processMasters.find(item => item.processId === process.process.processId).compatibleStationGroupIds, [group.group.stationGroupId]);
+    assert.equal(setLocalProcessStationGroups(scenario, process.process.processId, []).issues[0].code, "process_group_unbound");
+  });
+  it("files a draft process without a route and keeps generated identity separate from business codes", () => {
+    const scenario = clone();
+    const routeCount = scenario.routes.length;
+    const operationCount = scenario.routes.reduce((sum, route) => sum + route.operations.length, 0);
+    const created = addWash(scenario);
+    assert.equal(created.process.status, "draft");
+    assert.equal(created.process.sourceSystem, "local-validation");
+    assert.equal(created.process.processId, "local-process-1");
+    assert.equal(created.process.version, "local-1");
+    assert.equal(created.process.createdAt, "2026-10-18T00:00:00.000Z");
+    assert.equal(created.process.externalProcessId, undefined);
+    assert.equal(created.process.businessCode, undefined);
+    assert.equal(scenario.processTypes.find(item => item.processTypeId === "qualityGate").family, "quality");
+    assert.equal(scenario.processTypes.find(item => item.processTypeId === "local-type-1").family, "manufacturing");
+    assert.equal(scenario.routes.length, routeCount);
+    assert.equal(scenario.routes.reduce((sum, route) => sum + route.operations.length, 0), operationCount);
+    assert.equal(createLocalProcess(scenario, { name: " ", processTypeId: "local-type-1" }).issues[0].field, "name");
+    assert.equal(createLocalProcess(scenario, { name: "Again", processTypeId: "missing-type" }).issues[0].code, "missing_process_type");
+    const again = createLocalProcess(scenario, { name: "Wash again", processTypeId: "local-type-1", businessCode: "W-1" });
+    assert.equal(again.process.processId, "local-process-2");
+    assert.equal(createLocalProcess(scenario, { name: "Third", processTypeId: "local-type-1", businessCode: "w-1" }).issues[0].code, "duplicate_business_code");
+    assert.equal(sourceRoute().operations.map(operation => operation.operationId).join(), "op-a-10,op-a-20");
+  });
+
+  it("warns on a similar name without merging or rewriting an existing process id", () => {
+    const scenario = clone();
+    addCleaningType(scenario);
+    const first = createLocalProcess(scenario, { name: "超声清洗", processTypeId: "local-type-1" });
+    const second = createLocalProcess(scenario, { name: "超音波清洗", processTypeId: "local-type-1" });
+    assert.equal(second.warnings[0].code, "similar_name");
+    assert.notEqual(first.process.processId, second.process.processId);
+    assert.equal(scenario.processMasters.filter(process => process.processId === first.process.processId || process.processId === second.process.processId).map(process => process.name).join(), "超声清洗,超音波清洗");
+    assert.equal(scenario.processMasters.find(process => process.processId === first.process.processId).name, "超声清洗");
+  });
+
+  it("copies a route without rewriting the source, then inserts an operation between the existing ones", () => {
+    const scenario = clone();
+    const wash = addWash(scenario);
+    const before = JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1"));
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    assert.equal(JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1")), before);
+    assert.equal(copy.route.status, "draft");
+    assert.notEqual(copy.route.routeId, "route-a-housing-v1");
+    assert.deepEqual(copy.route.operations.map(operation => operation.sequence), [10, 20]);
+    const inserted = insertLocalOperation(scenario, {
+      routeId: copy.route.routeId, processId: wash.process.processId, operationId: "op-a-wash", sequence: 15, name: "Wash",
+    });
+    assert.equal(inserted.issues, undefined);
+    const sequences = copy.route.operations.map(operation => [operation.sequence, operation.operationId, operation.predecessorOperationIds, operation.successorOperationIds]);
+    assert.equal(sequences[1][0], 15);
+    assert.deepEqual(sequences[0][3], [sequences[1][1]]);
+    assert.deepEqual(sequences[1][2], [sequences[0][1]]);
+    assert.deepEqual(sequences[1][3], [sequences[2][1]]);
+    assert.equal(inserted.operation.standardCycleSec, undefined);
+    assert.equal(inserted.operation.stationId, undefined);
+    assert.equal(insertLocalOperation(scenario, {
+      routeId: copy.route.routeId, processId: "missing", operationId: "op-missing", sequence: 16, name: "Missing",
+    }).issues[0].code, "missing_process");
+    assert.equal(insertLocalOperation(scenario, {
+      routeId: copy.route.routeId, processId: wash.process.processId, operationId: "op-a-wash", sequence: 16, name: "Again",
+    }).issues[0].code, "duplicate_operation");
+    assert.equal(insertLocalOperation(scenario, {
+      routeId: copy.route.routeId, processId: wash.process.processId, operationId: "op-a-wash-2", sequence: 15, name: "Clash",
+    }).issues[0].code, "duplicate_sequence");
+    const reused = insertLocalOperation(scenario, {
+      routeId: copy.route.routeId, processId: "process-gp12", operationId: "op-a-gp12", sequence: 25, name: "GP12",
+    });
+    assert.equal(reused.operation.processId, "process-gp12");
+    assert.equal(JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1")), before);
+    assert.equal(scenario.routes.find(route => route.productId === "B-Housing").operations[0].operationId, "op-b-10");
+  });
+
+  it("inserts and reorders a visual draft route without changing operation identity or the released source", () => {
+    const scenario = clone();
+    const wash = addWash(scenario);
+    const sourceBefore = JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1"));
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    const inserted = insertLocalOperationAt(scenario, { routeId: copy.route.routeId, processId: wash.process.processId, index: 1 });
+    assert.equal(inserted.issues, undefined);
+    assert.deepEqual(copy.route.operations.map(item => item.sequence), [10, 20, 30]);
+    assert.equal(copy.route.operations[1].operationId, inserted.operation.operationId);
+    const first = copy.route.operations[0].operationId;
+    const last = copy.route.operations[2].operationId;
+    const reordered = reorderLocalOperations(scenario, copy.route.routeId, [last, first, inserted.operation.operationId]);
+    assert.equal(reordered.issues, undefined);
+    assert.deepEqual(copy.route.operations.map(item => item.operationId), [last, first, inserted.operation.operationId]);
+    assert.deepEqual(copy.route.operations[0].successorOperationIds, [first]);
+    assert.deepEqual(copy.route.operations[1].predecessorOperationIds, [last]);
+    assert.deepEqual(copy.route.operations[2].predecessorOperationIds, [first]);
+    const beforeInvalid = JSON.stringify(copy.route.operations);
+    assert.equal(reorderLocalOperations(scenario, copy.route.routeId, [first, first, last]).issues[0].code, "invalid_order");
+    assert.equal(JSON.stringify(copy.route.operations), beforeInvalid);
+    assert.equal(reorderLocalOperations(scenario, "route-a-housing-v1", ["op-a-20", "op-a-10"]).issues[0].code, "not_local_draft");
+    assert.equal(JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1")), sourceBefore);
+  });
+
+  it("removes a local operation together with its assignment and does not invent a stage BOM", () => {
+    const scenario = clone();
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    insertLocalOperation(scenario, { routeId: copy.route.routeId, processId: "process-machining", operationId: "op-a-extra", sequence: 15, name: "Extra" });
+    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-extra", stationId: "OP10", role: "primary" });
+    removeLocalOperation(scenario, copy.route.routeId, "op-a-extra");
+    assert.equal(copy.route.operations.some(operation => operation.operationId === "op-a-extra"), false);
+    assert.equal((scenario.operationStationAssignments ?? []).some(item => item.operationId === "op-a-extra"), false);
+    assert.equal((scenario.stageBoms ?? []).some(item => item.routeId === copy.route.routeId), false);
+    assert.deepEqual(copy.route.operations[0].successorOperationIds, [copy.route.operations[1].operationId]);
+  });
+
+  it("keeps backup and planned-investment stations out of planning and requires an explicit parameter", () => {
+    const scenario = clone();
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    const routeId = copy.route.routeId;
+    const operationId = copy.route.operations[0].operationId;
+    const primary = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10", role: "primary" });
+    assert.equal(primary.assignment.planningAllowed, true);
+    const backup = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10B", role: "backup", backupCondition: "after approval" });
+    assert.equal(backup.assignment.planningAllowed, false);
+    assert.equal(backup.assignment.customerApprovalRequired, true);
+    const station = createLocalStation(scenario, { stationId: "OP10-FUTURE", name: "Future machining", stationGroupId: "grp-machining" });
+    assert.equal(station.station.investmentStatus, "plannedInvestment");
+    const future = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10-FUTURE", role: "primary" });
+    assert.equal(future.assignment.planningAllowed, false);
+    const saved = saveLocalStationParameter(scenario, {
+      routeId, operationId, stationId: "OP10", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 0.9, qualityRate: 0.95, effectiveFrom: "2026-10-18",
+    });
+    assert.equal(saved.parameter.standardCycleSec, 30);
+    assert.equal(saved.parameter.performanceRate, 0.9);
+    assert.equal(saveLocalStationParameter(scenario, {
+      routeId, operationId, stationId: "OP10B", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, effectiveFrom: "2026-10-18",
+    }).issues[0].code, "backup_not_plannable");
+  });
+
+  it("opens a local flow while formal validation still rejects the draft route and process", () => {
+    const scenario = clone();
+    const wash = addWash(scenario);
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    insertLocalOperation(scenario, { routeId: copy.route.routeId, processId: wash.process.processId, operationId: "op-a-wash", sequence: 15, name: "Wash" });
+    const beforeParameter = assessLocalTrial(scenario, "A-Housing", copy.route.routeId);
+    assert.equal(beforeParameter.localFlowOpen, true);
+    assert.equal(beforeParameter.formalReady, false);
+    assert.equal(beforeParameter.formalIssues.some(issue => issue.code === "route_not_released"), true);
+    assert.equal(beforeParameter.formalIssues.some(issue => issue.code === "process_master_not_released"), true);
+    assert.equal(beforeParameter.gaps.some(issue => issue.code === "stage_reference_missing"), true);
+    assert.equal(validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1").formalReady, true);
+    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP10", role: "primary" });
+    saveLocalStationParameter(scenario, {
+      routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP10",
+      standardCycleSec: 22, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, effectiveFrom: "2026-10-18",
+    });
+    const after = assessLocalTrial(scenario, "A-Housing", copy.route.routeId);
+    assert.equal(after.calculable, true);
+    assert.equal(after.formalReady, false);
+  });
+
+  it("restores version 1 storage and clears routes without deleting the process library", () => {
+    const scenario = clone();
+    const sampleRoute = JSON.stringify(scenario.routes.find(route => route.routeId === "route-a-housing-v1"));
+    const wash = addWash(scenario);
+    const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    const second = createLocalRouteCopy(scenario, "route-a-housing-v1");
+    insertLocalOperation(scenario, { routeId: copy.route.routeId, processId: wash.process.processId, operationId: "op-a-wash", sequence: 15, name: "Wash" });
+    insertLocalOperation(scenario, { routeId: second.route.routeId, processId: wash.process.processId, operationId: "op-a-wash-b", sequence: 15, name: "Wash" });
+    assert.equal(listProcessRouteReferences(scenario, wash.process.processId).length, 2);
+    createLocalStation(scenario, { stationId: "OP-NEW", name: "New station", stationGroupId: "grp-machining" });
+    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: copy.route.operations[0].operationId, stationId: "OP-NEW", role: "backup" });
+    const stored = extractLocalValidation(scenario);
+    assert.equal(stored.schemaVersion, 2);
+    const fresh = clone();
+    applyLocalValidation(fresh, stored);
+    assert.equal(fresh.routes.some(route => route.routeId === copy.route.routeId), true);
+    assert.equal(fresh.processMasters.some(process => process.processId === wash.process.processId), true);
+    const legacy = parseLocalValidationStore({
+      schemaVersion: 1,
+      processes: [{ processId: "process-wash", name: "Wash", processType: "cleaning", sourceSystem: "local-validation", status: "draft", version: "local-1" }],
+      routes: [],
+      assignments: [],
+      stations: [],
+      parameters: [],
+    });
+    assert.equal(legacy.migratedFrom, 1);
+    applyLocalValidation(fresh, legacy.store);
+    assert.equal(fresh.processMasters.find(process => process.processId === "process-wash").processType, "cleaning");
+    const beforeReject = JSON.stringify(fresh);
+    assert.equal(parseLocalValidationStore({ schemaVersion: 9, processes: [], routes: [] }).ok, false);
+    applyLocalValidation(fresh, { schemaVersion: 9, processes: [], processTypes: [], routes: [], assignments: [], stations: [], parameters: [] });
+    assert.equal(JSON.stringify(fresh), beforeReject);
+    clearLocalValidation(fresh);
+    assert.equal(fresh.processMasters.some(process => process.processId === wash.process.processId), true);
+    assert.equal(fresh.processMasters.some(process => process.processId === "process-wash"), true);
+    assert.equal(fresh.processTypes.some(item => item.processTypeId === "local-type-1"), true);
+    assert.equal(fresh.routes.some(route => String(route.routeId).startsWith("local-")), false);
+    assert.equal(JSON.stringify(fresh.routes.find(route => route.routeId === "route-a-housing-v1")), sampleRoute);
+    assert.equal(JSON.stringify(clearLocalValidation(scenario).routes.find(route => route.routeId === "route-a-housing-v1")), sampleRoute);
+    assert.equal(scenario.processMasters.some(process => process.processId === wash.process.processId), true);
+  });
+});

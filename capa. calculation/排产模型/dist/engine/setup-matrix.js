@@ -1,6 +1,6 @@
 export function generateSetupEvents(orders, routes, setupRules) {
     const result = new Map();
-    const stationIds = new Set(routes.flatMap(route => route.operations.map(operation => operation.stationId)));
+    const stationIds = new Set(routes.flatMap(route => route.operations.flatMap(operation => operation.stationId ? [operation.stationId] : [])));
     for (const stationId of stationIds) {
         let previousProductId;
         for (const order of orders) {

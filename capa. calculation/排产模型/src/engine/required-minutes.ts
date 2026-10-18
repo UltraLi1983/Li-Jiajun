@@ -17,6 +17,8 @@ export function calculateRequiredMinutesByStation(
     if (quantity <= 0) continue;
 
     for (const operation of route.operations) {
+      if (!operation.stationId || operation.standardCycleSec === undefined || operation.partShare === undefined
+        || operation.plannedQualityRate === undefined || operation.plannedPerformanceRate === undefined) continue;
       const observation = observations.find(
         item => item.productId === route.productId && item.stationId === operation.stationId,
       );

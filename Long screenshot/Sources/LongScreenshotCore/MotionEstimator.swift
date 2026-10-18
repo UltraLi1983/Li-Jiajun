@@ -157,8 +157,6 @@ public struct MotionEstimator {
     }
 
     /// A conservative fallback for a single block which finishes loading while still visible.
-    /// Three separate, textured slices must agree on one translation; the changed rows must
-    /// form one bounded interval. This deliberately does not recover a wholly changed page.
     private func recoverLocalizedChange(previous: GrayFrame, current: GrayFrame,
         top: Int, bottom: Int, maxShift: Int, xStart: Int, xEnd: Int,
         oldRows: [Int], newRows: [Int]) -> MotionEstimate? {

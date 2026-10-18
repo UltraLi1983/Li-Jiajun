@@ -146,6 +146,7 @@ def main() -> None:
     verify_rejection(args.output_dir, "repeated-rows", "no_verifiable_motion", args.binary)
     verify_rejection(args.output_dir, "rotated-metadata", "rotated_video_not_yet_supported", args.binary)
     verify_rejection(args.output_dir, "zoom-change", "ambiguous_displacement", args.binary)
+    verify_rejection(args.output_dir, "image-reflow", "high_overlap_error", args.binary)
     verify_downsampling(args.output_dir, args.binary)
 
 

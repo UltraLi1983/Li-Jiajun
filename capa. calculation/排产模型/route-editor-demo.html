@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工艺路线编排 Demo</title>
+  <style>
+    :root { color-scheme: light; --bg:#f4f7f8; --surface:#fff; --line:#d8e1e6; --text:#17212b; --muted:#637281; --teal:#226b70; --green:#177245; --amber:#9a620d; --blue:#2367a8; --red:#b23b3b; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--text); background:var(--bg); }
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.5; }
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid #80b6bd; outline-offset:2px; }
+    .shell { min-height:100vh; display:grid; grid-template-columns:244px minmax(0,1fr); }
+    .sidebar { background:#eef4f5; border-right:1px solid var(--line); padding:20px 14px; }
+    .brand { padding:0 8px 17px; border-bottom:1px solid #cfdbdf; }
+    .brand h1 { margin:0; font-size:19px; line-height:1.3; }
+    .brand p { margin:7px 0 0; color:var(--muted); font-size:12px; }
+    .nav { display:grid; gap:4px; padding-top:18px; }
+    .nav-item { display:flex; align-items:center; gap:11px; width:100%; padding:11px 10px; border:0; border-radius:7px; background:transparent; color:#43535f; font-weight:700; text-align:left; }
+    .nav-item.active { background:#dcebed; color:var(--teal); outline:1px solid #b8d1d5; }
+    .nav-number { display:grid; place-items:center; width:25px; height:25px; flex:none; border-radius:50%; background:white; font-size:12px; }
+    .sidebar-meta { margin:28px 8px 0; padding-top:15px; border-top:1px solid #cfdbdf; color:var(--muted); font-size:12px; line-height:1.6; }
+    main { min-width:0; padding:18px 20px 28px; }
+    .page-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:15px; }
+    .page-head h2 { margin:1px 0 4px; font-size:23px; }
+    .page-head p { margin:0; color:var(--muted); font-size:13px; }
+    .badge { display:inline-flex; align-items:center; min-height:29px; padding:4px 9px; border:1px solid #b9d7de; border-radius:20px; background:#eef9fb; color:var(--teal); font-size:12px; font-weight:750; white-space:nowrap; }
+    .scope { display:flex; align-items:center; flex-wrap:wrap; gap:8px 18px; padding:12px 15px; background:var(--surface); border:1px solid var(--line); border-radius:7px; margin-bottom:14px; }
+    .scope-item { display:flex; gap:7px; align-items:baseline; min-width:0; }
+    .scope-item span { color:var(--muted); font-size:12px; font-weight:650; }
+    .scope-item strong { font-size:13px; overflow-wrap:anywhere; }
+    .workspace { background:var(--surface); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:13px 15px; border-bottom:1px solid var(--line); }
+    .toolbar-title h3 { margin:0; font-size:17px; }
+    .toolbar-title small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+    .toolbar-actions { display:flex; align-items:center; flex-wrap:wrap; gap:7px; }
+    .button { min-height:36px; padding:7px 12px; border:1px solid var(--teal); border-radius:6px; color:#fff; background:var(--teal); font-size:12px; font-weight:750; }
+    .button:hover { filter:brightness(.94); }
+    .button.secondary { color:#354754; background:#fff; border-color:#acbdc6; }
+    .button.neutral { color:#fff; background:#52616e; border-color:#52616e; }
+    .button.danger { color:var(--red); border-color:#e6c7c7; background:#fff; }
+    .icon-button { width:29px; height:29px; display:grid; place-items:center; padding:0; border:1px solid #cbd9df; border-radius:5px; background:white; color:#415461; font-size:14px; line-height:1; }
+    .icon-button:hover { background:#edf5f6; }
+    .segmented { display:inline-flex; padding:3px; border:1px solid #cedbe0; border-radius:6px; background:#f2f6f8; }
+    .segmented button { padding:5px 9px; border:0; border-radius:4px; background:transparent; color:#54636d; font-size:12px; font-weight:700; }
+    .segmented button.active { background:white; color:var(--teal); box-shadow:0 1px 3px #d1dee2; }
+    .editor-grid { display:grid; grid-template-columns:minmax(0,1fr) 350px; min-height:510px; }
+    .route-area { min-width:0; border-right:1px solid var(--line); }
+    .route-meta { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 18px 0; color:var(--muted); font-size:12px; }
+    .route-meta strong { color:#40535f; }
+    .diagram-scroll { overflow-x:auto; padding:28px 18px 26px; min-height:320px; }
+    .diagram { display:flex; align-items:stretch; width:max-content; min-width:100%; }
+    .join { display:flex; align-items:center; flex:none; width:40px; }
+    .join::before,.join::after { content:""; height:2px; flex:1; background:#a9bbc2; }
+    .join button { width:25px; height:25px; flex:none; padding:0; border:1px solid var(--teal); border-radius:50%; background:#fff; color:var(--teal); font-size:19px; line-height:20px; font-weight:500; }
+    .join button:hover { background:#e3f1f2; }
+    .node { width:200px; min-height:236px; flex:none; padding:13px; border:1px solid #cbd8de; border-top:4px solid #8da8b4; border-radius:7px; background:#fff; text-align:left; color:inherit; box-shadow:0 2px 4px #1e35400d; }
+    .node:hover { border-color:#7ca8af; }
+    .node.selected { border-color:var(--teal); border-top-color:var(--teal); box-shadow:0 0 0 3px #cce5e6; }
+    .node.dragging { opacity:.45; }
+    .node.drop-target { outline:3px dashed var(--teal); outline-offset:3px; }
+    .node-top { display:flex; justify-content:space-between; align-items:center; gap:5px; }
+    .node-seq { color:var(--teal); font-weight:850; font-size:13px; }
+    .node-kind { color:#6a7b86; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .node h4 { margin:14px 0 2px; font-size:17px; line-height:1.25; overflow-wrap:anywhere; }
+    .node-id { margin:0 0 14px; color:#71818b; font-size:11px; overflow-wrap:anywhere; }
+    .station-mini { display:flex; align-items:center; justify-content:space-between; gap:5px; width:100%; min-width:0; margin:6px 0; padding:6px 7px; border:1px solid #dce5e9; border-radius:4px; background:#f8fbfc; font-size:11px; cursor:pointer; }
+    .station-mini.active { border-color:var(--teal); background:#e8f3f3; color:var(--teal); }
+    .station-mini strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .station-mini span { white-space:nowrap; color:var(--muted); }
+    .node-empty { margin-top:12px; padding:9px; color:var(--amber); background:#fff8e8; border-radius:4px; font-size:11px; }
+    .node-foot { display:flex; justify-content:space-between; margin-top:12px; padding-top:9px; border-top:1px solid #e9eff1; color:var(--muted); font-size:11px; }
+    .route-footer { display:flex; flex-wrap:wrap; gap:9px 18px; padding:10px 18px 15px; border-top:1px solid #edf1f3; color:var(--muted); font-size:12px; }
+    .route-footer strong { color:#354b56; }
+    .list-wrap { padding:18px; overflow-x:auto; min-height:320px; }
+    table { width:100%; border-collapse:collapse; font-size:12px; }
+    th,td { padding:11px 9px; border-bottom:1px solid #e3eaed; text-align:left; white-space:nowrap; }
+    th { color:#637482; background:#f4f8f9; }
+    tr.active { background:#edf7f7; }
+    td button.link { border:0; padding:0; color:var(--teal); background:transparent; font-weight:750; }
+    .inspector { min-width:0; padding:16px; background:#fbfdfe; }
+    .inspector-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+    .inspector-head small { color:var(--muted); font-size:11px; }
+    .inspector-head h3 { margin:3px 0 0; font-size:17px; }
+    .move-controls { display:flex; gap:4px; }
+    .form-section { padding:14px 0; border-bottom:1px solid #e0e8eb; }
+    .form-section h4 { margin:0 0 10px; font-size:13px; }
+    .form-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .form-field { display:block; min-width:0; color:var(--muted); font-size:11px; font-weight:700; }
+    .form-field input,.form-field select,.form-field textarea { display:block; width:100%; min-width:0; height:36px; margin-top:5px; padding:5px 8px; border:1px solid #aebbc6; border-radius:5px; background:white; color:var(--text); font-size:13px; }
+    .form-field textarea { height:66px; resize:vertical; }
+    .form-field.full { grid-column:1/-1; }
+    .station-edit { padding:11px 0 14px; border-top:1px solid #dce6e9; }
+    .station-edit:first-of-type { border-top:0; padding-top:0; }
+    .station-edit-head { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:9px; }
+    .station-edit-head strong { font-size:13px; }
+    .station-edit-head small { display:block; color:var(--muted); font-size:11px; font-weight:500; }
+    .station-add { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:end; }
+    .station-add .button { height:36px; }
+    .validation { margin:12px 0 0; padding:9px 10px; border-left:3px solid var(--amber); background:#fff8e8; color:#77500d; font-size:11px; line-height:1.45; }
+    .validation.ok { border-left-color:var(--green); background:#eef8f1; color:#17663f; }
+    .inspector-actions { display:flex; gap:7px; justify-content:space-between; padding-top:15px; }
+    dialog { width:min(600px,calc(100% - 24px)); max-height:min(740px,90vh); padding:0; border:1px solid #beced5; border-radius:8px; box-shadow:0 18px 60px #1b303440; }
+    dialog::backdrop { background:#172b3299; }
+    .dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 17px; border-bottom:1px solid var(--line); }
+    .dialog-head h3 { margin:0; font-size:17px; }
+    .dialog-body { padding:16px 17px; overflow-y:auto; max-height:calc(90vh - 68px); }
+    .search { width:100%; height:39px; margin-bottom:10px; padding:8px 10px; border:1px solid #aebbc6; border-radius:5px; }
+    .catalog-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px solid #e3eaed; }
+    .catalog-row strong { display:block; font-size:13px; }
+    .catalog-row small { display:block; margin-top:3px; color:var(--muted); font-size:11px; }
+    .catalog-form { display:none; padding:12px; border:1px solid var(--line); border-radius:6px; background:#f8fbfc; margin-bottom:12px; }
+    .catalog-form.open { display:block; }
+    .catalog-form h4 { margin:0 0 10px; font-size:13px; }
+    .dialog-actions { display:flex; justify-content:space-between; gap:8px; margin-top:14px; }
+    .toast { position:fixed; right:18px; bottom:18px; z-index:20; max-width:min(400px,calc(100vw - 36px)); padding:10px 14px; border-radius:6px; background:#244c50; color:white; font-size:13px; box-shadow:0 6px 24px #162e3144; }
+    .toast[hidden] { display:none; }
+    @media(max-width:1100px) { .editor-grid { grid-template-columns:minmax(0,1fr) 310px; } }
+    @media(max-width:900px) { .shell { grid-template-columns:1fr; } .sidebar { padding:10px 14px; border-right:0; border-bottom:1px solid var(--line); } .brand { padding:0 0 7px; border:0; } .brand p,.sidebar-meta { display:none; } .nav { display:flex; overflow-x:auto; padding-top:8px; } .nav-item { width:auto; flex:none; white-space:nowrap; } }
+    @media(max-width:700px) { main { padding:14px 10px; } .page-head h2 { font-size:20px; } .editor-grid { grid-template-columns:1fr; } .route-area { border-right:0; border-bottom:1px solid var(--line); } .toolbar { align-items:flex-start; } .diagram-scroll { padding:22px 12px; } .inspector { padding:14px; } .scope { gap:6px 15px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><h1>排产产能参数工具</h1><p>工艺路线、工站分配与参数校准</p></div>
+      <nav class="nav" aria-label="阶段">
+        <div class="nav-item active"><span class="nav-number">1</span>工艺路线与工站</div>
+        <div class="nav-item"><span class="nav-number">2</span>标准 SA 设定</div>
+        <div class="nav-item"><span class="nav-number">3</span>现场 R&amp;R 跟踪</div>
+        <div class="nav-item"><span class="nav-number">4</span>校准与产能分析</div>
+      </nav>
+      <div class="sidebar-meta">界面 Demo<br>本页数据仅存在当前浏览器，不连接正式引擎。</div>
+    </aside>
+    <main>
+      <header class="page-head"><div><h2>工艺路线与工站</h2><p>产品路线草稿</p></div><span class="badge">本地演示 · 未发布</span></header>
+      <section class="scope" aria-label="当前范围">
+        <div class="scope-item"><span>产品</span><strong>产品A壳体 / A-Housing</strong></div>
+        <div class="scope-item"><span>路线</span><strong>route-a-housing-v1 · 本地副本</strong></div>
+        <div class="scope-item"><span>工序数</span><strong id="stepCount">3</strong></div>
+      </section>
+      <section class="workspace" aria-label="路线编排工作区">
+        <div class="toolbar">
+          <div class="toolbar-title"><h3>路线编排</h3><small>按产品流转顺序</small></div>
+          <div class="toolbar-actions">
+            <div class="segmented" role="group" aria-label="路线视图"><button type="button" data-view="flow" class="active">流程图</button><button type="button" data-view="list">清单</button></div>
+            <button type="button" class="button secondary" id="openLibrary">工艺库</button>
+            <button type="button" class="button neutral" id="resetDemo">重置示例</button>
+            <button type="button" class="button" id="saveDemo">保存草稿</button>
+          </div>
+        </div>
+        <div class="editor-grid">
+          <div class="route-area"><div class="route-meta"><strong>产品A壳体 · 路线工序</strong><span>本地验证草稿</span></div><div id="routeView"></div><div class="route-footer" id="routeSummary"></div></div>
+          <aside class="inspector" id="inspector" aria-label="工序配置"></aside>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="libraryDialog" aria-labelledby="libraryTitle">
+    <div class="dialog-head"><h3 id="libraryTitle">工艺库</h3><button type="button" class="icon-button" id="closeLibrary" aria-label="关闭工艺库" title="关闭">×</button></div>
+    <div class="dialog-body">
+      <div id="newProcessForm" class="catalog-form">
+        <h4>新增本地工艺</h4>
+        <div class="form-row">
+          <label class="form-field">工艺名称<input id="newProcessName" maxlength="60" placeholder="例如：超声清洗"></label>
+          <label class="form-field">工艺类型<select id="newProcessType"><option value="cleaning">清洗</option><option value="machining">机加工</option><option value="assembly">装配</option><option value="qualityGate">检验</option><option value="packaging">包装</option></select></label>
+        </div>
+        <div class="dialog-actions"><button type="button" class="button secondary" id="cancelProcess">取消</button><button type="button" class="button" id="createProcess">保存到工艺库</button></div>
+      </div>
+      <input id="processSearch" class="search" type="search" aria-label="搜索工艺" placeholder="搜索工艺名称或编号">
+      <div id="catalogList"></div>
+      <div class="dialog-actions"><button type="button" class="button secondary" id="showProcessForm">新增本地工艺</button></div>
+    </div>
+  </dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script>
+    const KEY = 'capa-route-editor-demo-v1';
+    const TYPE_NAMES = { machining:'机加工', assembly:'装配', qualityGate:'检验', cleaning:'清洗', packaging:'包装' };
+    const STATIONS = [
+      {id:'OP10-1', name:'机加工01', equipment:'设备绑定待接入'},
+      {id:'OP10-2', name:'机加工02', equipment:'设备绑定待接入'},
+      {id:'OP10-3', name:'备用03', equipment:'设备绑定待接入'},
+      {id:'OP20-1', name:'装配01', equipment:'设备绑定待接入'},
+      {id:'GP12-1', name:'检验01', equipment:'设备绑定待接入'},
+      {id:'WASH-1', name:'清洗01', equipment:'设备绑定待接入'},
+    ];
+    const initial = () => ({
+      catalog:[
+        {id:'process-machining',name:'机加工',type:'machining',source:'样例主数据'},
+        {id:'process-assembly',name:'装配',type:'assembly',source:'样例主数据'},
+        {id:'process-gp12',name:'GP12 检验',type:'qualityGate',source:'样例主数据'},
+        {id:'process-wash',name:'超声清洗',type:'cleaning',source:'本地草稿'},
+        {id:'process-packaging',name:'包装',type:'packaging',source:'样例主数据'},
+      ],
+      steps:[
+        {id:'op-a-10',processId:'process-machining',units:1,stations:[{id:'OP10-1',role:'primary',share:70,ct:22,pieces:1,p:100,q:100},{id:'OP10-2',role:'parallel',share:30,ct:25,pieces:1,p:100,q:100}]},
+        {id:'op-a-20',processId:'process-assembly',units:1,stations:[{id:'OP20-1',role:'primary',share:100,ct:24,pieces:1,p:100,q:100}]},
+        {id:'op-a-gp12',processId:'process-gp12',units:1,stations:[{id:'GP12-1',role:'primary',share:100,ct:18,pieces:1,p:100,q:100}]},
+      ],
+      selected:'op-a-10',selectedStation:null,view:'flow'
+    });
+    const readStored = () => { try { const value = JSON.parse(localStorage.getItem(KEY)); return value && Array.isArray(value.steps) && Array.isArray(value.catalog) ? value : initial(); } catch { return initial(); } };
+    let state = readStored();
+    let insertAt = null;
+    let toastTimer;
+    const $ = selector => document.querySelector(selector);
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+    const processFor = step => state.catalog.find(item => item.id === step.processId) || {name:'缺失工艺',type:'',id:step.processId};
+    const stationFor = id => STATIONS.find(item => item.id === id) || {id,name:id,equipment:'未登记'};
+    const selectedIndex = () => state.steps.findIndex(item => item.id === state.selected);
+    const selectedStep = () => state.steps[selectedIndex()];
+    const persist = () => { try { localStorage.setItem(KEY,JSON.stringify(state)); } catch { announce('浏览器未能保存草稿'); } };
+    const announce = message => { const toast = $('#toast'); toast.textContent = message; toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.hidden = true, 3200); };
+    function render() {
+      $('#stepCount').textContent = state.steps.length;
+      document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active',button.dataset.view === state.view));
+      renderRoute(); renderInspector();
+      const active = state.steps.reduce((total,step) => total + step.stations.filter(station => station.role !== 'backup').length,0);
+      const backups = state.steps.reduce((total,step) => total + step.stations.filter(station => station.role === 'backup').length,0);
+      $('#routeSummary').innerHTML = `<span>工序 <strong>${state.steps.length}</strong></span><span>可排产执行单元 <strong>${active}</strong></span><span>备用 <strong>${backups}</strong></span><span>设备绑定 <strong>后续功能</strong></span>`;
+    }
+    function nodeMarkup(step,index) {
+      const process = processFor(step);
+      const stations = step.stations.map(station => `<button type="button" class="station-mini ${step.id===state.selected&&station.id===state.selectedStation?'active':''}" data-select-station="${esc(station.id)}" data-operation="${esc(step.id)}"><strong>${esc(station.id)} · ${esc(stationFor(station.id).name)}</strong><span>${station.role === 'backup' ? '备用' : `${Number(station.share)||0}%`}</span></button>`).join('');
+      return `<article draggable="true" class="node ${step.id === state.selected ? 'selected' : ''}" data-select="${esc(step.id)}" data-drag="${esc(step.id)}" role="button" tabindex="0" aria-label="选择工序 ${esc(process.name)}"><div class="node-top"><span class="node-seq">OP ${String((index+1)*10).padStart(2,'0')}</span><span class="node-kind">${esc(TYPE_NAMES[process.type] || process.type)}</span></div><h4>${esc(process.name)}</h4><p class="node-id">${esc(step.id)}</p>${stations || '<div class="node-empty">尚未分配工站</div>'}<div class="node-foot"><span>${step.stations.length} 个执行单元</span><span>每成品需 ${Number(step.units)||1} 件</span></div></article>`;
+    }
+    function renderRoute() {
+      const root = $('#routeView');
+      if (state.view === 'flow') {
+        let html = '<div class="diagram-scroll"><div class="diagram">';
+        state.steps.forEach((step,index) => { html += `<span class="join"><button type="button" data-insert="${index}" title="在此插入工序" aria-label="在第 ${index+1} 道工序前插入">+</button></span>${nodeMarkup(step,index)}`; });
+        html += `<span class="join"><button type="button" data-insert="${state.steps.length}" title="在末尾添加工序" aria-label="在末尾添加工序">+</button></span></div></div>`;
+        root.innerHTML = html;
+      } else {
+        const rows = state.steps.map((step,index) => { const process = processFor(step); return `<tr class="${step.id===state.selected?'active':''}"><td>${String((index+1)*10).padStart(2,'0')}</td><td><button class="link" type="button" data-select="${esc(step.id)}">${esc(process.name)}</button></td><td>${esc(step.id)}</td><td>${step.stations.map(station => esc(station.id)).join('、') || '待分配'}</td><td>${step.units}</td><td><button class="icon-button" type="button" data-insert="${index+1}" title="在此工序后添加" aria-label="在此工序后添加">+</button></td></tr>`; }).join('');
+        root.innerHTML = `<div class="list-wrap"><table><thead><tr><th>顺序</th><th>工艺</th><th>工序编号</th><th>执行单元</th><th>每成品需</th><th>添加</th></tr></thead><tbody>${rows || '<tr><td colspan="6"><button class="button secondary" type="button" data-insert="0">添加第一道工序</button></td></tr>'}</tbody></table></div>`;
+      }
+    }
+    function stationMarkup(station,index) {
+      const item = stationFor(station.id);
+      return `<div class="station-edit"><div class="station-edit-head"><div><strong>${esc(station.id)} · ${esc(item.name)}</strong><small>${esc(item.equipment)}</small></div><button type="button" class="icon-button" data-remove-station="${index}" title="移除工站" aria-label="移除 ${esc(station.id)}">×</button></div><div class="form-row"><label class="form-field">角色<select data-station="${index}" data-field="role"><option value="primary" ${station.role==='primary'?'selected':''}>主用</option><option value="parallel" ${station.role==='parallel'?'selected':''}>并行</option><option value="backup" ${station.role==='backup'?'selected':''}>备用</option></select></label><label class="form-field">计划份额 %<input data-station="${index}" data-field="share" type="number" min="0" max="100" step="1" value="${Number(station.share)||0}" ${station.role==='backup'?'disabled':''}></label><label class="form-field">标准 CT · 秒<input data-station="${index}" data-field="ct" type="number" min="0.1" step="0.1" value="${station.ct ?? ''}" placeholder="待录入"></label><label class="form-field">每循环件数<input data-station="${index}" data-field="pieces" type="number" min="1" step="1" value="${station.pieces ?? ''}" placeholder="待录入"></label><label class="form-field">P · %<input data-station="${index}" data-field="p" type="number" min="0" max="100" step="0.1" value="${Number(station.p)||0}"></label><label class="form-field">Q · %<input data-station="${index}" data-field="q" type="number" min="0" max="100" step="0.1" value="${Number(station.q)||0}"></label></div></div>`;
+    }
+    function renderInspector() {
+      const step = selectedStep();
+      if (!step) { $('#inspector').innerHTML = '<div class="inspector-head"><h3>工序配置</h3></div><p>选择路线中的工序。</p>'; return; }
+      const process = processFor(step);
+      const choices = STATIONS.filter(item => !step.stations.some(station => station.id === item.id)).map(item => `<option value="${esc(item.id)}">${esc(item.id)} · ${esc(item.name)}</option>`).join('');
+      const share = step.stations.filter(station => station.role !== 'backup').reduce((total,station) => total+(Number(station.share)||0),0);
+      const incomplete = step.stations.some(station => !(Number(station.ct)>0) || !Number.isInteger(Number(station.pieces)) || Number(station.pieces)<1);
+      const warning = !step.stations.length ? '尚未分配工站，不能形成工序能力。' : share !== 100 ? `主用与并行工站份额合计 ${share}%，应为 100%。备用不计入。` : incomplete ? '请补齐新工站的 CT 与每循环件数。' : '主用与并行工站份额合计 100%，参数已录入。';
+      if (state.selectedStation) {
+        const index = step.stations.findIndex(station => station.id === state.selectedStation);
+        if (index >= 0) {
+          const station = step.stations[index];
+          $('#inspector').innerHTML = `<div class="inspector-head"><div><small>${esc(process.name)} · 当前工站</small><h3>${esc(stationFor(station.id).name)}</h3></div><button type="button" class="button secondary" id="backToOperation">返回工序</button></div><div class="form-section"><h4>工站参数</h4>${stationMarkup(station,index)}<p class="validation ${share===100&&!incomplete?'ok':''}">${warning}</p></div>`;
+          return;
+        }
+        state.selectedStation = null;
+      }
+      $('#inspector').innerHTML = `<div class="inspector-head"><div><small>当前工序 · OP ${String((selectedIndex()+1)*10).padStart(2,'0')}</small><h3>${esc(process.name)}</h3></div><div class="move-controls"><button type="button" class="icon-button" data-move="-1" ${selectedIndex()===0?'disabled':''} title="前移工序" aria-label="前移工序">←</button><button type="button" class="icon-button" data-move="1" ${selectedIndex()===state.steps.length-1?'disabled':''} title="后移工序" aria-label="后移工序">→</button></div></div><div class="form-section"><h4>路线工序</h4><div class="form-row"><label class="form-field full">工艺编号<input value="${esc(process.id)}" readonly></label><label class="form-field">工序编号<input value="${esc(step.id)}" readonly></label><label class="form-field">每件成品需本工序产出<input type="number" min="1" step="1" data-step-field="units" value="${Number(step.units)||1}"></label></div></div><div class="form-section"><h4>工站分配</h4><div class="station-add"><label class="form-field">选择工站<select id="stationChoice">${choices || '<option value="">无可添加工站</option>'}</select></label><button type="button" class="button secondary" id="addStation" ${choices?'':'disabled'}>添加工站</button></div><p class="validation ${share===100&&step.stations.length&&!incomplete?'ok':''}">${warning}</p></div><div class="inspector-actions"><button type="button" class="button danger" id="removeStep">移除工序</button><span class="badge">草稿</span></div>`;
+    }
+    function openLibrary(index) { insertAt = Number.isInteger(index) ? index : null; $('#libraryTitle').textContent = insertAt === null ? '工艺库' : `在位置 ${insertAt+1} 插入工序`; $('#processSearch').value=''; $('#newProcessForm').classList.remove('open'); renderCatalog(); $('#libraryDialog').showModal(); }
+    function renderCatalog() {
+      const query = $('#processSearch').value.trim().toLowerCase();
+      const items = state.catalog.filter(item => `${item.name} ${item.id} ${TYPE_NAMES[item.type]||item.type}`.toLowerCase().includes(query));
+      $('#catalogList').innerHTML = items.map(item => `<div class="catalog-row"><div><strong>${esc(item.name)}</strong><small>${esc(item.id)} · ${esc(TYPE_NAMES[item.type]||item.type)} · ${esc(item.source)}</small></div>${insertAt===null?'':`<button type="button" class="button secondary" data-process="${esc(item.id)}">选用</button>`}</div>`).join('') || '<p style="color:var(--muted);font-size:12px">没有匹配的工艺</p>';
+    }
+    function uniqueId(prefix,existing) { let id; do { id = `${prefix}-${Math.random().toString(36).slice(2,8)}`; } while (existing.includes(id)); return id; }
+    $('#routeView').addEventListener('click',event => { const button=event.target.closest('button'); if(button?.dataset.insert!==undefined){openLibrary(Number(button.dataset.insert));return;} if(button?.dataset.selectStation){state.selected=button.dataset.operation;state.selectedStation=button.dataset.selectStation;render();return;} const node=event.target.closest('[data-select]'); if(node){state.selected=node.dataset.select;state.selectedStation=null;render();} });
+    $('#routeView').addEventListener('keydown',event => { if(event.key!=='Enter'&&event.key!==' ')return; const node=event.target.closest('[data-select]'); if(!node||event.target!==node)return; event.preventDefault(); state.selected=node.dataset.select; state.selectedStation=null; render(); });
+    $('#routeView').addEventListener('dragstart',event => { const node=event.target.closest('[data-drag]'); if(!node)return; event.dataTransfer.setData('text/plain',node.dataset.drag); event.dataTransfer.effectAllowed='move'; node.classList.add('dragging'); });
+    $('#routeView').addEventListener('dragend',() => document.querySelectorAll('.dragging,.drop-target').forEach(node => node.classList.remove('dragging','drop-target')));
+    $('#routeView').addEventListener('dragover',event => { const node=event.target.closest('[data-drag]'); if(!node)return; event.preventDefault(); node.classList.add('drop-target'); });
+    $('#routeView').addEventListener('dragleave',event => { const node=event.target.closest('[data-drag]'); if(node && !node.contains(event.relatedTarget))node.classList.remove('drop-target'); });
+    $('#routeView').addEventListener('drop',event => { const node=event.target.closest('[data-drag]'); if(!node)return; event.preventDefault(); const fromId=event.dataTransfer.getData('text/plain'); const from=state.steps.findIndex(step=>step.id===fromId); const to=state.steps.findIndex(step=>step.id===node.dataset.drag); if(from<0||to<0||from===to)return; const [item]=state.steps.splice(from,1); state.steps.splice(to,0,item); render(); });
+    $('#inspector').addEventListener('click',event => { const button=event.target.closest('button'); if(!button)return; const step=selectedStep(); if(!step)return; if(button.id==='backToOperation'){state.selectedStation=null;render();} else if(button.dataset.move){ const from=selectedIndex(),to=from+Number(button.dataset.move); if(to<0||to>=state.steps.length)return; [state.steps[from],state.steps[to]]=[state.steps[to],state.steps[from]]; render(); } else if(button.dataset.removeStation!==undefined){ step.stations.splice(Number(button.dataset.removeStation),1); state.selectedStation=null; render(); } else if(button.id==='addStation'){ const id=$('#stationChoice').value; if(!id)return; const active=step.stations.filter(item=>item.role!=='backup'); step.stations.push({id,role:active.length?'parallel':'primary',share:active.length?0:100,ct:null,pieces:null,p:100,q:100}); state.selectedStation=id; render(); } else if(button.id==='removeStep'){ if(!confirm(`从路线草稿移除“${processFor(step).name}”？`))return; const index=selectedIndex(); state.steps.splice(index,1); state.selected=state.steps[Math.min(index,state.steps.length-1)]?.id||null; state.selectedStation=null; render(); } });
+    $('#inspector').addEventListener('change',event => { const input=event.target,step=selectedStep(); if(!step)return; if(input.dataset.stepField==='units'){ const value=Number(input.value); if(!Number.isInteger(value)||value<1){ announce('每件成品所需件数必须是正整数'); render(); return; } step.units=value; render(); return; } if(input.dataset.station===undefined)return; const station=step.stations[Number(input.dataset.station)]; if(!station)return; const field=input.dataset.field; const value=field==='role'?input.value:Number(input.value); if(field!=='role' && (!Number.isFinite(value)||value<0||(field==='pieces'&&(!Number.isInteger(value)||value<1))||(field==='ct'&&value<=0)||(['share','p','q'].includes(field)&&value>100))){ announce('参数超出允许范围'); render(); return; } station[field]=value; if(field==='role'&&value==='backup') station.share=0; render(); });
+    $('#openLibrary').addEventListener('click',() => openLibrary(null));
+    $('#closeLibrary').addEventListener('click',() => $('#libraryDialog').close());
+    $('#processSearch').addEventListener('input',renderCatalog);
+    $('#catalogList').addEventListener('click',event => { const button=event.target.closest('[data-process]'); if(!button||insertAt===null)return; const process=state.catalog.find(item=>item.id===button.dataset.process); if(!process)return; const id=uniqueId('local-op',state.steps.map(item=>item.id)); state.steps.splice(insertAt,0,{id,processId:process.id,units:1,stations:[]}); state.selected=id; state.selectedStation=null; $('#libraryDialog').close(); render(); announce(`已插入${process.name}，请分配工站`); });
+    $('#showProcessForm').addEventListener('click',() => { $('#newProcessForm').classList.add('open'); $('#newProcessName').focus(); });
+    $('#cancelProcess').addEventListener('click',() => $('#newProcessForm').classList.remove('open'));
+    $('#createProcess').addEventListener('click',() => { const name=$('#newProcessName').value.trim(); if(!name){announce('请填写工艺名称');$('#newProcessName').focus();return;} if(state.catalog.some(item=>item.name===name)&&!confirm('工艺库中已有同名工艺，仍要新增吗？'))return; const id=uniqueId('local-process',state.catalog.map(item=>item.id)); state.catalog.push({id,name,type:$('#newProcessType').value,source:'本地草稿'}); $('#newProcessName').value=''; $('#newProcessForm').classList.remove('open'); renderCatalog(); announce('已加入工艺库；需另行选用才会进入路线'); });
+    $('#saveDemo').addEventListener('click',() => { persist(); announce('演示草稿已保存在此浏览器'); });
+    $('#resetDemo').addEventListener('click',() => { if(!confirm('重置演示路线和本地工艺？'))return; state=initial(); localStorage.removeItem(KEY); render(); announce('已重置演示数据'); });
+    render();
+  </script>
+</body>
+</html>

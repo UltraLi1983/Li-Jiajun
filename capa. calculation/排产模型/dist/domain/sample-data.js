@@ -26,9 +26,15 @@ export const sampleScenario = {
             routeId: "route-b-housing-v1",
         },
     ],
+    processTypes: [
+        { processTypeId: "machining", name: "Machining", family: "manufacturing", sourceSystem: "sample", status: "released" },
+        { processTypeId: "assembly", name: "Assembly", family: "manufacturing", sourceSystem: "sample", status: "released" },
+        { processTypeId: "qualityGate", name: "Quality gate", family: "quality", sourceSystem: "sample", status: "released" },
+        { processTypeId: "packaging", name: "Packaging", family: "manufacturing", sourceSystem: "sample", status: "released" },
+    ],
     processMasters: [
-        { processId: "process-machining", name: "Machining", processType: "machining", sourceSystem: "local-validation", status: "released", version: "1.0" },
-        { processId: "process-assembly", name: "Assembly", processType: "assembly", sourceSystem: "local-validation", status: "released", version: "1.0" },
+        { processId: "process-machining", name: "Machining", processType: "machining", compatibleStationGroupIds: ["grp-machining"], sourceSystem: "local-validation", status: "released", version: "1.0" },
+        { processId: "process-assembly", name: "Assembly", processType: "assembly", compatibleStationGroupIds: ["grp-assembly"], sourceSystem: "local-validation", status: "released", version: "1.0" },
         { processId: "process-gp12", name: "GP12", processType: "qualityGate", sourceSystem: "local-validation", status: "released", version: "1.0" },
         { processId: "process-packaging", name: "Packaging", processType: "packaging", sourceSystem: "local-validation", status: "released", version: "1.0" },
     ],

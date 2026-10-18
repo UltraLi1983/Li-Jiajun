@@ -6,7 +6,7 @@ export function generateSetupEvents(
   setupRules: SetupRule[],
 ): Map<string, StationEvent[]> {
   const result = new Map<string, StationEvent[]>();
-  const stationIds = new Set(routes.flatMap(route => route.operations.map(operation => operation.stationId)));
+  const stationIds = new Set(routes.flatMap(route => route.operations.flatMap(operation => operation.stationId ? [operation.stationId] : [])));
 
   for (const stationId of stationIds) {
     let previousProductId: string | undefined;

@@ -4,7 +4,7 @@
 
 ## 数据流
 
-`本地视频 URL → VideoDecoder → FrameResizer → FrameSampler → RegionAnalyzer → MotionEstimator → StitchPlanner → SegmentRenderer → PNG/Diagnostics`
+`本地视频 URL → VideoDecoder → FrameResizer → FrameSampler → RegionAnalyzer → MotionEstimator → StitchPlanner → DynamicPatchVerifier → SegmentRenderer → PNG/Diagnostics`
 
 核心算法以 Swift Package 实现，macOS CLI 与后续 iOS App 共用。平台边界只处理导入、任务调度、预览与导出。处理过程默认离线，不发送视频、帧或报告。
 
@@ -18,6 +18,7 @@
 | RegionAnalyzer | 多帧 → 内容 ROI、遮罩 | 识别稳定顶部/底部、边缘手势区域与局部动态块；输出不确定区域。 |
 | MotionEstimator | 前后帧与 ROI → 位移候选、置信证据 | 在多个纹理丰富的水平带上做纵向匹配，检查残差、带间一致性和位移唯一性。Vision 配准仅作为对照或辅助。 |
 | StitchPlanner | 位移证据流 → 片段方案 | 将位移累计为内容坐标；处理停顿和短暂反向滚动；仅追加已验证的新内容，遇断点停止。 |
+| DynamicPatchVerifier | 局部变化候选与下一帧 → 回填区间或拒绝 | 稳定带确认唯一位移后暂存变化帧；下一帧证实该区持续存在，再按内容坐标覆盖旧占位图。 |
 | SegmentRenderer | 处理帧片段 → PNG | 只裁切和拼接，不做额外几何变形；未来优先分块/分段，避免保留完整长图位图。 |
 | Diagnostics | 每一步证据 → JSON/文本 | 记录时间戳、ROI、位移、误差、置信度、拒绝原因，不存原始敏感像素。 |
 
@@ -47,3 +48,4 @@
 - ADR-002：核心做成可在 macOS/iOS 复用的 Swift Package。理由：命令行验证后可直接接入 SwiftUI。
 - ADR-003：默认失败关闭。无法证明连续性的片段不得悄悄拼入。
 - ADR-004：默认将宽于 720 px 的解码帧等比缩小，保留 0 选项输出全尺寸。理由：目标主要在手机查看，测试负载的时间和内存下降明显；不预转码，避免导入延迟与额外文件。后续以原生高分辨率样本核验小字可读性。
+- ADR-005：用户批准加入局部动态区域配准、后一帧确认和内容坐标回填；页面重排仍拒绝。见 [实验记录](DynamicContentProposal.md)。

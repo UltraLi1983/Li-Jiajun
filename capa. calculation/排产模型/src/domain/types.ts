@@ -56,15 +56,32 @@ export interface OrderPlan {
 }
 
 export type MasterDataStatus = "draft" | "released" | "obsolete";
+export type ProcessTypeFamily = "manufacturing" | "quality";
+
+export interface ProcessTypeDefinition {
+  processTypeId: string;
+  name: string;
+  sourceSystem: string;
+  status: MasterDataStatus;
+  /** Quality gates stay separate from manufacturing processes. Older records may omit this and are inferred. */
+  family?: ProcessTypeFamily;
+}
 
 export interface ProcessMaster {
   processId: string;
   name: string;
   processType: string;
+  /** Station groups qualified for this reusable process; empty means no station can be assigned yet. */
+  compatibleStationGroupIds?: string[];
   description?: string;
+  businessCode?: string;
+  /** Reserved for a future upstream mapping. Local filing must not set this or treat it as processId. */
+  externalProcessId?: string;
+  externalVersion?: string;
   sourceSystem: string;
   status: MasterDataStatus;
   version: string;
+  createdAt?: string;
 }
 
 export interface ProductRoute {
@@ -95,12 +112,13 @@ export interface Operation {
   logisticsEdgeIds?: string[];
   bufferRuleId?: string;
 
-  // Temporary compatibility fields for the current required-minutes engine.
-  stationId: string;
-  standardCycleSec: number;
-  plannedPerformanceRate: number;
-  plannedQualityRate: number;
-  partShare: number;
+  // Compatibility fields for the current required-minutes engine.
+  // A local validation draft leaves these unset until a station parameter is confirmed.
+  stationId?: string;
+  standardCycleSec?: number;
+  plannedPerformanceRate?: number;
+  plannedQualityRate?: number;
+  partShare?: number;
   toolCount?: number;
   cavityCount?: number;
 }
@@ -317,6 +335,7 @@ export interface CapacityScenario {
   capacityBufferRate: number;
 
   products?: Product[];
+  processTypes?: ProcessTypeDefinition[];
   processMasters?: ProcessMaster[];
   stageBoms?: StageBOM[];
   wipStates?: WIPState[];

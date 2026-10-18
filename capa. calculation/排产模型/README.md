@@ -2,6 +2,8 @@
 
 正式版入口：`formal.html`（本地服务地址：`http://127.0.0.1:8785/formal.html`）。`index.html` 是旧验证原型。
 
+第一阶段最上方已接入可视化路线编排（本地验证路线可插入、重排和选站编辑）；独立界面示意见 `route-editor-demo.html`。正式路线仍只读，设备换绑未实现。
+
 ## 当前主流程
 
 1. 工艺路线与工站：选择产品、工序及可用工站。
@@ -24,10 +26,13 @@ macOS 可直接双击项目根目录的 `启动排产产能工具.command`：脚
 ## 文档
 
 - `docs/04-development-roadmap.md`：当前工程计划和进度，继续开发先看这里。
+- `docs/17-cursor-process-library.md`：当前 Cursor 任务包；独立工艺库与前置建档。代码已接入，5.17 待人工烟测。
+- `docs/16-process-execution-equipment-architecture.md`：已确认的工艺库、逻辑执行单元与物理设备架构；设备换绑仍待实现。
 - `docs/00-product-position.md`：产品定位与四阶段业务口径。
 - `docs/06-local-access-runbook.md`：当前目录、启动命令与浏览器入口。
 - `docs/07-smoke-test-runbook.md`：人工烟测步骤。
-- `docs/14-cursor-weekly-route-report.md`：路线周计划汇总与 A4 内部双页报告。代码已接入，5.15 待人工烟测。`report-preview.html` 仍只是静态版式示意。
+- `docs/15-cursor-local-process-route.md`：本地验证模式新增工艺、路线工序及工站分配。代码已接入，5.16 待人工烟测。清除本地验证路线不会删除工艺库。
+- `docs/14-cursor-weekly-route-report.md`：路线周计划汇总与 A4 内部双页报告。代码已接入，5.15 A 段通过，B/C 段由用户后置。`report-preview.html` 仍只是静态版式示意。
 - `docs/13-cursor-cycle-samples-ct-policy.md`：逐次节拍样本与 CT/P 建议边界。5.14 已于 2026-10-12 通过。窄屏不在本包。
 - `docs/12-cursor-week-month-capacity.md`：当前工站周/月 Best case 与 Most likely 排产件数，5.13 已验收。
 - `docs/11-cursor-independent-week-planning.md`：另编整周的原任务包。页面已改成平稳日与整月重复，5.12 已于 2026-10-11 通过。Most likely 的排产件数不在本包。
