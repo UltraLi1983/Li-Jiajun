@@ -4,7 +4,7 @@ import { calculateRequiredCapacityShare, evaluateCapacityShare, findCapacityShar
 import { checkProductReadiness } from "./readiness-engine.js";
 import { selectEffectiveParameter } from "./parameter-versioning.js";
 export function runCapacityAnalysisPreflight(scenario, input) {
-    const readiness = checkProductReadiness(scenario, input.productId);
+    const readiness = checkProductReadiness(scenario, input.productId, input.routeId);
     const capacityResults = calculateCapacityScenario(scenario);
     const shareEvaluations = evaluatePlanningAllowedShares(scenario, input);
     const batchChecks = checkPlannedBatchQuantities(scenario, input);
@@ -31,7 +31,9 @@ export function runCapacityAnalysisPreflight(scenario, input) {
 function evaluatePlanningAllowedShares(scenario, input) {
     const evaluations = [];
     const evaluatedKeys = new Set();
-    const assignments = (scenario.operationStationAssignments ?? []).filter(assignment => assignment.productId === input.productId && assignment.planningAllowed);
+    const assignments = (scenario.operationStationAssignments ?? []).filter(assignment => assignment.productId === input.productId && assignment.planningAllowed
+        && (!input.routeId || assignment.routeId === input.routeId));
+    const routeKeys = new Set(assignments.map(assignment => buildShareKey(input.productId, assignment.operationId, assignment.stationId)));
     for (const assignment of assignments) {
         const key = buildShareKey(input.productId, assignment.operationId, assignment.stationId);
         const availableMinutes = input.availableMinutesByStation?.[assignment.stationId];
@@ -73,6 +75,8 @@ function evaluatePlanningAllowedShares(scenario, input) {
         if (profile.productId !== input.productId)
             continue;
         const key = buildShareKey(profile.productId, profile.operationId, profile.stationId);
+        if (input.routeId && !routeKeys.has(key))
+            continue;
         if (evaluatedKeys.has(key))
             continue;
         evaluations.push(evaluateCapacityShare(scenario, {

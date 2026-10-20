@@ -30,6 +30,7 @@
     .nav-step:hover, .nav-step:focus-visible { background: #e4eff1; outline: 2px solid #b8d1d5; }
     .nav-step.active { background: #dcebed; outline: 2px solid #b8d1d5; color: var(--teal); }
     .nav-step > span:first-child { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; background: #fff; font-size: 13px; }
+    .nav-step > span:first-child svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .nav-step > span:last-child { flex: 1; min-width: 0; line-height: 1.35; }
     .workflow-stage[hidden] { display: none; }
     .stage-footer { display: flex; justify-content: flex-end; margin-top: 14px; }
@@ -76,6 +77,7 @@
     .field strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
     .week-start-field .week-start-date { color: var(--text); font-size: 14px; font-weight: 600; margin: 4px 0 2px; }
     .checkbox-field { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    #libraryEquipmentCodeField[hidden], #libraryQualificationCheck[hidden] { display: none; }
     .checkbox-field input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; padding: 0; accent-color: var(--teal); }
     .checkbox-field span { margin: 0; }
     .copy-day-date { white-space: nowrap; }
@@ -84,7 +86,17 @@
     .route-editor-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
     #visualRoutePanel { margin-bottom: 14px; }
     .route-editor-toolbar h2 { margin: 0; font-size: 18px; }
+    .route-history { margin: 8px 0; }
+    .route-history .panel-actions { justify-content: flex-start; padding-top: 8px; }
+    .route-history select { max-width: 100%; min-width: min(420px, 100%); }
     .route-editor-toolbar .panel-actions { align-items: center; }
+    .route-summary-scroll { overflow-x: auto; margin-top: 14px; border-top: 1px solid var(--line); }
+    .route-summary { display: flex; align-items: stretch; gap: 0; width: max-content; min-width: 100%; margin: 0; padding: 14px 0 2px; list-style: none; }
+    .route-summary-item { position: relative; display: flex; flex-direction: column; gap: 3px; width: 190px; min-width: 190px; padding: 0 32px 8px 0; }
+    .route-summary-item:not(:last-child)::after { content: "→"; position: absolute; right: 11px; top: 19px; color: var(--teal); font-size: 18px; }
+    .route-summary-sequence { color: var(--teal); font-size: 11px; font-weight: 800; }
+    .route-summary-item strong { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+    .route-summary-item small { color: var(--muted); font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
     .route-editor-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 340px); margin-top: 14px; border-top: 1px solid var(--line); }
     .route-editor-flow { min-width: 0; overflow-x: auto; padding: 20px 8px 20px 0; }
     .route-editor-track { display: flex; align-items: stretch; min-width: max-content; }
@@ -101,7 +113,11 @@
     .route-editor-add-station { display:block; width:100%; margin-top:8px; padding:6px; border:1px dashed #4c858c; border-radius:4px; background:#f2f9f9; color:#17626b; text-align:left; cursor:pointer; }
     .route-editor-group-option { display:inline-flex; align-items:center; gap:6px; margin:6px 14px 6px 0; }
     .route-editor-node-head { display: flex; justify-content: space-between; gap: 5px; color: var(--teal); font-size: 12px; font-weight: 800; }
-    .route-editor-station { display: flex; align-items: center; justify-content: space-between; gap: 5px; width: 100%; margin-top: 7px; padding: 6px 7px; border: 1px solid #dce5e9; border-radius: 5px; background: #f8fbfc; color: var(--text); font-size: 11px; text-align: left; }
+    .route-editor-station { display: flex; align-items: center; justify-content: space-between; gap: 5px; width: 100%; margin-top: 7px; padding: 6px 7px; border: 1px solid #dce5e9; border-radius: 5px; background: #f8fbfc; color: var(--text); font-size: 11px; text-align: left; flex-wrap: wrap; }
+    .report-gap-pill { margin-top: 4px; }
+    .route-report-gaps { display: grid; gap: 8px; margin: 10px 0 14px; padding: 0; list-style: none; }
+    .route-report-gaps li { display: flex; gap: 8px; align-items: flex-start; }
+    .route-summary-item .report-gap-pill { align-self: flex-start; }
     .route-editor-station.selected { border-color: var(--teal); background: #e8f3f3; color: var(--teal); }
     .route-editor-station span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .route-editor-station em { flex: none; color: var(--muted); font-size: 10px; font-style: normal; }
@@ -113,6 +129,14 @@
     .route-editor-inspector .assignment-card .field { padding: 7px; }
     .route-editor-inspector .assignment-card .field strong { font-size: 12px; }
     .route-editor-inspector .panel-actions { justify-content: flex-start; }
+    .route-flow-editor { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .route-flow-editor h4 { margin: 0; font-size: 14px; }
+    .route-flow-pairs { display: grid; gap: 6px; margin: 12px 0; }
+    .route-flow-pair { display: grid; grid-template-columns: 18px minmax(0, 1fr) 14px minmax(0, 1fr); gap: 6px; align-items: center; padding: 7px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; cursor: pointer; }
+    .route-flow-pair input { margin: 0; }
+    .route-flow-pair span { overflow-wrap: anywhere; }
+    .route-flow-tag { display: inline-block; margin-top: 9px; color: var(--teal); font-weight: 800; overflow-wrap: anywhere; }
+    .route-flow-warning { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0; padding: 9px; border: 1px solid #e6c887; border-radius: 6px; color: var(--amber); font-size: 12px; }
     .route-editor-empty { padding: 24px; color: var(--muted); font-size: 13px; }
     .route-editor-dialog { width: min(470px, calc(100% - 24px)); max-height: 80vh; padding: 18px; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 18px 60px #1b303440; }
     .route-editor-dialog::backdrop { background: #172b3299; }
@@ -132,6 +156,8 @@
     .assignment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
     .assignment-card { padding: 12px; border-top: 4px solid #9db0bb; }
     .assignment-card .local-baseline-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .local-share-form { display: flex; align-items: end; gap: 10px; margin-top: 12px; }
+    .local-share-form .field { flex: 1; min-width: 0; }
     .assignment-card.good { border-top-color: var(--green); }
     .assignment-card.warn { border-top-color: var(--amber); }
     .assignment-card.bad { border-top-color: var(--red); }
@@ -208,6 +234,31 @@
     .table-wrap { margin-top: 14px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
     .library-table th, .library-table td { vertical-align: middle; text-align: left; white-space: nowrap; line-height: 1.4; }
     .library-table .button { min-height: 32px; padding: 6px 12px; }
+    .library-step { padding: 18px 0; border-top: 1px solid var(--line); }
+    .library-step:first-of-type { margin-top: 16px; }
+    .library-step h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 16px; }
+    .library-step h3 span { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 6px; color: var(--teal); background: #e5f0f1; font-size: 12px; }
+    .library-step .field { margin: 0; }
+    .library-step .panel-actions { margin-top: 12px; }
+    .library-step details { margin-top: 12px; }
+    .library-step details .backup-toggle { background: #edf3f7; color: #42515e; }
+    .library-step details .backup-toggle:hover { background: #dcebed; }
+    .library-process-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .library-review-check { display: flex; align-items: center; gap: 9px; margin: 12px 0; color: var(--text); font-size: 13px; }
+    .library-review-check input { width: 18px; height: 18px; flex: none; padding: 0; accent-color: var(--teal); }
+    .library-station-types { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+    .library-station-types .library-review-check { display: inline-flex; margin: 5px 20px 5px 0; }
+    .library-type-results { margin-top: 10px; border: 1px solid var(--line); border-radius: 7px; overflow: auto; max-height: 220px; background: #fff; }
+    .library-type-results[hidden] { display: none; }
+    .library-type-results .note { margin: 0; padding: 12px; }
+    .library-type-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 42px; padding: 9px 12px; border: 0; border-bottom: 1px solid var(--line); background: #fff; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+    .library-type-result:last-child { border-bottom: 0; }
+    .library-type-result:hover, .library-type-result:focus-visible { background: #edf6f6; outline: 2px solid var(--teal); outline-offset: -2px; }
+    .library-type-result[aria-pressed="true"] { background: #e5f0f1; color: var(--teal); font-weight: 800; }
+    .library-type-result small { color: var(--muted); white-space: nowrap; }
+    .library-group-edit { margin-top: 12px; padding: 12px 0; }
+    .library-group-edit > strong { display: block; margin-bottom: 10px; font-size: 13px; }
+    .library-group-edit fieldset { margin: 0 0 10px; border: 1px solid var(--line); border-radius: 7px; }
     .assignment-matrix tr.blocked td { background: #fff7f7; }
     .assignment-matrix .backup-condition { color: var(--red); font-weight: 800; }
     .load-warning { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #e6c887; border-radius: 8px; background: #fff8e8; color: var(--amber); font-weight: 700; }
@@ -252,6 +303,7 @@
       .assignment-card .local-baseline-grid { grid-template-columns: 1fr; }
       main { padding: 14px; }
       .metrics, .assignment-grid, .field-grid, .mini-grid, .split, .setup-grid { grid-template-columns: 1fr; }
+      .library-process-fields { grid-template-columns: 1fr; }
       .scope-strip { display: grid; grid-template-columns: 1fr; }
       .control-card { margin-top: 12px; }
       .page-head { display: block; }
@@ -310,7 +362,7 @@
         <p id="localValidationBanner" class="note" hidden></p>
       </div>
       <nav aria-label="工作流">
-        <button class="nav-step" type="button" data-stage-nav="library"><span>库</span><span data-i18n="stageLibrary">工艺库</span></button>
+        <button class="nav-step" type="button" data-stage-nav="library"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span><span data-i18n="stageLibrary">工艺库</span></button>
         <button class="nav-step active" type="button" data-stage-nav="routing" aria-current="step"><span>1</span><span data-i18n="stageRouting">工艺路线与工站</span></button>
         <button class="nav-step" type="button" data-stage-nav="baseline"><span>2</span><span data-i18n="stageBaseline">标准 SA 设定</span></button>
         <button class="nav-step" type="button" data-stage-nav="reality"><span>3</span><span data-i18n="stageReality">现场 R&R 跟踪</span></button>
@@ -366,8 +418,8 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow" data-i18n="routeOperationEyebrow">路线和工序清单</p>
-              <h2 data-i18n="routeOperationTitle">工艺路线与工序清单</h2>
+              <p class="eyebrow" data-i18n="routeOperationEyebrow">工序主数据</p>
+              <h2 data-i18n="routeOperationTitle">工序字段核对</h2>
             </div>
             <span id="routeStatus" class="pill">检查中</span>
           </div>
@@ -394,6 +446,6 @@
     </main>
   </div>
   <div id="routeWeekPrintRoot" hidden></div>
-  <script type="module" src="./dist/ui/formal-app.js?v=20261018-process-group-binding"></script>
+  <script type="module" src="./dist/ui/formal-app.js?v=20261020-local-db"></script>
 </body>
 </html>

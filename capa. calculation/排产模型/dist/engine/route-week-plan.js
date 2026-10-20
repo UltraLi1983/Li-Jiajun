@@ -1,8 +1,28 @@
 import { floorGoodPieces } from "./week-month-capacity.js";
+import { calculateStationFlow } from "./station-flow.js";
 const SHARE_NOTE = "周综合排产沿用工站分配上的占用份额。固定份额乘进路线件数。没有固定份额的工站使用本工站周账件数，不套用 48 小时同窗的 100% 上限。单工站周账页本身不乘份额。";
 export function buildRouteWeekPlan(input) {
     const reasons = [];
     const stations = input.stations.map(station => stationResult(station, input, reasons));
+    const sharedStationAssignments = new Map();
+    for (const station of input.stations) {
+        const assignments = sharedStationAssignments.get(station.stationId) ?? [];
+        assignments.push(station);
+        sharedStationAssignments.set(station.stationId, assignments);
+    }
+    let sharedBudgetValid = true;
+    for (const [stationId, assignments] of sharedStationAssignments) {
+        if (new Set(assignments.map(assignment => assignment.operationId)).size < 2)
+            continue;
+        const fixed = assignments.every(assignment => assignment.allocationMode === "fixedShare"
+            && assignment.plannedShare !== undefined && Number.isFinite(assignment.plannedShare)
+            && assignment.plannedShare > 0 && assignment.plannedShare <= 1);
+        const total = assignments.reduce((sum, assignment) => sum + (assignment.plannedShare ?? 0), 0);
+        if (!fixed || total > 1 + 1e-9) {
+            sharedBudgetValid = false;
+            reasons.push(`${stationId}：跨工序共用工站须设固定份额，合计不得超过 100%`);
+        }
+    }
     const operations = input.operationOrder.map(operationId => {
         const units = input.operationUnits.find(item => item.operationId === operationId);
         const members = stations.filter(station => station.operationId === operationId);
@@ -14,10 +34,28 @@ export function buildRouteWeekPlan(input) {
         if (!operation.stationCount)
             reasons.push(`${operation.operationId}：没有可排产工站`);
     }
-    const routeReady = operations.length > 0 && operations.every(operation => operation.bestFinishedPieces !== undefined && operation.mostLikelyFinishedPieces !== undefined);
-    const planBottleneck = routeReady ? lowest(operations, "mostLikelyFinishedPieces") : undefined;
-    const bestBottleneck = routeReady ? lowest(operations, "bestFinishedPieces") : undefined;
-    const actualReady = input.role === "review" && input.actual?.completeSameWeek === true
+    let routeReady = sharedBudgetValid && operations.length > 0 && operations.every(operation => operation.bestFinishedPieces !== undefined && operation.mostLikelyFinishedPieces !== undefined);
+    const constrained = (input.stationFlowPolicies?.length ?? 0) > 0;
+    const flowFor = (kind) => calculateStationFlow(input.operationOrder, stations.filter(item => item.included).map(item => ({
+        operationId: item.operationId, stationId: item.stationId,
+        finishedPieces: (kind === "best" ? item.nativeBestRaw : item.nativeMostLikelyRaw) * item.shareApplied
+            / input.operationUnits.find(unit => unit.operationId === item.operationId).unitsPerFinishedProduct,
+    })), input.stationFlowPolicies ?? []);
+    const bestFlow = routeReady && constrained ? flowFor("best") : undefined;
+    const mostFlow = routeReady && constrained ? flowFor("most") : undefined;
+    if (bestFlow?.issue || mostFlow?.issue) {
+        reasons.push(bestFlow?.issue ?? mostFlow.issue);
+        routeReady = false;
+    }
+    const aggregatePlanBottleneck = routeReady ? lowest(operations, "mostLikelyFinishedPieces") : undefined;
+    const aggregateBestBottleneck = routeReady ? lowest(operations, "bestFinishedPieces") : undefined;
+    const flowLimited = routeReady && constrained && mostFlow?.pieces !== undefined
+        && floorGoodPieces(mostFlow.pieces) < aggregatePlanBottleneck.mostLikelyFinishedPieces;
+    const bestFlowLimited = routeReady && constrained && bestFlow?.pieces !== undefined
+        && floorGoodPieces(bestFlow.pieces) < aggregateBestBottleneck.bestFinishedPieces;
+    const planBottleneck = flowLimited ? undefined : aggregatePlanBottleneck;
+    const bestBottleneck = bestFlowLimited ? undefined : aggregateBestBottleneck;
+    const actualReady = !constrained && input.role === "review" && input.actual?.completeSameWeek === true
         && operations.every(operation => operation.actualFinishedPieces !== undefined);
     const actualBottleneck = actualReady ? lowest(operations, "actualFinishedPieces") : undefined;
     for (const operation of operations) {
@@ -30,10 +68,13 @@ export function buildRouteWeekPlan(input) {
         : included.some(station => station.planBasis === "currentParameterRecalc") ? "currentParameterRecalc"
             : "snapshot";
     const demandQty = validDemand(input.demandQty) ? input.demandQty : undefined;
-    const mostLikelyPieces = planBottleneck?.mostLikelyFinishedPieces;
-    const bestCasePieces = bestBottleneck?.bestFinishedPieces;
+    const mostLikelyPieces = routeReady ? (mostFlow?.pieces === undefined
+        ? planBottleneck?.mostLikelyFinishedPieces : floorGoodPieces(mostFlow.pieces)) : undefined;
+    const bestCasePieces = routeReady ? (bestFlow?.pieces === undefined
+        ? bestBottleneck?.bestFinishedPieces : floorGoodPieces(bestFlow.pieces)) : undefined;
     const actualPieces = actualBottleneck?.actualFinishedPieces;
-    const actualBlankReason = actualBlank(input);
+    const actualBlankReason = constrained && input.role === "review"
+        ? "定向流转需要同周逐工站实绩及流向记录；仅有工序合计不能推断路线 Actual。" : actualBlank(input);
     return {
         productId: input.productId,
         routeId: input.routeId,
@@ -58,6 +99,7 @@ export function buildRouteWeekPlan(input) {
         ...(input.role === "review" && input.actual?.completeSameWeek && input.actual.performanceRate !== undefined ? { actualPerformanceRate: input.actual.performanceRate } : {}),
         ...(input.role === "review" && input.actual?.completeSameWeek && input.actual.qualityRate !== undefined ? { actualQualityRate: input.actual.qualityRate } : {}),
         shareNote: SHARE_NOTE,
+        ...(flowLimited ? { flowLimited: true } : {}),
     };
 }
 function stationResult(station, input, reasons) {

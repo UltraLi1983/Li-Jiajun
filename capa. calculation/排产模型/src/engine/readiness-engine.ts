@@ -41,7 +41,7 @@ export interface ProductReadinessResult {
   blockedBackupAssignments: OperationStationAssignment[];
 }
 
-export function checkProductReadiness(scenario: CapacityScenario, productId: string): ProductReadinessResult {
+export function checkProductReadiness(scenario: CapacityScenario, productId: string, routeId?: string): ProductReadinessResult {
   const issues: ReadinessIssue[] = [];
   const product = scenario.products?.find(item => item.productId === productId);
   const planningAllowedAssignments: OperationStationAssignment[] = [];
@@ -52,7 +52,8 @@ export function checkProductReadiness(scenario: CapacityScenario, productId: str
     return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
   }
 
-  const route = scenario.routes.find(item => routeMatchesProduct(item.routeId, item.productId, product));
+  const route = scenario.routes.find(item => item.productId === productId
+    && (routeId ? item.routeId === routeId : routeMatchesProduct(item.routeId, item.productId, product)));
   if (!route) {
     issues.push({ severity: "error", code: "route_missing", productId, message: `${productId} does not have a matching route` });
     return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
@@ -76,7 +77,8 @@ export function checkProductReadiness(scenario: CapacityScenario, productId: str
 
   for (const operation of route.operations) {
     const assignments = (scenario.operationStationAssignments ?? []).filter(
-      assignment => assignment.productId === productId && assignment.operationId === operation.operationId,
+      assignment => assignment.productId === productId && assignment.operationId === operation.operationId
+        && (!routeId || assignment.routeId === routeId),
     );
 
     if (!assignments.length) {

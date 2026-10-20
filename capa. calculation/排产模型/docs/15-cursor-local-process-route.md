@@ -1,6 +1,6 @@
 # Cursor 任务包 15：本地验证模式新增工艺与路线工序
 
-状态：代码已接入，5.16 待人工烟测。接续任务包 14 的已交付代码。任务包 14 的 5.15 A 段（初始 P）已由用户确认通过；B/C 段的周报告深度烟测与时间锚点问题由用户明确后置，不作为本包阻断项。本包不继续扩展报告。正式路线发布未完成。
+状态：5.16 已于 2026-10-19 由用户确认通过。接续任务包 14 的已交付代码。任务包 14 的 5.15 A 段（初始 P）已由用户确认通过；B/C 段的周报告深度烟测与时间锚点问题由用户明确后置，不作为本包阻断项。本包不继续扩展报告。正式路线发布未完成。
 
 末轮验证按根目录 `README.md` 的规则：先核本包、代码差异、相关依赖和测试证据，再按需扩大；不要无目的扫描全仓或重复跑无关测试。开发前读 `docs/04-development-roadmap.md` 的“验证模式新增工艺与路线工序”，再核对 `src/domain/types.ts`、`src/engine/routing-master-data-engine.ts`、`src/engine/routing-configuration-engine.ts`、`src/engine/readiness-engine.ts` 和 `src/ui/formal-app.ts` 的现有选择/编辑路径。
 
@@ -40,4 +40,6 @@
 
 修改文件：`src/engine/local-validation-route.ts`、`src/domain/types.ts`、`src/engine/required-minutes.ts`、`src/engine/setup-matrix.ts`、`src/ui/formal-app.ts`、`formal.html`、`test/local-validation-route.test.mjs`，以及本包、工程计划、烟测手册和 README。
 
-测试：`npm test` 169/169 通过。浏览器已走通「新增工艺 → 创建验证副本 → 在两道工序之间插入清洗 → 分配 OP10 → 保存 CT/每循环件数/P/Q」。插入后路线选择曾被写回样例路线，已改为保留当前本地路线。窄屏未逐项点完。5.16 仍待用户确认。
+测试：`npm test` 169/169 通过。浏览器已走通「新增工艺 → 创建验证副本 → 在两道工序之间插入清洗 → 分配 OP10 → 保存 CT/每循环件数/P/Q」。插入后路线选择曾被写回样例路线，已改为保留当前本地路线。窄屏未逐项点完。
+
+2026-10-19：用户确认 5.16 通过。

@@ -1,5 +1,6 @@
 import type { OperationWindowCapacity, WindowStationInput } from "../engine/route-window-capacity.js";
 import { calculateRouteWindowCapacity } from "../engine/route-window-capacity.js";
+import type { StationFlowPolicy } from "../domain/types.js";
 
 export interface MinuteWindow {
   startMinute: number;
@@ -47,6 +48,7 @@ export interface RouteWindowCapacityView {
   bestBottleneckOperationId?: string;
   actualBottleneckOperationId?: string;
   error?: string;
+  flowIssue?: string;
 }
 
 export interface RouteWindowCapacityViewInput {
@@ -55,6 +57,7 @@ export interface RouteWindowCapacityViewInput {
   operationIds: string[];
   operationUnitsPerProduct?: Record<string, number>;
   demandQty?: number;
+  stationFlowPolicies?: StationFlowPolicy[];
 }
 
 export interface RouteWindowResolution {
@@ -186,6 +189,7 @@ export function buildRouteWindowCapacityView(input: RouteWindowCapacityViewInput
       stations: engineStations,
       operationIds: input.operationIds,
       ...(input.operationUnitsPerProduct ? { operationUnitsPerProduct: input.operationUnitsPerProduct } : {}),
+      ...(input.stationFlowPolicies ? { stationFlowPolicies: input.stationFlowPolicies } : {}),
       ...(input.demandQty !== undefined ? { demandQty: input.demandQty } : {}),
     });
     const byKey = new Map(result.stations.map(station => [`${station.operationId}::${station.stationId}`, station]));
@@ -214,6 +218,7 @@ export function buildRouteWindowCapacityView(input: RouteWindowCapacityViewInput
     if (result.actualGap !== undefined) view.actualGap = result.actualGap;
     if (result.bestBottleneckOperationId !== undefined) view.bestBottleneckOperationId = result.bestBottleneckOperationId;
     if (result.actualBottleneckOperationId !== undefined) view.actualBottleneckOperationId = result.actualBottleneckOperationId;
+    if (result.flowIssue) view.flowIssue = result.flowIssue;
     return view;
   } catch (error) {
     return {

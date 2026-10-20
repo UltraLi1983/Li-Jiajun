@@ -23,6 +23,16 @@ const input = {
 };
 
 describe("same-window route capacity", () => {
+  it("does not count an unlinked upstream station in route capacity", () => {
+    const linked = calculateRouteWindowCapacity({ ...input, stationFlowPolicies: [{
+      fromOperationId: "op-a-10", toOperationId: "op-a-20",
+      allowedPairs: [{ fromStationId: "OP10B", toStationId: "OP20" }],
+    }] });
+    assert.equal(linked.bestGoodCapacity, 3096);
+    assert.equal(linked.actualGoodOutput, 2912);
+    assert.equal(linked.bestBottleneckOperationId, undefined);
+    assert.equal(linked.actualBottleneckOperationId, undefined);
+  });
   it("adds parallel stations and takes the serial bottleneck without inventing demand", () => {
     const result = calculateRouteWindowCapacity(input);
     assert.ok(Math.abs(result.stations[0].bestGoodCapacity - 3225) < 1e-8);

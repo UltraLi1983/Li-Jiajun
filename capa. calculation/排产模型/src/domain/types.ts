@@ -33,9 +33,16 @@ export interface Product {
 
 export interface StationMaster {
   stationId: string;
+  // Legacy/local declared equipment code; this is not an authoritative physical UID.
+  equipmentId?: string;
   name: string;
   stationGroupId?: string;
   investmentStatus: InvestmentStatus;
+  sourceSystem?: string;
+  sourceReference?: string;
+  identityVerificationStatus?: "localDeclaration";
+  qualifiedProcessTypeIds?: string[];
+  qualifiedProcessIds?: string[];
   physicalLocationId?: string;
   digitalTwinNodeId?: string;
 }
@@ -71,7 +78,7 @@ export interface ProcessMaster {
   processId: string;
   name: string;
   processType: string;
-  /** Station groups qualified for this reusable process; empty means no station can be assigned yet. */
+  /** Legacy group compatibility; new station registration uses qualifiedProcessTypeIds instead. */
   compatibleStationGroupIds?: string[];
   description?: string;
   businessCode?: string;
@@ -93,6 +100,19 @@ export interface ProductRoute {
   effectiveTo?: string;
   sourceSystem?: string;
   operations: Operation[];
+  /** Absent transition means stations may feed any station at the next operation. */
+  stationFlowPolicies?: StationFlowPolicy[];
+}
+
+export interface StationFlowPair {
+  fromStationId: string;
+  toStationId: string;
+}
+
+export interface StationFlowPolicy {
+  fromOperationId: string;
+  toOperationId: string;
+  allowedPairs: StationFlowPair[];
 }
 
 export interface Operation {

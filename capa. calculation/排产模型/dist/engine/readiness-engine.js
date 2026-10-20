@@ -1,6 +1,6 @@
 import { validateProductRoutingMasterData } from "./routing-master-data-engine.js";
 import { selectEffectiveParameter } from "./parameter-versioning.js";
-export function checkProductReadiness(scenario, productId) {
+export function checkProductReadiness(scenario, productId, routeId) {
     const issues = [];
     const product = scenario.products?.find(item => item.productId === productId);
     const planningAllowedAssignments = [];
@@ -9,7 +9,8 @@ export function checkProductReadiness(scenario, productId) {
         issues.push({ severity: "error", code: "product_missing", productId, message: `${productId} does not exist in products` });
         return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
     }
-    const route = scenario.routes.find(item => routeMatchesProduct(item.routeId, item.productId, product));
+    const route = scenario.routes.find(item => item.productId === productId
+        && (routeId ? item.routeId === routeId : routeMatchesProduct(item.routeId, item.productId, product)));
     if (!route) {
         issues.push({ severity: "error", code: "route_missing", productId, message: `${productId} does not have a matching route` });
         return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
@@ -29,7 +30,8 @@ export function checkProductReadiness(scenario, productId) {
         return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
     }
     for (const operation of route.operations) {
-        const assignments = (scenario.operationStationAssignments ?? []).filter(assignment => assignment.productId === productId && assignment.operationId === operation.operationId);
+        const assignments = (scenario.operationStationAssignments ?? []).filter(assignment => assignment.productId === productId && assignment.operationId === operation.operationId
+            && (!routeId || assignment.routeId === routeId));
         if (!assignments.length) {
             issues.push({
                 severity: "error",

@@ -1,10 +1,25 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { sampleScenario, resolveOperationOutputRequirement } from "../dist/index.js";
+import { createLocalRouteCopy } from "../dist/engine/local-validation-route.js";
 
 const scenario = () => structuredClone(sampleScenario);
 
 describe("operation output units per finished product", () => {
+  it("requires a confirmed local quantity for a copied route without Stage BOM", () => {
+    const data = scenario();
+    const route = createLocalRouteCopy(data, "route-a-housing-v1").route;
+    const operation = route.operations[0];
+    assert.equal(operation.requiredOutputUnitsPerFinishedProduct, undefined);
+    assert.equal(resolveOperationOutputRequirement(data, route, operation).issue, "quantity_missing");
+    operation.requiredOutputUnitsPerFinishedProduct = 2;
+    operation.quantitySourceVersion = "sample-v1";
+    assert.equal(resolveOperationOutputRequirement(data, route, operation).issue, "quantity_missing");
+    operation.quantitySourceVersion = "local-1";
+    const result = resolveOperationOutputRequirement(data, route, operation);
+    assert.equal(result.unitsPerFinishedProduct, 2);
+    assert.equal(result.source, "localValidation");
+  });
   it("reads explicit local validation quantities from the product route", () => {
     const data = scenario();
     const route = data.routes.find(item => item.routeId === "route-a-housing-v1");

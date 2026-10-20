@@ -50,6 +50,21 @@ export function createLocalProcessType(scenario, input) {
     if (input.family !== "manufacturing" && input.family !== "quality") {
         return failure("missing_field", "process type family is required", "family");
     }
+    const typeAliases = {
+        machining: "machining", "机加工": "machining",
+        assembly: "assembly", "装配": "assembly",
+        "quality gate": "quality gate", "质量门": "quality gate",
+        packaging: "packaging", "包装": "packaging",
+        cleaning: "cleaning", "清洗": "cleaning",
+        "die casting": "die casting", "压铸": "die casting",
+    };
+    const key = (value) => {
+        const normalized = value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+        return typeAliases[normalized] ?? normalized;
+    };
+    const existing = (scenario.processTypes ?? []).find(item => key(item.name) === key(name));
+    if (existing)
+        return failure("duplicate_process_type", `Process type already exists: ${existing.name}`, existing.processTypeId);
     const processTypeId = nextLocalId((scenario.processTypes ?? []).map(item => item.processTypeId), "local-type");
     const processType = {
         processTypeId,
@@ -137,7 +152,13 @@ export function setLocalProcessStationGroups(scenario, processId, groupIds) {
 export function stationCompatibleWithOperation(scenario, operation, station) {
     const process = scenario.processMasters?.find(item => item.processId === operation.processId)
         ?? scenario.processMasters?.find(item => item.processType === operation.processType && item.status === "released");
-    return !!process?.compatibleStationGroupIds?.includes(station.stationGroupId ?? "");
+    if (!process)
+        return false;
+    const legacyGroupMatch = !!process.compatibleStationGroupIds?.includes(station.stationGroupId ?? "");
+    const typeMatch = !!station.qualifiedProcessTypeIds?.includes(operation.processType);
+    return (legacyGroupMatch || typeMatch)
+        && (!station.qualifiedProcessTypeIds || typeMatch)
+        && (!station.qualifiedProcessIds || station.qualifiedProcessIds.includes(process.processId));
 }
 export function listProcessRouteReferences(scenario, processId) {
     return scenario.routes.flatMap(route => route.operations
@@ -168,6 +189,8 @@ export function createLocalRouteCopy(scenario, sourceRouteId) {
         };
         delete next.inputStageBomId;
         delete next.outputStageBomId;
+        delete next.requiredOutputUnitsPerFinishedProduct;
+        delete next.quantitySourceVersion;
         return next;
     }));
     const route = {
@@ -177,8 +200,69 @@ export function createLocalRouteCopy(scenario, sourceRouteId) {
         status: "draft",
         sourceSystem: LOCAL_VALIDATION_SOURCE,
         operations,
+        ...(source.stationFlowPolicies?.length ? { stationFlowPolicies: source.stationFlowPolicies.map(policy => ({
+                fromOperationId: idMap.get(policy.fromOperationId) ?? policy.fromOperationId,
+                toOperationId: idMap.get(policy.toOperationId) ?? policy.toOperationId,
+                allowedPairs: policy.allowedPairs.map(pair => ({ ...pair })),
+            })) } : {}),
     };
     scenario.routes = [...scenario.routes, route];
+    return { scenario, route };
+}
+export function groupProductRoutes(scenario, productId) {
+    const routes = scenario.routes.filter(route => route.productId === productId);
+    const drafts = routes.filter(isLocalDraftRoute).sort((left, right) => localRouteOrdinal(right.routeId) - localRouteOrdinal(left.routeId)
+        || routes.indexOf(right) - routes.indexOf(left));
+    const latestDraft = drafts[0];
+    return {
+        ...(latestDraft ? { latestDraft } : {}),
+        historicalDrafts: drafts.slice(1),
+        released: routes.filter(route => route.status === "released"),
+    };
+}
+export function renameLocalOperation(scenario, input) {
+    const route = localRoute(scenario, input.routeId);
+    if (!route)
+        return failure("not_local_draft", `${input.routeId} is not a local draft`, "routeId");
+    const operation = route.operations.find(item => item.operationId === input.operationId);
+    if (!operation)
+        return failure("route_not_found", `${input.operationId} is not on this route`, "operationId");
+    const name = input.name.trim();
+    if (!name || name.length > 80)
+        return failure("invalid_name", "operation name must be 1–80 characters", "name");
+    operation.name = name;
+    return { scenario, operation };
+}
+export function setLocalStationFlowPolicy(scenario, input) {
+    const route = localRoute(scenario, input.routeId);
+    if (!route)
+        return failure("not_local_draft", `${input.routeId} is not a local draft`, "routeId");
+    const policies = (route.stationFlowPolicies ?? []).filter(item => item.fromOperationId !== input.fromOperationId || item.toOperationId !== input.toOperationId);
+    if (input.allowedPairs !== undefined) {
+        const ordered = [...route.operations].sort((a, b) => a.sequence - b.sequence);
+        const index = ordered.findIndex(item => item.operationId === input.fromOperationId);
+        if (index < 0 || ordered[index + 1]?.operationId !== input.toOperationId) {
+            return failure("invalid_station_flow", "Only adjacent route operations may be linked", "toOperationId");
+        }
+        if (!input.allowedPairs.length)
+            return failure("invalid_station_flow", "Select at least one station link", "allowedPairs");
+        const assigned = (operationId) => new Set((scenario.operationStationAssignments ?? [])
+            .filter(item => item.routeId === input.routeId && item.operationId === operationId && item.planningAllowed)
+            .map(item => item.stationId));
+        const from = assigned(input.fromOperationId);
+        const to = assigned(input.toOperationId);
+        const unique = new Set();
+        for (const pair of input.allowedPairs) {
+            const key = JSON.stringify([pair.fromStationId, pair.toStationId]);
+            if (!from.has(pair.fromStationId) || !to.has(pair.toStationId) || unique.has(key)) {
+                return failure("invalid_station_flow", "Links must use distinct plannable stations on the adjacent operations", "allowedPairs");
+            }
+            unique.add(key);
+        }
+        policies.push({ fromOperationId: input.fromOperationId, toOperationId: input.toOperationId,
+            allowedPairs: input.allowedPairs.map(pair => ({ ...pair })) });
+    }
+    route.stationFlowPolicies = policies;
     return { scenario, route };
 }
 export function insertLocalOperation(scenario, input) {
@@ -206,9 +290,6 @@ export function insertLocalOperation(scenario, input) {
     const process = scenario.processMasters?.find(item => item.processId === processId);
     if (!process)
         return failure("missing_process", `${processId} is not in the process list`, "processId");
-    if (isLocalDraftProcess(process) && !process.compatibleStationGroupIds?.length) {
-        return failure("process_group_unbound", `${processId} must be bound to a station group in the process library before route use`, "processId");
-    }
     const operation = {
         operationId,
         processId,
@@ -284,10 +365,47 @@ export function createLocalStation(scenario, input) {
     if (scenario.stations?.some(item => item.stationId === stationId)) {
         return failure("duplicate_station", `${stationId} already exists`, "stationId");
     }
-    if (!input.stationGroupId || !scenario.stationGroups?.some(group => group.stationGroupId === input.stationGroupId)) {
+    if (input.stationGroupId && !scenario.stationGroups?.some(group => group.stationGroupId === input.stationGroupId)) {
         return failure("station_incompatible", "Station group does not exist", "stationGroupId");
     }
-    const station = { stationId, name, investmentStatus: "plannedInvestment", stationGroupId: input.stationGroupId };
+    const existing = input.investmentStatus === "existing";
+    const equipmentId = input.equipmentId?.trim();
+    const sourceReference = input.sourceReference?.trim();
+    if (existing && !equipmentId)
+        return failure("missing_field", "Declared equipment code is required", "equipmentId");
+    if (!existing && equipmentId)
+        return failure("station_incompatible", "A planned resource cannot claim a physical equipment code", "equipmentId");
+    if (equipmentId && scenario.stations?.some(item => item.equipmentId === equipmentId)) {
+        return failure("duplicate_station", `${equipmentId} is already registered`, "equipmentId");
+    }
+    if (existing && !sourceReference)
+        return failure("missing_field", "Resource source is required", "sourceReference");
+    const qualifiedProcess = scenario.processMasters?.find(item => item.processId === input.qualifiedProcessId);
+    if (input.qualifiedProcessId && !qualifiedProcess) {
+        return failure("missing_process", "Qualified process does not exist", "qualifiedProcessId");
+    }
+    if (qualifiedProcess && input.stationGroupId && !qualifiedProcess.compatibleStationGroupIds?.includes(input.stationGroupId)) {
+        return failure("station_incompatible", "Station group is not linked to the qualified process", "stationGroupId");
+    }
+    const qualifiedProcessTypeIds = [...new Set([...(input.qualifiedProcessTypeIds ?? []), ...(qualifiedProcess ? [qualifiedProcess.processType] : [])])];
+    if (!qualifiedProcessTypeIds.length)
+        return failure("missing_field", "Select at least one process type", "qualifiedProcessTypeIds");
+    if (qualifiedProcessTypeIds.some(id => !scenario.processTypes?.some(type => type.processTypeId === id))) {
+        return failure("missing_process_type", "A selected process type does not exist", "qualifiedProcessTypeIds");
+    }
+    if (existing && !input.qualificationConfirmed) {
+        return failure("station_incompatible", "Confirm the declared resource and candidate process types", "qualificationConfirmed");
+    }
+    const station = {
+        stationId, name, investmentStatus: existing ? "existing" : "plannedInvestment",
+        ...(input.stationGroupId ? { stationGroupId: input.stationGroupId } : {}),
+        ...(equipmentId ? { equipmentId } : {}),
+        sourceSystem: LOCAL_VALIDATION_SOURCE,
+        ...(sourceReference ? { sourceReference } : {}),
+        identityVerificationStatus: "localDeclaration",
+        qualifiedProcessTypeIds,
+        ...(qualifiedProcess ? { qualifiedProcessIds: [qualifiedProcess.processId] } : {}),
+    };
     scenario.stations = [...(scenario.stations ?? []), station];
     const group = scenario.stationGroups?.find(item => item.stationGroupId === input.stationGroupId);
     if (group)
@@ -306,7 +424,7 @@ export function assignLocalStation(scenario, input) {
     if (!station)
         return failure("station_missing", `${input.stationId} is not in the station master`, "stationId");
     if (!stationCompatibleWithOperation(scenario, operation, station)) {
-        return failure("station_incompatible", `${input.stationId} is not qualified for this process; configure compatible station groups in the process library`, "stationId");
+        return failure("station_incompatible", `${input.stationId} is not a candidate for this process type`, "stationId");
     }
     if ((scenario.operationStationAssignments ?? []).some(item => item.routeId === input.routeId && item.operationId === input.operationId && item.stationId === input.stationId)) {
         return failure("duplicate_assignment", `${input.stationId} is already assigned`, "stationId");
@@ -322,6 +440,7 @@ export function assignLocalStation(scenario, input) {
         operationId: input.operationId,
         stationId: input.stationId,
         role: input.role,
+        allocationMode: "forecastCalculated",
         customerApprovalRequired: needsApproval,
         approvalStatus: needsApproval ? "pending" : "notRequired",
         planningAllowed,
@@ -404,8 +523,9 @@ export function extractLocalValidation(scenario) {
         processTypes: (scenario.processTypes ?? []).filter(isLocalDraftProcessType),
         routes,
         assignments: (scenario.operationStationAssignments ?? []).filter(item => routeIds.has(item.routeId)),
-        stations: (scenario.stations ?? []).filter(item => item.investmentStatus === "plannedInvestment"
-            && (scenario.operationStationAssignments ?? []).some(assignment => routeIds.has(assignment.routeId) && assignment.stationId === item.stationId)),
+        stations: (scenario.stations ?? []).filter(item => item.sourceSystem === LOCAL_VALIDATION_SOURCE
+            || (item.investmentStatus === "plannedInvestment"
+                && (scenario.operationStationAssignments ?? []).some(assignment => routeIds.has(assignment.routeId) && assignment.stationId === item.stationId))),
         stationGroups: (scenario.stationGroups ?? []).filter(item => item.stationGroupId.startsWith("local-group-")),
         parameters: (scenario.operationStationParameters ?? []).filter(item => operationIds.has(item.operationId) && item.parameterId.startsWith("local-baseline-")),
     };
@@ -443,7 +563,7 @@ export function applyLocalValidation(scenario, store) {
             scenario.routes = [...scenario.routes, route];
     }
     for (const station of store.stations) {
-        if (sampleStationIds.has(station.stationId) || station.investmentStatus !== "plannedInvestment")
+        if (sampleStationIds.has(station.stationId) || (station.sourceSystem !== LOCAL_VALIDATION_SOURCE && station.investmentStatus !== "plannedInvestment"))
             continue;
         if (!scenario.stations?.some(item => item.stationId === station.stationId)) {
             scenario.stations = [...(scenario.stations ?? []), station];
@@ -471,15 +591,10 @@ export function applyLocalValidation(scenario, store) {
 export function clearLocalValidation(scenario) {
     const routeIds = new Set(scenario.routes.filter(isLocalDraftRoute).map(route => route.routeId));
     const operationIds = new Set(scenario.routes.filter(isLocalDraftRoute).flatMap(route => route.operations.map(operation => operation.operationId)));
-    const stationIds = new Set((scenario.operationStationAssignments ?? [])
-        .filter(item => routeIds.has(item.routeId))
-        .map(item => item.stationId));
     scenario.routes = scenario.routes.filter(item => !isLocalDraftRoute(item));
     scenario.operationStationAssignments = (scenario.operationStationAssignments ?? []).filter(item => !routeIds.has(item.routeId));
     scenario.operationStationParameters = (scenario.operationStationParameters ?? [])
         .filter(item => !(operationIds.has(item.operationId) && item.parameterId.startsWith("local-baseline-")));
-    scenario.stations = (scenario.stations ?? []).filter(item => !(item.investmentStatus === "plannedInvestment" && stationIds.has(item.stationId)
-        && !(scenario.operationStationAssignments ?? []).some(assignment => assignment.stationId === item.stationId)));
     scenario.stageBoms = (scenario.stageBoms ?? []).filter(item => !routeIds.has(item.routeId));
     scenario.wipStates = (scenario.wipStates ?? []).filter(item => !routeIds.has(item.routeId));
     return scenario;
@@ -502,10 +617,14 @@ function localRoute(scenario, routeId) {
 }
 function nextRouteId(scenario, sourceRouteId) {
     const prefix = `local-${sourceRouteId}`;
-    let index = 1;
-    while (scenario.routes.some(route => route.routeId === `${prefix}-${index}`))
-        index += 1;
-    return `${prefix}-${index}`;
+    const indices = scenario.routes
+        .map(route => route.routeId?.startsWith(`${prefix}-`) ? Number(route.routeId.slice(prefix.length + 1)) : 0)
+        .filter(index => Number.isSafeInteger(index) && index > 0);
+    return `${prefix}-${Math.max(0, ...indices) + 1}`;
+}
+function localRouteOrdinal(routeId) {
+    const match = routeId?.match(/-(\d+)$/);
+    return match ? Number(match[1]) : 0;
 }
 function nextLocalId(existing, prefix) {
     let index = 1;

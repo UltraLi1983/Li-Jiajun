@@ -15,7 +15,9 @@
 
 ## 启动与检查
 
-macOS 可直接双击项目根目录的 `启动排产产能工具.command`：脚本会构建计算引擎、选择空闲端口、启动本地服务并打开正式版页面。保持弹出的终端窗口开启；关闭窗口即停止本次服务。首次运行若缺少项目依赖，脚本会执行 `npm install`。
+macOS 可直接双击项目根目录的 `启动排产产能工具.command`：脚本会构建应用，并固定从 `127.0.0.1:8785` 连接本机 SQLite 数据服务；已有同项目服务会复用。保持弹出的终端窗口开启；关闭窗口只停止服务，不删除数据库。首次运行若缺少项目依赖，脚本会执行 `npm install`。如果旧版静态服务占用 8785，先关闭其终端窗口后重试。
+
+路线、基线、工序件数和 R&R 浏览器草稿会同步到 `~/Library/Application Support/Production Capacity Tool/state.sqlite3`。可视化路线页的“本机路线历史”可以恢复已同步的快照；首次连接仅能导入当前 `8785` 浏览器分区仍存在的记录，不能凭其他端口的残留参数重建已经丢失的完整路线。数据库是本机验证数据，不是正式主数据归档；仍需另行备份该数据库文件。
 
 手动启动：在本目录运行 `npm run build`，然后运行 `npm run serve`。打开上述本地服务地址。检查命令为 `npm run check` 与 `npm test`。工序切换与同窗路线结果可用 `npm run test:browser` 在隔离的 Chrome 中回归；默认读取 macOS Chrome 路径，其他环境可设置 `CAPA_CHROME_PATH`。
 
@@ -26,12 +28,13 @@ macOS 可直接双击项目根目录的 `启动排产产能工具.command`：脚
 ## 文档
 
 - `docs/04-development-roadmap.md`：当前工程计划和进度，继续开发先看这里。
-- `docs/17-cursor-process-library.md`：当前 Cursor 任务包；独立工艺库与前置建档。代码已接入，5.17 待人工烟测。
+- `docs/18-cursor-route-bottleneck-cavity.md`：当前路线瓶颈与每循环件数口径。5.22 已于 2026-10-19 通过。
+- `docs/17-cursor-process-library.md`：独立工艺库与前置建档。5.17 已于 2026-10-19 通过。
 - `docs/16-process-execution-equipment-architecture.md`：已确认的工艺库、逻辑执行单元与物理设备架构；设备换绑仍待实现。
 - `docs/00-product-position.md`：产品定位与四阶段业务口径。
 - `docs/06-local-access-runbook.md`：当前目录、启动命令与浏览器入口。
 - `docs/07-smoke-test-runbook.md`：人工烟测步骤。
-- `docs/15-cursor-local-process-route.md`：本地验证模式新增工艺、路线工序及工站分配。代码已接入，5.16 待人工烟测。清除本地验证路线不会删除工艺库。
+- `docs/15-cursor-local-process-route.md`：本地验证模式新增工艺、路线工序及工站分配。5.16 已于 2026-10-19 通过。清除本地验证路线不会删除工艺库。
 - `docs/14-cursor-weekly-route-report.md`：路线周计划汇总与 A4 内部双页报告。代码已接入，5.15 A 段通过，B/C 段由用户后置。`report-preview.html` 仍只是静态版式示意。
 - `docs/13-cursor-cycle-samples-ct-policy.md`：逐次节拍样本与 CT/P 建议边界。5.14 已于 2026-10-12 通过。窄屏不在本包。
 - `docs/12-cursor-week-month-capacity.md`：当前工站周/月 Best case 与 Most likely 排产件数，5.13 已验收。

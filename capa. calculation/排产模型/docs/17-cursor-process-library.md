@@ -1,6 +1,6 @@
 # Cursor 任务包 17：独立工艺库与前置建档
 
-状态：代码已接入，5.17 待人工烟测。本包落实 `docs/16-process-execution-equipment-architecture.md` 的第一步；任务包 15 的 5.16 人工烟测仍待用户确认，不得把本包完成写成 5.16 通过。
+状态：5.17 已于 2026-10-19 由用户确认通过。本包落实 `docs/16-process-execution-equipment-architecture.md` 的第一步。5.16 亦于同日由用户确认通过。
 
 末轮验证遵循根目录 `README.md`：先看本包、代码差异、相关依赖和测试证据，再按需扩大范围；不要无目的全仓扫描或重复跑无关测试。开发前重点核对 `src/domain/types.ts`、`src/engine/local-validation-route.ts`、`src/domain/sample-data.ts`、`src/ui/formal-app.ts`、本地存储读写、`test/local-validation-route.test.mjs` 与现有正式主数据门禁。
 
@@ -43,4 +43,6 @@
 - 写入工艺库不新增路线工序。第一阶段改为打开工艺库，路线上仍只选择工艺、顺序和工序编号。
 - 本机存储升到 schema 2，并继续读取任务包 15 的 schema 1；无法识别的版本留在原处，不删除。`process-wash` 这类已有 `processId` 不改写。「仅清除本地验证路线」保留工艺库。
 - 正式预检仍拒绝草稿工艺和草稿路线。未做工艺编辑/合并/删除、上游导入、执行单元和物理设备。
+
+2026-10-19：用户确认 5.17 通过。
 

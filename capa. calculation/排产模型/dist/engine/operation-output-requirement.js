@@ -1,7 +1,10 @@
+import { isLocalDraftRoute } from "./local-validation-route.js";
 export function resolveOperationOutputRequirement(scenario, route, operation, asOfDate, throughDate) {
     const result = { operationId: operation.operationId };
     const stageBom = scenario.stageBoms?.find(item => item.stageBomId === operation.outputStageBomId);
     if (!stageBom) {
+        if (isLocalDraftRoute(route))
+            return resolveLocalQuantity(result, route, operation);
         result.issue = "stage_bom_missing";
         return result;
     }
@@ -30,7 +33,11 @@ export function resolveOperationOutputRequirement(scenario, route, operation, as
         result.unitsPerFinishedProduct = stageBom.requiredOutputUnitsPerFinishedProduct;
         return result;
     }
-    if (operation.requiredOutputUnitsPerFinishedProduct === undefined) {
+    return resolveLocalQuantity(result, route, operation);
+}
+function resolveLocalQuantity(result, route, operation) {
+    if (operation.requiredOutputUnitsPerFinishedProduct === undefined
+        || (isLocalDraftRoute(route) && !operation.quantitySourceVersion?.startsWith("local-"))) {
         result.issue = "quantity_missing";
         return result;
     }

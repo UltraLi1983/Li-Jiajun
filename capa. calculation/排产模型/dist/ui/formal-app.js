@@ -1,4 +1,5 @@
 import { sampleScenario } from "../domain/sample-data.js";
+import { bootstrapLocalState, listRouteHistory, readRouteHistory, removeLocalState, saveLocalState, setLocalStateErrorHandler } from "./local-state-client.js";
 import { calculateProductionSegment } from "../engine/run-rate-segment.js";
 import { buildParameterSuggestions, confirmParameterSuggestion } from "../engine/parameter-calibration.js";
 import { buildRouteWindowCapacityView, collectRouteWindowCandidates, listRouteOperations, nextStationId, resolveRouteObservationWindow, routeWindowKey, stationActualKey, stationPlanKey, } from "./route-navigation.js";
@@ -12,7 +13,8 @@ import { copyStandardWindowToWeek } from "../engine/standard-window-projection.j
 import { ledgerShiftCount, mostLikelyMonthProduction, observeShiftAllowance, summarizeMostLikely } from "../engine/most-likely-allowance.js";
 import { buildPeriodCapacity } from "../engine/week-month-capacity.js";
 import { buildRouteWeekPlan } from "../engine/route-week-plan.js";
-import { applyLocalValidation, assessLocalTrial, assignLocalStation, clearLocalValidation, createLocalProcess, createLocalProcessType, createLocalRouteCopy, createLocalStation, createLocalStationGroup, extractLocalValidation, insertLocalOperation, insertLocalOperationAt, reorderLocalOperations, isLocalDraftProcess, isLocalDraftProcessType, isLocalDraftRoute, listProcessRouteReferences, parseLocalValidationStore, processTypeFamilyOf, saveLocalStationParameter, setLocalProcessStationGroups, stationCompatibleWithOperation, } from "../engine/local-validation-route.js";
+import { describeCurrentRouteBottleneck, listRouteReportGaps, presentCurrentRouteBottleneck, routeReportGapBadge, selectCompleteRouteWeek } from "../engine/current-route-bottleneck.js";
+import { applyLocalValidation, assessLocalTrial, assignLocalStation, clearLocalValidation, createLocalProcess, createLocalProcessType, createLocalRouteCopy, createLocalStation, extractLocalValidation, groupProductRoutes, insertLocalOperationAt, renameLocalOperation, reorderLocalOperations, setLocalStationFlowPolicy, isLocalDraftProcess, isLocalDraftProcessType, isLocalDraftRoute, listProcessRouteReferences, parseLocalValidationStore, processTypeFamilyOf, stationCompatibleWithOperation, } from "../engine/local-validation-route.js";
 import { renderRouteWeekSheets } from "./route-week-report.js";
 import { buildWeekMinuteLedger, maxShiftsForLength, repeatWeekForMonth, validateManualMinutes } from "../engine/week-minute-ledger.js";
 import { buildStandardSaSampleSlots, findStandardSaDayGaps, intervalCoveredByShifts, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../engine/standard-sa-day.js";
@@ -84,7 +86,7 @@ const workflowCopy = {
     },
     en: {
         stageRouting: "Routing and stations", stageBaseline: "Standard SA setup", stageReality: "On-site R&R tracking", stageCalibration: "Calibration and capacity",
-        stageLibrary: "Process library",
+        stageLibrary: "Process Library",
         stageRoutingHint: "Define product operations, assign stations and check their parameters.",
         stageBaselineHint: "Record production, breaks, changeovers and planned stops in a standard window of up to 48 hours.",
         stageLibraryHint: "Maintain reusable local processes. This does not change the current route or register physical equipment.",
@@ -133,8 +135,8 @@ const copy = {
         pageSubtitle: "先确认产品、工艺路线、工站绑定和参数门禁，再进入产能分析。",
         engineBadge: "正式版 · 已连接编译后的计算引擎",
         loadWarning: "正在加载正式版脚本。如果这里持续显示，说明 dist/ui/formal-app.js 没有成功加载，请先运行 npm run build，并确认通过 npm run serve 从当前项目目录访问页面。",
-        routeOperationEyebrow: "路线和工序清单",
-        routeOperationTitle: "工艺路线与工序清单",
+        routeOperationEyebrow: "工序主数据",
+        routeOperationTitle: "工序字段核对",
         masterData: "主数据",
         checkedResult: "计算 / 检查结果",
         productRouteMockEdit: "产品 / 路线主数据（本地验证模式）",
@@ -363,8 +365,8 @@ const copy = {
         pageSubtitle: "Confirm product, route, station assignment and parameter gates before capacity analysis.",
         engineBadge: "formal shell · connected to dist engine",
         loadWarning: "Loading formal app script. If this remains visible, dist/ui/formal-app.js did not load. Run npm run build and serve from the current project directory.",
-        routeOperationEyebrow: "Route and operation list",
-        routeOperationTitle: "Route and Operation List",
+        routeOperationEyebrow: "Operation master data",
+        routeOperationTitle: "Operation fields",
         masterData: "master data",
         checkedResult: "calculated / checked result",
         productRouteMockEdit: "Product / route master data (local validation mode)",
@@ -585,19 +587,24 @@ let selectedWorkflowStationId = "";
 let visualInspectorMode = "station";
 let visualStationId = "";
 let visualEditingStationKey = "";
+let isRouteEditorOpen = true;
+let routeCameFromLibrary = false;
 let visualRouteError = "";
 let visualInsertIndex = 0;
 let isMockEditing = false;
-let localValidationError = "";
 let localValidationNotice = "";
 let localStoreError = "";
 let libraryReturnStage = "routing";
 let libraryQuery = "";
+let libraryTypeQuery = "";
+let libraryShowNewType = false;
 let librarySelectedProcessId = "";
 let libraryError = "";
 let libraryNotice = "";
-let libraryForm = { name: "", processTypeId: "", description: "", businessCode: "", newTypeName: "", newTypeFamily: "manufacturing", compatibleStationGroupIds: [] };
+let libraryForm = { name: "", processTypeId: "", description: "", businessCode: "", newTypeName: "", newTypeFamily: "manufacturing" };
 const localValidationStorageKey = "capa-local-validation-v1";
+let routeHistory = [];
+let routeHistoryOpen = false;
 let localBaselineVersionCounter = 0;
 const localBaselineErrors = new Map();
 const localBaselineStoragePrefix = "capa-local-baseline-v1:";
@@ -736,6 +743,17 @@ function init() {
     applyShellTranslations();
     render(selectedProductId);
     loadWarningRoot?.setAttribute("hidden", "");
+    void refreshRouteHistory();
+}
+async function refreshRouteHistory() {
+    try {
+        routeHistory = await listRouteHistory();
+        render(selectedProductId);
+    }
+    catch {
+        localStoreError = locale === "zh" ? "无法读取本机路线历史。" : "Could not read local route history.";
+        render(selectedProductId);
+    }
 }
 function t(key) {
     return workflowCopy[locale][key] ?? copy[locale][key] ?? workflowCopy.en[key] ?? copy.en[key] ?? key;
@@ -754,6 +772,8 @@ function setWorkflowStage(value) {
         return;
     if (value === "library" && activeWorkflowStage !== "library")
         libraryReturnStage = activeWorkflowStage;
+    if (value === "routing" && activeWorkflowStage !== "routing")
+        routeCameFromLibrary = activeWorkflowStage === "library";
     activeWorkflowStage = value;
     document.querySelectorAll(".workflow-stage").forEach(section => {
         section.hidden = section.dataset.stage !== activeWorkflowStage;
@@ -773,7 +793,15 @@ function setWorkflowStage(value) {
     };
     document.querySelector(".page-head h2").textContent = t(stageKeys[activeWorkflowStage][0]);
     document.querySelector(".page-head p").textContent = t(stageKeys[activeWorkflowStage][1]);
-    scopeStrip.hidden = activeWorkflowStage === "routing";
+    scopeStrip.hidden = activeWorkflowStage === "routing" || activeWorkflowStage === "library";
+    const libraryButton = visualRouteRoot.querySelector("#visualOpenLibrary");
+    if (libraryButton)
+        libraryButton.textContent = routeLibraryButtonText();
+}
+function routeLibraryButtonText() {
+    if (locale === "zh")
+        return routeCameFromLibrary ? "返回工艺库" : "进入工艺库";
+    return routeCameFromLibrary ? "Back to process library" : "Open process library";
 }
 function applyLanguageSwitcherText() {
     languageLabelRoot.textContent = locale === "zh" ? "Language" : "界面语言";
@@ -801,6 +829,7 @@ function render(productId) {
     const routingConfig = buildProductRoutingConfiguration(scenarioState, productId, selectedRouteId());
     const preflight = runCapacityAnalysisPreflight(scenarioState, {
         productId,
+        ...(routingConfig.route?.routeId ? { routeId: routingConfig.route.routeId } : {}),
         availableMinutesByStation: { OP10: 2880, OP10B: 2880, OP20: 2880 },
         plannedQuantityByOperation: buildPlannedQuantityByOperation(routingConfig),
     });
@@ -823,7 +852,7 @@ function render(productId) {
     renderProcessLibrary();
     renderProduct(routingConfig);
     renderRouteStatus(routingConfig);
-    renderRouting(routingConfig.operations, selectedOperation?.operation.operationId ?? "");
+    renderRouting(routingConfig.operations);
     renderVisualRoute(routingConfig, selectedOperation);
     renderOperationDetail(selectedOperation, routingConfig);
     renderStationAssignmentPage(routingConfig.operations);
@@ -831,6 +860,7 @@ function render(productId) {
     renderRnrTracking(selectedOperation);
     renderCalibration(selectedOperation, routingConfig);
     renderPreflight(preflight);
+    paintRouteReportGaps(currentRouteReportGaps(routingConfig));
     setWorkflowStage(activeWorkflowStage);
 }
 function syncOperationSelector(operations) {
@@ -876,13 +906,104 @@ function renderSummary(routingConfig, preflight) {
     const operations = routingConfig.operations.length;
     const assignments = routingConfig.operations.reduce((sum, operation) => sum + operation.assignments.length, 0);
     const blocked = routingConfig.operations.flatMap(operation => operation.assignments).filter(item => item.planningStatus !== "available").length;
-    const worstCapacity = [...preflight.capacityResults].sort((a, b) => a.gapMinutes - b.gapMinutes)[0];
+    const bottleneck = currentRouteBottleneckCard(routingConfig);
     summaryRoot.innerHTML = [
         metricCard(t("readiness"), preflight.ready ? t("ready") : t("blocked"), preflight.ready ? t("canEnterCapacityAnalysis") : `${formatNumber(preflight.blockers.length)}${t("blockerCount")}`, preflight.ready ? "good" : "bad"),
         metricCard(t("routingMetric"), `${formatNumber(operations)}${t("operationUnit")} / ${formatNumber(assignments)}${t("stationUnit")}`, `${formatNumber(blocked)}${t("unavailableStationAssignment")}`, blocked ? "warn" : "good"),
         metricCard(t("demandMetric"), `${formatNumber(routingConfig.product?.weeklyDemand ?? 0)} / ${t("perWeek")}`, routingConfig.product?.demandScenario ? formatDemandScenario(routingConfig.product.demandScenario) : t("noScenario"), "neutral"),
-        metricCard(t("bottleneck"), worstCapacity ? `${worstCapacity.stationId} ${formatNumber(Math.round(worstCapacity.gapMinutes))} ${t("minuteUnit")}` : "-", worstCapacity ? `${t("status")} ${formatCapacityStatus(worstCapacity.status)}` : t("noCapacityResult"), worstCapacity?.status === "short" ? "bad" : "neutral"),
+        bottleneckCard(t("bottleneck"), bottleneck),
     ].join("");
+}
+function currentRouteBottleneckCard(routingConfig) {
+    const available = routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => ({
+        operationId: operation.operation.operationId,
+        operationName: formatKnownText(operation.operation.name),
+        stationId: view.assignment.stationId,
+        stationName: formatKnownText(view.station?.name ?? view.assignment.stationId),
+    })));
+    const operations = [...new Map(available.map(item => [item.operationId, item.operationName])).entries()].map(([operationId, name]) => ({
+        operationId,
+        name,
+        stations: available.filter(item => item.operationId === operationId).map(item => ({ stationId: item.stationId, name: item.stationName })),
+    }));
+    const weeksByStation = Object.fromEntries(available.map(item => [item.stationId, weeksForCurrentRouteStation(routingConfig.productId, item.stationId)]));
+    const selection = selectCompleteRouteWeek(available.map(item => item.stationId), weeksByStation);
+    const weeklyDemand = routingConfig.product?.weeklyDemand;
+    const demandQty = typeof weeklyDemand === "number" && Number.isSafeInteger(weeklyDemand) && weeklyDemand >= 0 ? weeklyDemand : undefined;
+    const plan = selection.ok ? routeWeekPlanFor(routingConfig, selection.weekStartDate, "outlook", demandQty) : undefined;
+    const view = describeCurrentRouteBottleneck({
+        routeId: routingConfig.route?.routeId ?? routingConfig.productId,
+        ...(routingConfig.route?.version ? { routeVersion: routingConfig.route.version } : {}),
+        selection,
+        ...(plan ? { plan } : {}),
+        operations,
+    });
+    return presentCurrentRouteBottleneck(view, locale === "zh" ? "zh" : "en");
+}
+function currentRouteReportGaps(routingConfig) {
+    const localeCode = locale === "zh" ? "zh" : "en";
+    const positions = routingConfig.operations.flatMap(operation => {
+        const available = operation.assignments.filter(view => view.planningStatus === "available");
+        const operationName = formatKnownText(operation.operation.name);
+        if (!available.length) {
+            return [{
+                    operationId: operation.operation.operationId,
+                    operationName,
+                    stationId: "",
+                    stationName: "",
+                    weeks: [],
+                    draftWeekStart: "",
+                    generated: false,
+                }];
+        }
+        return available.map(view => {
+            const stationId = view.assignment.stationId;
+            const draft = getCopyProjectionDraft(routingConfig.productId, stationId);
+            return {
+                operationId: operation.operation.operationId,
+                operationName,
+                stationId,
+                stationName: formatKnownText(view.station?.name ?? stationId),
+                weeks: weeksForCurrentRouteStation(routingConfig.productId, stationId),
+                draftWeekStart: draft.weekStartDate,
+                generated: draft.generated,
+            };
+        });
+    });
+    const planning = positions.filter(position => position.stationId);
+    const selection = selectCompleteRouteWeek(planning.map(position => position.stationId), Object.fromEntries(planning.map(position => [position.stationId, position.weeks])));
+    const weeklyDemand = routingConfig.product?.weeklyDemand;
+    const demandQty = typeof weeklyDemand === "number" && Number.isSafeInteger(weeklyDemand) && weeklyDemand >= 0 ? weeklyDemand : undefined;
+    const plan = selection.ok ? routeWeekPlanFor(routingConfig, selection.weekStartDate, "outlook", demandQty) : undefined;
+    return listRouteReportGaps(positions, localeCode, plan);
+}
+function paintRouteReportGaps(gaps) {
+    const localeCode = locale === "zh" ? "zh" : "en";
+    const badge = (gap) => `<span class="pill bad report-gap-pill">${escapeHtml(routeReportGapBadge(gap.code, localeCode))}</span>`;
+    document.querySelectorAll("[data-report-gap-station]").forEach(node => {
+        const matched = gaps.filter(gap => gap.stationId && gap.stationId === node.dataset.reportGapStation);
+        node.hidden = matched.length === 0;
+        node.innerHTML = matched.map(gap => node.hasAttribute("data-report-gap-detail")
+            ? `${badge(gap)} ${escapeHtml(gap.detail)}`
+            : badge(gap)).join("");
+    });
+    document.querySelectorAll("[data-report-gap-operation]").forEach(node => {
+        const matched = gaps.filter(gap => !gap.stationId && gap.operationId === node.dataset.reportGapOperation);
+        node.hidden = matched.length === 0;
+        node.innerHTML = matched.map(gap => badge(gap)).join("");
+    });
+    document.querySelectorAll("[data-report-gap-host]").forEach(node => {
+        node.innerHTML = gaps.length
+            ? `<h4>${escapeHtml(locale === "zh" ? "还不能输出路线报告的位置" : "Positions that cannot feed the route report")}</h4><ul class="route-report-gaps">${gaps.map(gap => `<li data-report-gap="${escapeHtml(gap.stationId || gap.operationId)}">${badge(gap)}<span>${escapeHtml(gap.detail)}</span></li>`).join("")}</ul>`
+            : `<p class="pill good">${escapeHtml(locale === "zh" ? "当前路线可以输出这一周的路线件数" : "This route can output this week's route pieces")}</p>`;
+    });
+}
+function weeksForCurrentRouteStation(productId, stationId) {
+    const prefix = `${planScopeKey(productId, stationId)}::`;
+    return [...stationWeekSnapshots.keys()]
+        .filter(key => key.startsWith(prefix))
+        .map(key => key.slice(prefix.length))
+        .filter(week => /^\d{4}-\d{2}-\d{2}$/.test(week));
 }
 function renderProduct(routingConfig) {
     const product = routingConfig.product;
@@ -931,9 +1052,9 @@ function renderProduct(routingConfig) {
           ${field(t("routeSource"), routingConfig.route?.sourceSystem ?? "-")}
           ${field(t("effectivePeriod"), formatEffectivePeriod(routingConfig.route?.effectiveFrom, routingConfig.route?.effectiveTo))}
         </div>
+        ${routingConfig.route && isLocalDraftRoute(routingConfig.route) ? `<div class="panel-actions" style="margin-top:14px;"><button id="clearLocalValidation" class="button secondary" type="button">${locale === "zh" ? "清除本地验证路线" : "Clear local validation routes"}</button></div>` : ""}
       </section>
     </div>
-    ${renderLocalValidationPanel(routingConfig)}
   `;
     bindProductEditing(product.productId);
 }
@@ -951,11 +1072,10 @@ function bindProductEditing(currentProductId) {
         localBaselineVersionCounter = 0;
         localBaselineErrors.clear();
         localOperationQuantityErrors.clear();
-        localValidationError = "";
         localValidationNotice = "";
         libraryError = "";
         libraryNotice = "";
-        libraryForm = { name: "", processTypeId: "", description: "", businessCode: "", newTypeName: "", newTypeFamily: "manufacturing", compatibleStationGroupIds: [] };
+        libraryForm = { name: "", processTypeId: "", description: "", businessCode: "", newTypeName: "", newTypeFamily: "manufacturing" };
         selectedProductId = scenarioState.products?.[0]?.productId ?? "";
         selectedOperationId = "";
         selectedWorkflowStationId = "";
@@ -986,7 +1106,26 @@ function bindProductEditing(currentProductId) {
         syncRouteSelector(selectedProductId);
         render(selectedProductId);
     });
-    bindLocalValidationPanel();
+    productRoot.querySelector("#clearLocalValidation")?.addEventListener("click", () => {
+        const confirmed = window.confirm(locale === "zh"
+            ? "只清除本机的本地验证路线、工序和工站分配。工艺库里的工艺定义会保留。样例路线和已有 R&R 会保留。继续吗？"
+            : "Clear only local validation routes, operations and station assignments. The process library, sample routes and existing R&R stay. Continue?");
+        if (!confirmed)
+            return;
+        clearLocalOperationQuantities(scenarioState.routes.filter(isLocalDraftRoute).map(route => route.routeId ?? ""));
+        clearLocalValidation(scenarioState);
+        dropLocalRuntimeState();
+        persistLocalValidation();
+        localValidationNotice = "";
+        visualRouteError = "";
+        isRouteEditorOpen = false;
+        visualStationId = "";
+        visualEditingStationKey = "";
+        selectedOperationId = "";
+        selectedWorkflowStationId = "";
+        syncRouteSelector(selectedProductId, scenarioState.products?.find(product => product.productId === selectedProductId)?.routeId);
+        render(selectedProductId);
+    });
     productRoot.querySelectorAll("[data-product-field]").forEach(input => {
         input.addEventListener("change", () => {
             updateProductField(currentProductId, input.dataset.productField ?? "", input.value);
@@ -1030,41 +1169,116 @@ function moveVisualOperation(routeId, operationId, targetIndex) {
     ids.splice(targetIndex, 0, operationId);
     applyVisualRouteChange(reorderLocalOperations(scenarioState, routeId, ids), { operationId });
 }
+function bindVisualRouteToolbar(routingConfig, selectedOperation) {
+    const route = routingConfig.route;
+    visualRouteRoot.querySelector("#visualStartArrange")?.addEventListener("click", () => {
+        if (!route)
+            return;
+        if (!isLocalDraftRoute(route)) {
+            const approved = window.confirm(locale === "zh"
+                ? "当前路线已发布、不可直接修改。继续编排将建立本地草稿副本；原路线和历史记录不变。继续吗？"
+                : "This route is released and read-only. Continue by creating a local draft copy? The original route and history remain unchanged.");
+            if (!approved)
+                return;
+            isRouteEditorOpen = true;
+            const result = createLocalRouteCopy(scenarioState, route.routeId ?? "");
+            applyVisualRouteChange(result, "route" in result && result.route.routeId ? { routeId: result.route.routeId } : {});
+        }
+        else if (!isRouteEditorOpen) {
+            isRouteEditorOpen = true;
+            renderVisualRoute(routingConfig, selectedOperation);
+        }
+        visualRouteRoot.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    visualRouteRoot.querySelector("#visualExitEditor")?.addEventListener("click", () => {
+        isRouteEditorOpen = false;
+        renderVisualRoute(routingConfig, selectedOperation);
+        productRoot.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    visualRouteRoot.querySelector("#visualOpenLibrary")?.addEventListener("click", () => setWorkflowStage("library"));
+}
 function renderVisualRoute(routingConfig, selectedOperation) {
     const zh = locale === "zh";
     const route = routingConfig.route;
     const local = !!route && isLocalDraftRoute(route);
     const ordered = [...routingConfig.operations].sort((a, b) => a.operation.sequence - b.operation.sequence);
+    const invalidFlowPolicies = (route?.stationFlowPolicies ?? []).filter(policy => {
+        const index = ordered.findIndex(item => item.operation.operationId === policy.fromOperationId);
+        return index < 0 || ordered[index + 1]?.operation.operationId !== policy.toOperationId;
+    });
+    const invalidFlowNotice = invalidFlowPolicies.map(policy => `<div class="route-flow-warning" role="alert">
+    <span>${zh ? "工站连线已不对应相邻工序" : "Station links no longer join adjacent operations"}：${escapeHtml(policy.fromOperationId)} → ${escapeHtml(policy.toOperationId)}</span>
+    ${local ? `<button class="button secondary" type="button" data-remove-stale-flow="${escapeHtml(policy.fromOperationId)}" data-to-operation="${escapeHtml(policy.toOperationId)}">${zh ? "移除失效连线" : "Remove stale links"}</button>` : ""}
+  </div>`).join("");
+    const flowLabel = (operationId) => {
+        const policy = route?.stationFlowPolicies?.find(item => item.toOperationId === operationId);
+        if (!policy)
+            return "";
+        const stationName = (stationId) => formatKnownText(scenarioState.stations?.find(item => item.stationId === stationId)?.name ?? stationId);
+        return policy.allowedPairs.map(pair => `${stationName(pair.fromStationId)} → ${stationName(pair.toStationId)}`).join(" · ");
+    };
+    const toolbarActions = `<div class="panel-actions">
+    <button class="button" type="button" id="visualStartArrange" ${route ? "" : "disabled"}>${zh ? "编排工艺路线" : "Arrange process route"}</button>
+    <button class="button secondary" type="button" id="visualExitEditor" ${isRouteEditorOpen ? "" : "disabled"}>${zh ? "退出编排" : "Exit editor"}</button>
+    <button class="button secondary" type="button" id="visualOpenLibrary">${routeLibraryButtonText()}</button>
+  </div>`;
+    if (!isRouteEditorOpen) {
+        const summary = ordered.map(view => {
+            const operation = view.operation;
+            const stationNames = view.assignments.map(assignment => formatKnownText(assignment.station?.name ?? assignment.assignment.stationId));
+            const stationMarks = view.assignments.map(assignment => `<span data-report-gap-station="${escapeHtml(assignment.assignment.stationId)}"></span>`).join("");
+            return `<li class="route-summary-item"><span class="route-summary-sequence">OP${operation.sequence}</span><strong>${escapeHtml(formatKnownText(operation.name))}</strong><small>${escapeHtml(stationNames.join("、") || (zh ? "待分配工站" : "No station assigned"))}</small>${flowLabel(operation.operationId) ? `<small class="route-flow-tag">${escapeHtml(flowLabel(operation.operationId))}</small>` : ""}${stationMarks}<span data-report-gap-operation="${escapeHtml(operation.operationId)}"></span></li>`;
+        }).join("");
+        visualRouteRoot.innerHTML = `<div class="route-editor-toolbar"><div><h2>${zh ? "工艺路线编排" : "Route editor"}</h2><p class="note">${escapeHtml(route?.routeId ?? "-")}</p></div>
+      ${toolbarActions}</div>
+      ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
+      ${localValidationNotice ? `<p class="form-ok" role="status">${escapeHtml(localValidationNotice)}</p>` : ""}
+      ${invalidFlowNotice}
+      ${summary ? `<div class="route-summary-scroll"><ol class="route-summary" aria-label="${zh ? "当前工艺路线" : "Current process route"}">${summary}</ol></div>` : ""}`;
+        bindVisualRouteToolbar(routingConfig, selectedOperation);
+        bindInvalidFlowRemoval(route);
+        paintRouteReportGaps(currentRouteReportGaps(routingConfig));
+        return;
+    }
     const stationView = selectedOperation?.assignments.find(view => view.assignment.stationId === visualStationId)
         ?? selectedOperation?.assignments.find(view => view.assignment.stationId === selectedWorkflowStationId);
     const operation = selectedOperation?.operation;
+    const previousView = operation ? ordered[ordered.findIndex(item => item.operation.operationId === operation.operationId) - 1] : undefined;
+    const flowPolicy = previousView && operation ? route?.stationFlowPolicies?.find(item => item.fromOperationId === previousView.operation.operationId && item.toOperationId === operation.operationId) : undefined;
+    const fromStations = previousView?.assignments.filter(item => item.assignment.planningAllowed) ?? [];
+    const toStations = selectedOperation?.assignments.filter(item => item.assignment.planningAllowed) ?? [];
+    const flowPairs = fromStations.flatMap((from, fromIndex) => toStations.map((to, toIndex) => {
+        const checked = flowPolicy?.allowedPairs.some(pair => pair.fromStationId === from.assignment.stationId
+            && pair.toStationId === to.assignment.stationId) ?? false;
+        return `<label class="route-flow-pair"><input type="checkbox" name="pair" value="${fromIndex}:${toIndex}" ${checked ? "checked" : ""}>
+      <span>${escapeHtml(formatKnownText(from.station?.name ?? from.assignment.stationId))}</span><span aria-hidden="true">→</span><span>${escapeHtml(formatKnownText(to.station?.name ?? to.assignment.stationId))}</span></label>`;
+    })).join("");
+    const flowEditor = local && previousView && operation ? `<form id="visualFlowForm" class="route-flow-editor" data-from-operation="${escapeHtml(previousView.operation.operationId)}" data-to-operation="${escapeHtml(operation.operationId)}">
+    <h4>${zh ? "来自上一工序的工站流转" : "Station flow from previous operation"}</h4>
+    <p class="note">OP${previousView.operation.sequence} → OP${operation.sequence} · ${flowPolicy ? (zh ? "仅按已连线组合流转" : "Linked pairs only") : (zh ? "默认全部可互通" : "All stations may connect by default")}</p>
+    ${flowPairs ? `<div class="route-flow-pairs">${flowPairs}</div><div class="panel-actions"><button class="button secondary" type="submit">${zh ? "确认定向连线" : "Confirm station links"}</button>
+      ${flowPolicy ? `<button class="button secondary" type="button" id="visualClearFlow">${zh ? "恢复全部互通" : "Restore all-to-all"}</button>` : ""}</div>` : `<p class="note">${zh ? "相邻工序尚无可排产工站，先完成工站分配。" : "Assign plannable stations to both operations first."}</p>`}
+  </form>` : "";
     const stationKey = stationView ? `${stationView.assignment.operationId}::${stationView.assignment.stationId}` : "";
     const stationOptions = selectedOperation ? (scenarioState.stations ?? [])
         .filter(station => !selectedOperation.assignments.some(view => view.assignment.stationId === station.stationId))
         .filter(station => stationCompatibleWithOperation(scenarioState, selectedOperation.operation, station))
         .map(station => `<option value="${escapeHtml(station.stationId)}">${escapeHtml(formatKnownText(station.name))} / ${escapeHtml(station.stationId)}</option>`).join("") : "";
-    const compatibleGroups = operation ? ((scenarioState.processMasters ?? [])
-        .find(process => process.processId === operation.processId)
-        ?? (scenarioState.processMasters ?? []).find(process => process.processType === operation.processType && process.status === "released"))?.compatibleStationGroupIds ?? [] : [];
-    const compatibleGroupOptions = (scenarioState.stationGroups ?? []).filter(group => compatibleGroups.includes(group.stationGroupId))
-        .map(group => `<option value="${escapeHtml(group.stationGroupId)}">${escapeHtml(formatKnownText(group.name))}</option>`).join("");
     let inspector = `<p class="route-editor-empty">${zh ? "选择工序查看配置。" : "Select an operation."}</p>`;
     if (operation && visualInspectorMode === "station" && stationView) {
         const assignment = stationView.assignment;
-        const share = assignment.plannedShare === undefined ? "" : String(Math.round(assignment.plannedShare * 100));
         inspector = `<h3>${escapeHtml(formatKnownText(stationView.station?.name ?? assignment.stationId))} / ${escapeHtml(assignment.stationId)}</h3>
       <div class="panel-actions"><button class="button secondary" type="button" id="visualBackToOperation">${zh ? "返回工序 / 添加工站" : "Back / add station"}</button>
       ${local && assignment.planningAllowed ? `<button class="button secondary" type="button" id="visualEditParameter">${visualEditingStationKey === stationKey ? (zh ? "收起参数" : "Close parameter") : (zh ? "编辑参数" : "Edit parameter")}</button>` : ""}</div>
-      ${renderAssignment(stationView, local && assignment.planningAllowed && visualEditingStationKey === stationKey)}
-      ${local ? `<form id="visualShareForm" class="action-bar"><label class="field" style="max-width:190px;">${zh ? "计划占用份额 (%)" : "Planned share (%)"}<input name="share" type="number" min="0" max="100" step="0.1" value="${escapeHtml(share)}" placeholder="-" ${assignment.role === "backup" ? "disabled" : ""}></label><button class="button secondary" type="submit" ${assignment.role === "backup" ? "disabled" : ""}>${zh ? "确认份额" : "Confirm share"}</button></form>` : ""}`;
+      ${renderAssignment(stationView, local && assignment.planningAllowed && visualEditingStationKey === stationKey, local)}`;
     }
     else if (operation) {
         inspector = `<div class="panel-head"><h3>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</h3>
       ${local ? `<div class="panel-actions"><button class="button secondary" type="button" data-visual-move="-1" ${ordered[0]?.operation.operationId === operation.operationId ? "disabled" : ""} title="${zh ? "前移" : "Move earlier"}">←</button><button class="button secondary" type="button" data-visual-move="1" ${ordered.at(-1)?.operation.operationId === operation.operationId ? "disabled" : ""} title="${zh ? "后移" : "Move later"}">→</button></div>` : ""}</div>
       <div class="mini-grid">${field(zh ? "工艺编号" : "Process ID", operation.processId ?? "-")}${field(zh ? "工序编号" : "Operation ID", operation.operationId)}</div>
-      ${local ? `<form id="visualAssignForm" class="form-section"><h3>${zh ? "添加工站" : "Add station"}</h3><div class="mini-grid"><label class="field">${zh ? "兼容的现有工站" : "Compatible station"}<select name="stationId" required>${stationOptions || `<option value="">${zh ? "无可分配工站；请先在工艺库配置兼容工站组" : "No compatible station; configure groups in library"}</option>`}</select></label><label class="field">${zh ? "角色" : "Role"}<select name="role"><option value="primary">${zh ? "主用" : "Primary"}</option><option value="parallel">${zh ? "并行" : "Parallel"}</option><option value="backup">${zh ? "备用" : "Backup"}</option></select></label></div><div class="panel-actions"><button class="button secondary" type="submit" ${stationOptions ? "" : "disabled"}>${zh ? "添加工站" : "Add station"}</button></div></form>` : ""}`;
-        if (local)
-            inspector += `<form id="visualCreateStationForm" class="form-section"><h3>${zh ? "新建待投资工站" : "Create planned station"}</h3><div class="mini-grid"><label class="field">${zh ? "工站编号" : "Station ID"}<input name="stationId" required></label><label class="field">${zh ? "工站名称" : "Name"}<input name="name" required></label><label class="field">${zh ? "所属兼容组" : "Compatible group"}<select name="stationGroupId" required>${compatibleGroupOptions || `<option value="">${zh ? "请先在工艺库配置兼容工站组" : "Configure groups in library"}</option>`}</select></label><label class="field">${zh ? "角色" : "Role"}<select name="role"><option value="primary">${zh ? "主用" : "Primary"}</option><option value="parallel">${zh ? "并行" : "Parallel"}</option><option value="backup">${zh ? "备用" : "Backup"}</option></select></label></div><div class="panel-actions"><button class="button secondary" type="submit" ${compatibleGroupOptions ? "" : "disabled"}>${zh ? "新建并添加" : "Create and add"}</button></div></form>`;
+      ${local ? `<form id="visualOperationNameForm" class="form-section"><label class="field">${zh ? "本产品工序名称" : "Operation name for this product"}<input name="name" type="text" maxlength="80" required value="${escapeHtml(operation.name)}" placeholder="${zh ? "例如：外尺寸粗车削" : "e.g. Rough turning"}"></label><div class="panel-actions"><button class="button secondary" type="submit">${zh ? "确认名称" : "Confirm name"}</button></div></form>` : ""}
+      ${local ? `<form id="visualAssignForm" class="form-section"><h3>${zh ? "添加工站" : "Add station"}</h3><div class="mini-grid"><label class="field">${zh ? "已入库兼容工站" : "Registered compatible station"}<select name="stationId" required>${stationOptions || `<option value="">${zh ? "暂无兼容工站；请先到工艺库登记资源" : "No compatible station; register a resource in the library"}</option>`}</select></label><label class="field">${zh ? "角色" : "Role"}<select name="role"><option value="primary">${zh ? "主用" : "Primary"}</option><option value="parallel">${zh ? "并行" : "Parallel"}</option><option value="backup">${zh ? "备用" : "Backup"}</option></select></label></div><div class="panel-actions"><button class="button secondary" type="submit" ${stationOptions ? "" : "disabled"}>${zh ? "添加工站" : "Add station"}</button></div></form>` : ""}`;
+        inspector += flowEditor;
     }
     const nodes = ordered.map((view, index) => {
         const op = view.operation;
@@ -1073,27 +1287,61 @@ function renderVisualRoute(routingConfig, selectedOperation) {
             const id = assignment.assignment.stationId;
             const active = selectedOperationId === op.operationId && visualInspectorMode === "station" && (visualStationId || selectedWorkflowStationId) === id;
             const share = assignment.assignment.plannedShare;
-            return `<button class="route-editor-station ${active ? "selected" : ""}" type="button" data-visual-station="${escapeHtml(id)}" data-visual-operation="${escapeHtml(op.operationId)}"><span>${escapeHtml(formatKnownText(assignment.station?.name ?? id))}</span><em>${assignment.assignment.role === "backup" ? (zh ? "备用" : "backup") : share === undefined ? "-" : `${formatNumber(Math.round(share * 100))}%`}</em></button>`;
+            return `<button class="route-editor-station ${active ? "selected" : ""}" type="button" data-visual-station="${escapeHtml(id)}" data-visual-operation="${escapeHtml(op.operationId)}"><span>${escapeHtml(formatKnownText(assignment.station?.name ?? id))}</span><em>${assignment.assignment.role === "backup" ? (zh ? "备用" : "backup") : share === undefined ? "-" : `${formatNumber(Math.round(share * 100))}%`}</em><span data-report-gap-station="${escapeHtml(id)}"></span></button>`;
         }).join("");
         return `<span class="route-editor-join"><button type="button" data-visual-insert="${index}" ${local ? "" : "disabled"} title="${zh ? "在此插入工序" : "Insert operation"}" aria-label="${zh ? "在此插入工序" : "Insert operation"}">+</button></span>
       <article class="route-editor-node ${selectedOperationId === op.operationId ? "active" : ""}" data-visual-node="${escapeHtml(op.operationId)}" role="button" tabindex="0" draggable="${local}" aria-label="${zh ? "选择工序" : "Select operation"} ${escapeHtml(formatKnownText(op.name))}">
         <div class="route-editor-node-head"><span>OP${op.sequence}</span><span>${escapeHtml(processTypeLabel(process?.processType ?? op.processType))}</span></div>
         <strong>${escapeHtml(formatKnownText(op.name))}</strong><small>${escapeHtml(op.operationId)}</small>
         ${stations || `<p class="note">${zh ? "待分配工站" : "No station assigned"}</p>`}
+        ${flowLabel(op.operationId) ? `<small class="route-flow-tag">${escapeHtml(flowLabel(op.operationId))}</small>` : ""}
+        <span data-report-gap-operation="${escapeHtml(op.operationId)}"></span>
         ${local ? `<button class="route-editor-add-station" type="button" data-visual-add-station="${escapeHtml(op.operationId)}">+ ${zh ? "添加工站" : "Add station"}</button>` : ""}
       </article>`;
     }).join("");
     const processOptions = (scenarioState.processMasters ?? []).map(process => `<option value="${escapeHtml(process.processId)}">${escapeHtml(formatKnownText(process.name))} / ${escapeHtml(process.processId)}</option>`).join("");
+    const historyOptions = routeHistory.map(entry => `<option value="${entry.id}">${escapeHtml(entry.savedAt.replace("T", " ").slice(0, 19))} · ${entry.routeIds.length} ${zh ? "条路线" : "routes"} · ${escapeHtml(entry.routeIds.at(-1) ?? "-")}</option>`).join("");
     visualRouteRoot.innerHTML = `<div class="route-editor-toolbar"><div><h2>${zh ? "工艺路线编排" : "Route editor"}</h2><p class="note">${escapeHtml(route?.routeId ?? "-")} · ${local ? (zh ? "本地验证草稿" : "Local validation draft") : (zh ? "已发布路线 · 只读" : "Released route · read only")}</p></div>
-    <div class="panel-actions"><button class="button secondary" type="button" id="visualOpenLibrary">${zh ? "工艺库" : "Process library"}</button>${!local && route ? `<button class="button" type="button" id="visualCreateCopy">${zh ? "创建验证副本" : "Create validation copy"}</button>` : ""}</div></div>
+    ${toolbarActions}</div>
+    ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
+    ${localValidationNotice ? `<p class="form-ok" role="status">${escapeHtml(localValidationNotice)}</p>` : ""}
     ${visualRouteError ? `<p class="form-error" role="alert">${escapeHtml(visualRouteError)}</p>` : ""}
+    <details class="form-section route-history" ${routeHistoryOpen ? "open" : ""}><summary>${zh ? "本机路线历史" : "Local route history"}</summary><div class="panel-actions"><select id="routeHistorySelect" aria-label="${zh ? "选择历史路线" : "Select route history"}">${historyOptions || `<option value="">${zh ? "暂无历史记录" : "No history yet"}</option>`}</select><button class="button secondary" type="button" id="refreshRouteHistory">${zh ? "刷新" : "Refresh"}</button><button class="button secondary" type="button" id="restoreRouteHistory" ${historyOptions ? "" : "disabled"}>${zh ? "恢复所选记录" : "Restore selected record"}</button></div></details>
+    ${invalidFlowNotice}
     <div class="route-editor-layout"><div class="route-editor-flow"><div class="route-editor-track">${nodes}<span class="route-editor-join"><button type="button" data-visual-insert="${ordered.length}" ${local ? "" : "disabled"} title="${zh ? "在末尾添加工序" : "Append operation"}" aria-label="${zh ? "在末尾添加工序" : "Append operation"}">+</button></span></div></div><div class="route-editor-inspector">${inspector}</div></div>
     <dialog class="route-editor-dialog" id="visualProcessDialog"><h3>${zh ? "选择工艺加入路线" : "Choose a process"}</h3><label>${zh ? "工艺" : "Process"}<select id="visualProcessId">${processOptions}</select></label><div class="panel-actions"><button class="button secondary" type="button" id="visualCancelInsert">${zh ? "取消" : "Cancel"}</button><button class="button" type="button" id="visualConfirmInsert" ${processOptions ? "" : "disabled"}>${zh ? "加入路线" : "Add to route"}</button></div></dialog>`;
-    visualRouteRoot.querySelector("#visualOpenLibrary")?.addEventListener("click", () => setWorkflowStage("library"));
-    visualRouteRoot.querySelector("#visualCreateCopy")?.addEventListener("click", () => {
-        const result = createLocalRouteCopy(scenarioState, route?.routeId ?? "");
-        applyVisualRouteChange(result, "route" in result && result.route.routeId ? { routeId: result.route.routeId } : {});
+    bindVisualRouteToolbar(routingConfig, selectedOperation);
+    visualRouteRoot.querySelector(".route-history")?.addEventListener("toggle", event => {
+        routeHistoryOpen = event.currentTarget.open;
     });
+    visualRouteRoot.querySelector("#refreshRouteHistory")?.addEventListener("click", () => { void refreshRouteHistory(); });
+    visualRouteRoot.querySelector("#restoreRouteHistory")?.addEventListener("click", async () => {
+        const id = Number(visualRouteRoot.querySelector("#routeHistorySelect")?.value);
+        if (!Number.isSafeInteger(id) || id <= 0)
+            return;
+        if (!window.confirm(zh
+            ? "恢复这份历史记录会替换当前本地工艺与路线。当前版本仍保留在历史中。继续吗？"
+            : "Restore this snapshot and replace the current local process and route data? The current version remains in history."))
+            return;
+        try {
+            const parsed = parseLocalValidationStore(JSON.parse(await readRouteHistory(id)));
+            if (!parsed.ok)
+                throw new Error("Invalid route history snapshot");
+            scenarioState = applyLocalValidation(cloneScenario(), parsed.store);
+            persistLocalValidation();
+            localStoreError = "";
+            selectedOperationId = "";
+            selectedWorkflowStationId = "";
+            syncRouteSelector(selectedProductId, parsed.store.routes[0]?.routeId);
+            render(selectedProductId);
+            void refreshRouteHistory();
+        }
+        catch (error) {
+            localStoreError = zh ? "历史记录恢复失败，当前数据未更改。" : "Could not restore route history; current data was not changed.";
+            render(selectedProductId);
+        }
+    });
+    bindInvalidFlowRemoval(route);
     visualRouteRoot.querySelectorAll("[data-visual-insert]").forEach(button => button.addEventListener("click", () => {
         if (!local)
             return;
@@ -1151,23 +1399,63 @@ function renderVisualRoute(routingConfig, selectedOperation) {
     });
     visualRouteRoot.querySelector("#visualBackToOperation")?.addEventListener("click", () => { visualInspectorMode = "operation"; render(selectedProductId); });
     visualRouteRoot.querySelector("#visualEditParameter")?.addEventListener("click", () => { visualEditingStationKey = visualEditingStationKey === stationKey ? "" : stationKey; render(selectedProductId); });
+    visualRouteRoot.querySelector("#visualOperationNameForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        if (!route || !operation)
+            return;
+        const name = String(new FormData(event.currentTarget).get("name") ?? "").trim();
+        const sameName = route.operations.some(item => item.operationId !== operation.operationId && item.name.trim() === name);
+        if (sameName && !window.confirm(zh ? "当前路线已有同名工序，仍要使用这个名称吗？" : "Another operation on this route has the same name. Keep it?"))
+            return;
+        applyVisualRouteChange(renameLocalOperation(scenarioState, { routeId: route.routeId ?? "", operationId: operation.operationId, name }), { operationId: operation.operationId });
+    });
     visualRouteRoot.querySelector("[data-local-baseline-form]")?.addEventListener("submit", event => { event.preventDefault(); applyLocalBaseline(event.currentTarget); });
     visualRouteRoot.querySelector("#visualShareForm")?.addEventListener("submit", event => {
         event.preventDefault();
         if (!local || !stationView || stationView.assignment.role === "backup")
             return;
         const input = event.currentTarget.elements.namedItem("share");
-        const share = Number(input.value);
-        if (input.value === "" || !Number.isFinite(share) || share < 0 || share > 100) {
-            visualRouteError = zh ? "计划占用份额必须在 0–100% 之间。" : "Planned share must be between 0 and 100%.";
+        const value = input.value.trim();
+        const share = Number(value);
+        if (value !== "" && (!Number.isFinite(share) || share <= 0 || share > 100)) {
+            visualRouteError = zh ? "固定占用份额必须大于 0%，且不超过 100%。" : "Fixed share must be above 0% and at most 100%.";
             render(selectedProductId);
             return;
         }
-        stationView.assignment.allocationMode = "fixedShare";
-        stationView.assignment.plannedShare = share / 100;
+        if (value === "") {
+            stationView.assignment.allocationMode = "forecastCalculated";
+            delete stationView.assignment.plannedShare;
+        }
+        else {
+            stationView.assignment.allocationMode = "fixedShare";
+            stationView.assignment.plannedShare = share / 100;
+        }
         persistLocalValidation();
         visualRouteError = "";
         render(selectedProductId);
+    });
+    visualRouteRoot.querySelector("#visualFlowForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        if (!route || !previousView || !operation)
+            return;
+        const values = new FormData(event.currentTarget);
+        const allowedPairs = values.getAll("pair").map(value => {
+            const [fromIndex, toIndex] = String(value).split(":").map(Number);
+            return { fromStationId: fromStations[fromIndex]?.assignment.stationId ?? "",
+                toStationId: toStations[toIndex]?.assignment.stationId ?? "" };
+        });
+        applyVisualRouteChange(setLocalStationFlowPolicy(scenarioState, {
+            routeId: route.routeId ?? "", fromOperationId: previousView.operation.operationId,
+            toOperationId: operation.operationId, allowedPairs,
+        }));
+    });
+    visualRouteRoot.querySelector("#visualClearFlow")?.addEventListener("click", () => {
+        if (!route || !previousView || !operation)
+            return;
+        applyVisualRouteChange(setLocalStationFlowPolicy(scenarioState, {
+            routeId: route.routeId ?? "", fromOperationId: previousView.operation.operationId,
+            toOperationId: operation.operationId,
+        }));
     });
     visualRouteRoot.querySelector("#visualAssignForm")?.addEventListener("submit", event => {
         event.preventDefault();
@@ -1178,90 +1466,39 @@ function renderVisualRoute(routingConfig, selectedOperation) {
         });
         applyVisualRouteChange(result, "assignment" in result ? { stationId: result.assignment.stationId } : {});
     });
-    visualRouteRoot.querySelector("#visualCreateStationForm")?.addEventListener("submit", event => {
-        event.preventDefault();
-        const values = new FormData(event.currentTarget);
-        const stationId = String(values.get("stationId") ?? "").trim();
-        const created = createLocalStation(scenarioState, { stationId, name: String(values.get("name") ?? ""), stationGroupId: String(values.get("stationGroupId") ?? "") });
-        if ("issues" in created) {
-            applyVisualRouteChange(created);
-            return;
-        }
-        const assigned = assignLocalStation(scenarioState, { routeId: route?.routeId ?? "", operationId: operation?.operationId ?? "", stationId, role: String(values.get("role") ?? "primary") });
-        applyVisualRouteChange(assigned, "assignment" in assigned ? { stationId } : {});
-    });
     visualRouteRoot.querySelectorAll("[data-visual-move]").forEach(button => button.addEventListener("click", () => {
         if (!route || !operation)
             return;
         const index = ordered.findIndex(item => item.operation.operationId === operation.operationId);
         moveVisualOperation(route.routeId ?? "", operation.operationId, index + Number(button.dataset.visualMove));
     }));
+    paintRouteReportGaps(currentRouteReportGaps(routingConfig));
 }
-function renderRouting(operations, activeOperationId) {
+function bindInvalidFlowRemoval(route) {
+    if (!route || !isLocalDraftRoute(route))
+        return;
+    visualRouteRoot.querySelectorAll("[data-remove-stale-flow]").forEach(button => button.addEventListener("click", () => {
+        applyVisualRouteChange(setLocalStationFlowPolicy(scenarioState, {
+            routeId: route.routeId ?? "", fromOperationId: button.dataset.removeStaleFlow ?? "",
+            toOperationId: button.dataset.toOperation ?? "",
+        }));
+    }));
+}
+function renderRouting(operations) {
     routingRoot.innerHTML = operations.length
-        ? `${operations.map(operation => renderOperation(operation, activeOperationId)).join("")}${renderOperationTable(operations)}`
+        ? renderOperationTable(operations)
         : emptyState(t("noRoutingOperations"));
-    routingRoot.querySelectorAll(".operation-row[data-operation-id]").forEach(row => {
-        row.addEventListener("click", () => {
-            selectOperation(row.dataset.operationId ?? "");
-        });
-        row.addEventListener("keydown", event => {
-            if (event.key !== "Enter" && event.key !== " ")
-                return;
-            event.preventDefault();
-            selectOperation(row.dataset.operationId ?? "");
-        });
-    });
-    bindOperationEditing();
-}
-function bindOperationEditing() {
-    routingRoot.querySelectorAll("[data-operation-field]").forEach(input => {
-        input.addEventListener("change", () => {
-            updateOperationField(input.dataset.opEditId ?? "", input.dataset.operationField ?? "", input.value);
-        });
-    });
-}
-function renderOperation(operationView, activeOperationId) {
-    const operation = operationView.operation;
-    const completeness = getOperationCompleteness(operationView);
-    const isActive = operation.operationId === activeOperationId;
-    return `
-    <article class="operation-row selectable ${isActive ? "active" : ""}" data-operation-id="${escapeHtml(operation.operationId)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
-      <div class="operation-main">
-        <div class="op-seq">OP${operation.sequence}</div>
-        <div>
-          <h3>${escapeHtml(formatKnownText(operation.name))}</h3>
-          <p>${escapeHtml(formatKnownText(operation.processType))}${operation.digitalTwinNodeId ? ` · ${t("digitalTwinShort")} ${escapeHtml(operation.digitalTwinNodeId)}` : ""}</p>
-        </div>
-      </div>
-      <div class="operation-checks">
-        <span class="status ${completeness.assignmentTone}">${t("stationAssignmentCompleteness")}: ${escapeHtml(completeness.assignmentLabel)}</span>
-        <span class="status ${completeness.parameterTone}">${t("parameterCompleteness")}: ${escapeHtml(completeness.parameterLabel)}</span>
-      </div>
-      <div class="assignment-preview">
-        ${operationView.assignments.map(renderAssignmentPreview).join("")}
-      </div>
-      ${operationView.messages.length ? `<ul class="message-list">${operationView.messages.map(message => `<li>${escapeHtml(formatKnownText(message))}</li>`).join("")}</ul>` : ""}
-    </article>
-  `;
-}
-function renderAssignmentPreview(view) {
-    const assignment = view.assignment;
-    const stationName = view.station?.name ?? assignment.stationId;
-    const blocker = assignment.planningBlockerReason ? ` · ${assignment.planningBlockerReason}` : "";
-    const tone = view.planningStatus === "available" ? "" : "bad";
-    return `<span class="role-chip ${tone}">${formatRole(assignment.role)}: ${escapeHtml(formatKnownText(stationName))}${escapeHtml(formatKnownText(blocker))}</span>`;
 }
 function renderOperationTable(operations) {
     const rows = operations.map(operationView => {
         const operation = operationView.operation;
         return `
       <tr>
-        <td>${editableOperationField(operation.operationId, "sequence", String(operation.sequence), "number")}</td>
+        <td>${formatNumber(operation.sequence)}</td>
         <td>${escapeHtml(operation.operationId)}</td>
-        <td>${editableOperationField(operation.operationId, "name", operation.name)}</td>
-        <td>${editableOperationField(operation.operationId, "processType", operation.processType)}</td>
-        <td>${editableOperationField(operation.operationId, "digitalTwinNodeId", operation.digitalTwinNodeId ?? "")}</td>
+        <td>${escapeHtml(formatKnownText(operation.name))}</td>
+        <td>${escapeHtml(formatKnownText(operation.processType))}</td>
+        <td>${escapeHtml(operation.digitalTwinNodeId ?? "-")}</td>
         <td>${escapeHtml(operation.predecessorOperationIds?.join(", ") || "-")}</td>
         <td>${escapeHtml(operation.successorOperationIds?.join(", ") || "-")}</td>
       </tr>
@@ -1308,13 +1545,6 @@ function editableProductScenarioField(value) {
       </select>
     </div>
   `;
-}
-function editableOperationField(operationId, fieldName, value, type = "text") {
-    if (!isMockEditing) {
-        const displayValue = fieldName === "name" || fieldName === "processType" ? formatKnownText(value) : value;
-        return escapeHtml(type === "number" ? formatNumber(Number(value)) : displayValue || "-");
-    }
-    return `<input class="table-input" data-op-edit-id="${escapeHtml(operationId)}" data-operation-field="${escapeHtml(fieldName)}" type="${escapeHtml(type)}" value="${escapeHtml(value)}" />`;
 }
 function updateProductField(currentProductId, fieldName, value) {
     const product = scenarioState.products?.find(item => item.productId === currentProductId);
@@ -1376,31 +1606,6 @@ function cascadeProductId(previousProductId, nextProductId) {
             policy.productId = nextProductId;
     });
 }
-function updateOperationField(operationId, fieldName, value) {
-    const operation = scenarioState.routes
-        .find(route => route.routeId === selectedRouteId())
-        ?.operations.find(item => item.operationId === operationId);
-    if (!operation)
-        return;
-    if (fieldName === "sequence") {
-        operation.sequence = Math.max(Number(value) || operation.sequence, 0);
-    }
-    else if (fieldName === "name") {
-        operation.name = value;
-    }
-    else if (fieldName === "processType") {
-        operation.processType = value;
-    }
-    else if (fieldName === "digitalTwinNodeId") {
-        if (value) {
-            operation.digitalTwinNodeId = value;
-        }
-        else {
-            delete operation.digitalTwinNodeId;
-        }
-    }
-    render(selectedProductId);
-}
 function renderOperationDetail(operationView, routingConfig) {
     if (!operationView) {
         operationDetailRoot.innerHTML = emptyState(t("selectOperationEmpty"));
@@ -1415,8 +1620,12 @@ function renderOperationDetail(operationView, routingConfig) {
         ? `${locale === "zh" ? "阶段 BOM" : "Stage BOM"} · ${requirement.sourceRef ?? "-"}${requirement.version ? ` · ${requirement.version}` : ""}`
         : requirement?.source === "localValidation"
             ? `${locale === "zh" ? "本地验证输入" : "Local validation"}${requirement.version ? ` · ${requirement.version}` : ""}` : "-";
-    const quantityEditable = isMockEditing && route && (requirement?.source === "localValidation"
-        || requirement?.issue === "quantity_missing" || requirement?.issue === "quantity_invalid");
+    const stageBom = scenarioState.stageBoms?.find(item => item.stageBomId === operation.outputStageBomId);
+    const editableStageBom = !!route && !!stageBom && stageBom.productId === route.productId
+        && stageBom.routeId === route.routeId && stageBom.operationId === operation.operationId
+        && stageBom.requiredOutputUnitsPerFinishedProduct === undefined;
+    const quantityEditable = isMockEditing && !!route && ((isLocalDraftRoute(route) && (!stageBom || editableStageBom))
+        || editableStageBom);
     const focusedAssignment = operationView.assignments.find(view => view.assignment.stationId === visualStationId)
         ?? operationView.assignments.find(view => view.assignment.stationId === selectedWorkflowStationId);
     const visibleAssignments = visualInspectorMode === "station" && focusedAssignment
@@ -1442,9 +1651,7 @@ function renderOperationDetail(operationView, routingConfig) {
       <button class="button secondary" type="submit">${locale === "zh" ? "确认本地用量" : "Confirm local quantity"}</button>
     </form>` : ""}
     ${localOperationQuantityErrors.has(quantityKey) ? `<p class="form-error" role="alert">${escapeHtml(localOperationQuantityErrors.get(quantityKey) ?? "")}</p>` : ""}
-    <div class="assignment-grid">
-      ${visibleAssignments.map(view => renderAssignment(view)).join("")}
-    </div>
+    ${isRouteEditorOpen ? "" : `<div class="assignment-grid">${visibleAssignments.map(view => renderAssignment(view)).join("")}</div>`}
     ${operationView.messages.length ? `<ul class="message-list">${operationView.messages.map(message => `<li>${escapeHtml(formatKnownText(message))}</li>`).join("")}</ul>` : ""}
   `;
     operationDetailRoot.querySelectorAll("[data-local-baseline-form]").forEach(form => {
@@ -1469,9 +1676,10 @@ function applyLocalOperationQuantity(form) {
     const operation = route?.operations.find(item => item.operationId === operationId);
     const stageBom = scenarioState.stageBoms?.find(item => item.stageBomId === operation?.outputStageBomId);
     const units = Number(new FormData(form).get("units"));
-    if (!isMockEditing || !route || !operation || !stageBom
-        || stageBom.productId !== route.productId || stageBom.routeId !== route.routeId || stageBom.operationId !== operationId
-        || stageBom.requiredOutputUnitsPerFinishedProduct !== undefined
+    if (!isMockEditing || !route || !operation
+        || (stageBom && (stageBom.productId !== route.productId || stageBom.routeId !== route.routeId
+            || stageBom.operationId !== operationId || stageBom.requiredOutputUnitsPerFinishedProduct !== undefined))
+        || (!stageBom && !isLocalDraftRoute(route))
         || !Number.isSafeInteger(units) || units <= 0) {
         localOperationQuantityErrors.set(key, locale === "zh" ? "工序用量必须是正整数，且不能覆盖上游阶段 BOM。" : "Quantity must be a positive integer and cannot override Stage BOM.");
         render(selectedProductId);
@@ -1479,7 +1687,7 @@ function applyLocalOperationQuantity(form) {
     }
     try {
         const version = `local-${Date.now()}`;
-        localStorage.setItem(operationQuantityStorageKey(routeId, operationId), JSON.stringify({ routeId, operationId, units, version }));
+        saveLocalState(operationQuantityStorageKey(routeId, operationId), JSON.stringify({ routeId, operationId, units, version }));
         operation.requiredOutputUnitsPerFinishedProduct = units;
         operation.quantitySourceVersion = version;
         localOperationQuantityErrors.delete(key);
@@ -1511,15 +1719,16 @@ function restoreLocalOperationQuantities() {
     }
     catch { /* Browser storage may be disabled. */ }
 }
-function clearLocalOperationQuantities() {
+function clearLocalOperationQuantities(routeIds) {
     try {
         const keys = [];
         for (let index = 0; index < localStorage.length; index += 1) {
             const key = localStorage.key(index);
-            if (key?.startsWith(localOperationQuantityStoragePrefix))
+            if (key?.startsWith(localOperationQuantityStoragePrefix)
+                && (!routeIds || routeIds.some(routeId => key.startsWith(`${localOperationQuantityStoragePrefix}${encodeURIComponent(routeId)}:`))))
                 keys.push(key);
         }
-        keys.forEach(key => localStorage.removeItem(key));
+        keys.forEach(removeLocalState);
     }
     catch { /* Browser storage may be disabled. */ }
 }
@@ -1558,7 +1767,7 @@ function applyLocalBaseline(form) {
             ? `将新建本地预设版本：CT ${formatNumber(next.standardCycleSec)} 秒、P ${percent(next.performanceRate)}、Q ${percent(next.qualityRate)}。请确认 P 已按新 CT 复核；已有 R&R 记录和已发布版本不改写，当前对比与建议将按新基线重算。继续吗？`
             : `Create a local planned version: CT ${formatNumber(next.standardCycleSec)}s, P ${percent(next.performanceRate)}, Q ${percent(next.qualityRate)}? Confirm P was reviewed against the new CT. Existing records stay unchanged; current comparisons will recalculate.`))
             return;
-        localStorage.setItem(localBaselineStorageKey(productId, operationId, stationId), JSON.stringify(next));
+        saveLocalState(localBaselineStorageKey(productId, operationId, stationId), JSON.stringify(next));
         scenarioState.operationStationParameters ??= [];
         scenarioState.operationStationParameters.push(next);
         if (!hasObservations && contextKey === rnrContextKey) {
@@ -1613,7 +1822,7 @@ function clearLocalBaselines() {
             if (key?.startsWith(localBaselineStoragePrefix))
                 keys.push(key);
         }
-        keys.forEach(key => localStorage.removeItem(key));
+        keys.forEach(removeLocalState);
     }
     catch { /* Browser storage may be disabled. */ }
 }
@@ -1698,7 +1907,7 @@ function renderStationAssignmentRow(operationView, view) {
     </tr>
   `;
 }
-function renderAssignment(view, edit = isMockEditing) {
+function renderAssignment(view, edit = isMockEditing, editShare = false) {
     const assignment = view.assignment;
     const parameter = view.parameter;
     const baselineKey = `${assignment.operationId}::${assignment.stationId}`;
@@ -1740,7 +1949,11 @@ function renderAssignment(view, edit = isMockEditing) {
             </div>
             ${localBaselineErrors.has(baselineKey) ? `<p class="form-error" role="alert">${escapeHtml(localBaselineErrors.get(baselineKey) ?? "")}</p>` : ""}
             <button class="button secondary" type="submit">${locale === "zh" ? "确认本地基线" : "Confirm local baseline"}</button>
-          </form>` : ""}
+          </form>
+          ${editShare && assignment.role !== "backup" ? `<form id="visualShareForm" class="local-share-form">
+            <label class="field">${locale === "zh" ? "固定占用份额 (%)" : "Fixed share (%)"}<input name="share" type="number" min="0.1" max="100" step="0.1" value="${assignment.plannedShare === undefined ? "" : escapeHtml(String(Math.round(assignment.plannedShare * 1000) / 10))}" placeholder="-" title="${locale === "zh" ? "留空表示不设固定份额，按本工站周账计算" : "Leave blank to use the station's full weekly ledger without a fixed share"}"></label>
+            <button class="button secondary" type="submit">${locale === "zh" ? "确认份额" : "Confirm share"}</button>
+          </form>` : ""}` : ""}
       ${assignment.backupCondition ? `<p class="note">${escapeHtml(formatKnownText(assignment.backupCondition))}</p>` : ""}
       ${view.messages.length ? `<ul class="message-list compact">${view.messages.map(message => `<li>${escapeHtml(formatKnownText(message))}</li>`).join("")}</ul>` : ""}
     </section>
@@ -2298,6 +2511,7 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
     const stableDates = draft.dayModes.flatMap((mode, day) => mode === "manual" && draft.weekStartDate ? [addDays(draft.weekStartDate, day)] : []);
     return `
     <section class="sub-card" style="margin-top:14px;" data-week-ledger>
+      <p class="form-error" data-report-gap-station="${escapeHtml(stationId)}" data-report-gap-detail hidden></p>
       <div class="panel-head"><h3>${zh ? "长周期投影 / 日历展开" : "Long-horizon projection / calendar"}</h3><span class="section-label">${zh ? "按需生成 · 本地预览" : "Optional · local preview"}</span></div>
       <div class="field-grid">
         <div class="field"><label for="copyWeekStartDate">${zh ? "整周起始日期" : "Week start date"}</label><input id="copyWeekStartDate" type="date" value="${escapeHtml(draft.weekStartDate)}" /></div>
@@ -3046,7 +3260,7 @@ function renderRnrActualEditor(stationId, productId, parameter, operation) {
     const window = standardSaDayWindow(getStandardSaDayConfig(productId, stationId));
     const issues = validatePlannedSaEvents(events, window);
     const pace = currentRnrPaceSummary();
-    const loadSample = productId === "A-Housing" && ((operation?.operationId === "op-a-10" && (stationId === "OP10" || stationId === "OP10B")) || (operation?.operationId === "op-a-20" && stationId === "OP20"))
+    const loadSample = parameter && operation
         ? `<button class="button secondary" type="button" data-load-rnr-validation>${locale === "zh" ? "加载 R&R 验证样本" : "Load R&R validation sample"}</button>`
         : "";
     return `
@@ -3517,7 +3731,7 @@ function bindRnrTracking() {
     });
 }
 function productionLapsFor(operationId, stationId) {
-    return (rnrActualEventsByContext.get(`${selectedProductId}::${operationId}::${stationId}`) ?? [])
+    return (rnrActualEventsByContext.get(actualScopeKey(selectedProductId, operationId, stationId)) ?? [])
         .filter(event => event.kind === "production")
         .map(event => ({
         startMinute: event.startMinute,
@@ -3588,7 +3802,7 @@ function openPlannedCycleCorrection(form) {
             dialog.close();
             if (!saving)
                 return;
-            localStorage.setItem(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(saving));
+            saveLocalState(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(saving));
             scenarioState.operationStationParameters ??= [];
             scenarioState.operationStationParameters.push(saving);
             for (const [id, saved] of confirmedSuggestions) {
@@ -3663,7 +3877,7 @@ function submitInitialPreset(form) {
             : `Establish a local initial preset?\nCT ${formatNumber(next.standardCycleSec)}s, ${formatNumber(next.piecesPerCycle)} pcs/cycle. P ${percent(next.performanceRate)}${manualOverride ? ", a manual judgement rather than a time-window result" : ", the 100% default"}.\nThis is not upstream master-data approval. Raw samples and the planned SA timeline stay unchanged. Week and month pieces use the new parameter from its effective date.`;
         if (!globalThis.confirm(confirmation))
             return;
-        localStorage.setItem(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(next));
+        saveLocalState(localBaselineStorageKey(selectedProductId, operation, station), JSON.stringify(next));
         scenarioState.operationStationParameters ??= [];
         scenarioState.operationStationParameters.push(next);
         cycleCheckDraft = { ...cycleCheckDraft, samples: samplesBefore };
@@ -3719,6 +3933,7 @@ function renderRouteWeekReportPanel(routingConfig) {
     return `<section class="sub-card" style="margin-top:14px;" data-route-week-report>
     <div class="panel-head"><h3>${zh ? "路线周计划报告" : "Route week plan report"}</h3><span class="pill warn">${zh ? "内部草稿 · 当前参数回算" : "Internal draft · current-parameter recalculation"}</span></div>
     <p class="note">${zh ? "两页分别读取各工站已生成的那一周周账，不共用一套动作损失。48 小时 R&R 不会被扩成整周 Actual。没有历史计划快照，件数按当前已发布参数回算。刷新后周账快照不保留。静态 report-preview.html 的示例数字不会进入这里。" : "Each page reads the week ledger generated for that week. A 48-hour R&R is not expanded into a week actual. Pieces are recalculated with current published parameters. Refresh drops the week snapshots. Demo numbers in report-preview.html are not used."}</p>
+    <div data-report-gap-host="report"></div>
     <div class="field-grid">
       <div class="field"><label>${zh ? "下周起始日期" : "Next week start"}</label><input type="date" data-report-week value="${escapeHtml(draftWeek)}" /></div>
       <div class="field"><label>${zh ? "周需求（件）" : "Weekly demand (pcs)"}</label><input type="number" min="0" step="1" data-report-demand value="${escapeHtml(demandDefault)}" /></div>
@@ -3846,6 +4061,7 @@ function routeWeekPlanFor(routingConfig, weekStart, role, demandQty) {
         ...(demandQty === undefined ? {} : { demandQty }),
         stations,
         operationOrder: routingConfig.operations.map(item => item.operation.operationId),
+        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
         operationUnits: requirements.map(item => ({
             operationId: item.operationId,
             ...(item.unitsPerFinishedProduct === undefined ? {} : { unitsPerFinishedProduct: item.unitsPerFinishedProduct }),
@@ -3879,7 +4095,8 @@ function renderCalibration(selectedOperation, routingConfig) {
     const offShiftIntervals = standardSaOffShiftIntervals(dayConfig);
     const baseline = summarizeStandardSaDay(events, dayConfig);
     const baselineValid = !validateStandardSaDay(events, dayConfig).length;
-    const actualEvents = rnrActualEventsByContext.get(`${productId}::${selectedOperation?.operation.operationId ?? ""}::${stationId}`) ?? [];
+    const actualEvents = rnrActualEventsByContext.get(actualScopeKey(productId, selectedOperation?.operation.operationId ?? "", stationId)) ?? [];
+    const hasActualRecord = actualEvents.length > 0;
     const productionEvents = actualEvents.filter(event => event.kind === "production");
     const actualQty = productionEvents.reduce((sum, event) => sum + (event.okQty ?? 0) + (event.nokQty ?? 0), 0);
     const okQty = productionEvents.reduce((sum, event) => sum + (event.okQty ?? 0), 0);
@@ -3963,16 +4180,16 @@ function renderCalibration(selectedOperation, routingConfig) {
     <p class="note">${t("calibrationNote")}</p>
     <section class="metrics" style="margin-top:14px;">
       ${metricCard(t("baselineSaMetric"), baselineValid ? percent(baseline.bestCaseSaWithBreaks) : "-", t("baselineReference"), "good")}
-      ${metricCard(t("draftPerformanceMetric"), performance === undefined ? "-" : percent(performance), t("observedDraft"), "neutral")}
-      ${metricCard(t("draftQualityMetric"), qualityRate === undefined ? "-" : percent(qualityRate), t("observedDraft"), "neutral")}
+      ${metricCard(t("draftPerformanceMetric"), performance === undefined ? "-" : percent(performance), hasActualRecord ? t("observedDraft") : (locale === "zh" ? "暂无实际记录" : "No actual record"), "neutral")}
+      ${metricCard(t("draftQualityMetric"), qualityRate === undefined ? "-" : percent(qualityRate), hasActualRecord ? t("observedDraft") : (locale === "zh" ? "暂无实际记录" : "No actual record"), "neutral")}
     </section>
     <section class="sub-card" style="margin-top:14px;">
       <div class="panel-head"><h3>${locale === "zh" ? "计划 / 实际时间对账" : "Planned / actual time reconciliation"}</h3><span class="pill ${reconciliation?.complete ? "good" : "warn"}">${reconciliation?.complete ? (locale === "zh" ? "时间账完整" : "Timeline complete") : (locale === "zh" ? "待核对" : "Review needed")}</span></div>
       ${reconciliation ? `
         <div class="field-grid">
           ${field(locale === "zh" ? "计划生产分钟" : "Planned production minutes", formatNumber(reconciliation.plannedProductionMinutes))}
-          ${field(locale === "zh" ? "实际生产分钟" : "Actual production minutes", formatNumber(reconciliation.actualProductionMinutes))}
-          ${field(locale === "zh" ? "显式异常分钟" : "Recorded abnormal minutes", formatNumber(reconciliation.explicitAbnormalMinutes))}
+          ${field(locale === "zh" ? "实际生产分钟" : "Actual production minutes", hasActualRecord ? formatNumber(reconciliation.actualProductionMinutes) : "-")}
+          ${field(locale === "zh" ? "显式异常分钟" : "Recorded abnormal minutes", hasActualRecord ? formatNumber(reconciliation.explicitAbnormalMinutes) : "-")}
           ${field(locale === "zh" ? "待补录分钟" : "Unrecorded minutes", formatNumber(reconciliation.unrecordedMinutes))}
         </div>
         <div class="table-wrap"><table><thead><tr>
@@ -4252,7 +4469,7 @@ function syncAutoSavedRnrEvidence(draft) {
     if (previous === signature)
         return;
     try {
-        localStorage.setItem(key, JSON.stringify({ ...draft, savedAt: new Date().toISOString() }));
+        saveLocalState(key, JSON.stringify({ ...draft, savedAt: new Date().toISOString() }));
         autoSavedEvidenceSignatures.set(key, signature);
         evidenceDraftMessage = "";
     }
@@ -4287,7 +4504,7 @@ function clearAllAutoSavedRnrEvidence() {
             if (key?.startsWith("capa-rnr-evidence-v1:"))
                 keys.push(key);
         }
-        keys.forEach(key => localStorage.removeItem(key));
+        keys.forEach(removeLocalState);
     }
     catch { /* Browser storage may be disabled. */ }
     autoRestoredEvidenceContexts.clear();
@@ -4395,7 +4612,7 @@ function clearCurrentRnrEvidence(draft) {
     const { productId, operationId, stationId } = draft.snapshot.scope;
     const key = evidenceStorageKey(draft);
     try {
-        localStorage.removeItem(key);
+        removeLocalState(key);
     }
     catch { /* Browser storage may be disabled. */ }
     autoSavedEvidenceSignatures.delete(key);
@@ -4626,6 +4843,7 @@ function renderRouteWindowCapacityPanel(routingConfig) {
         ...(storedWindow ? { memory: storedWindow } : {}),
         stations,
         operationIds: routingConfig.operations.map(item => item.operation.operationId),
+        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
         ...(Object.keys(operationUnitsPerProduct).length ? { operationUnitsPerProduct } : {}),
         ...(demandQty === undefined ? {} : { demandQty }),
     });
@@ -4642,11 +4860,12 @@ function renderRouteWindowCapacityPanel(routingConfig) {
       ${field(zh ? "所选观察窗口" : "Selected observation window", selectedLabel)}
       ${field(zh ? "路线计划等效成品能力" : "Planned product-equivalent capacity", value(view.bestGoodCapacity))}
       ${field(zh ? "路线实跑等效成品上限" : "Actual product-equivalent upper bound", value(view.actualGoodOutput))}
-      ${field(zh ? "计划 / 实跑瓶颈工序" : "Planned / actual bottleneck", `${view.bestBottleneckOperationId ?? "-"} / ${view.actualBottleneckOperationId ?? "-"}`)}
+      ${field(zh ? "计划 / 实跑瓶颈工序" : "Planned / actual bottleneck", `${view.bestBottleneckOperationId ?? (routingConfig.route?.stationFlowPolicies?.length && view.bestGoodCapacity !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")} / ${view.actualBottleneckOperationId ?? (routingConfig.route?.stationFlowPolicies?.length && view.actualGoodOutput !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")}`)}
       ${view.demandQty === undefined ? "" : field(zh ? "本窗口能力余量（计划 / 实跑）" : "Window capacity margin (planned / actual)", `${value(view.bestGap)} / ${value(view.actualGap)}`)}
     </div>
     <p class="note">${zh ? "路线观察窗口按当前产品与路线记住。切换当前工序或工站不会改它，也不会截取不同窗口的交集。" : "The route window is remembered for this product and route. Switching the current operation or station does not change it or intersect different windows."}</p>
     ${view.error ? `<p class="form-error" role="alert">${escapeHtml(view.error)}</p>` : ""}
+    ${view.flowIssue ? `<p class="form-error" role="alert">${escapeHtml(view.flowIssue)}</p>` : ""}
     <label class="field" style="display:block;max-width:280px;margin-top:14px;">${zh ? "本窗口需求件数" : "Demand units for this window"}
       <input type="number" min="0" step="1" data-window-demand value="${escapeHtml(rawDemand)}" />
     </label>
@@ -4878,7 +5097,7 @@ function renderPreflight(preflight) {
     preflightRoot.innerHTML = `
     <div class="panel-head">
       <div>
-        <p class="eyebrow">${t("parameterPreflight")}</p>
+        <p class="eyebrow">${t("parameterPreflight")} · ${escapeHtml(selectedRoute?.routeId ?? "-")}</p>
         <h2>${viewingLocalDraft ? (locale === "zh" ? "正式发布仍被拒绝" : "Formal release is still rejected") : (canEnterAnalysis ? t("readyForCapacity") : t("blockedBeforeCapacity"))}</h2>
       </div>
       <span class="pill ${canEnterAnalysis ? "good" : "bad"}">${canEnterAnalysis ? t("ready") : t("blocked")}</span>
@@ -4969,23 +5188,32 @@ function updateLocalValidationBanner(routingConfig) {
 function localIssueText(issue) {
     if (locale !== "zh")
         return issue.message;
+    if (issue.code === "station_incompatible" && issue.field === "equipmentId")
+        return "待投资资源只填写规划资源号，不填写申报设备编号。";
+    if (issue.code === "missing_field" && issue.field === "equipmentId")
+        return "本地申报现有设备需要填写申报设备编号；它不是物理 UID。";
+    if (issue.code === "missing_field" && issue.field === "sourceReference")
+        return "请填写资料来源或规划依据。";
     const labels = {
         missing_field: "还有必填项没写",
+        invalid_name: "工序名称需为 1–80 个字符",
         duplicate_process: "工艺编号已存在，没有写入第二条",
         missing_process_type: "类型清单里没有这个工艺类型",
+        duplicate_process_type: "目录中已有该工艺类型，请直接选择",
         duplicate_business_code: "企业业务编号已存在，没有写入",
         similar_name: "名称相似，没有自动合并",
         duplicate_operation: "工序编号已存在",
         duplicate_sequence: "工序顺序重复或无效",
-        duplicate_station: "工站编号已存在",
+        duplicate_station: "工站排产键或申报设备编号已存在",
         duplicate_assignment: "这个工站已经分配过",
         missing_process: "工艺清单里没有这个工艺",
         route_not_found: "路线或工序不存在",
         source_route_missing: "只能从已发布样例路线复制",
         not_local_draft: "当前不是本地验证路线",
         station_missing: "工站不存在或还没分配",
-        station_incompatible: "工站组与当前工艺不兼容；请到工艺库配置兼容工站组",
-        process_group_unbound: "工艺尚未绑定工站组；请先在工艺库完成绑定",
+        station_incompatible: "工站不承接当前工艺类型；请在工艺库核对候选类型",
+        invalid_station_flow: "工站连线无效；只能连接相邻工序的可排产工站，至少选一组",
+        process_group_unbound: "历史工艺组规则不完整；请核对旧数据",
         backup_not_plannable: "备用工站在客户批准前不能排产",
         investment_not_plannable: "待投资工站不能排产",
         parameter_incomplete: "CT、每循环件数、P、Q 还没填完整",
@@ -4999,7 +5227,7 @@ function localIssueText(issue) {
 function persistLocalValidation() {
     try {
         const store = extractLocalValidation(scenarioState);
-        localStorage.setItem(localValidationStorageKey, JSON.stringify(store));
+        saveLocalState(localValidationStorageKey, JSON.stringify(store));
     }
     catch { /* Browser storage may be disabled. */ }
 }
@@ -5047,65 +5275,102 @@ function dropLocalRuntimeState() {
                     keys.push(key);
             }
         }
-        keys.forEach(key => localStorage.removeItem(key));
+        keys.forEach(removeLocalState);
     }
     catch { /* Browser storage may be disabled. */ }
 }
-function applyLocalChange(result, nextRouteId, notice) {
-    if ("issues" in result) {
-        localValidationNotice = "";
-        localValidationError = result.issues.map(localIssueText).join("；");
-    }
-    else {
-        localValidationError = "";
-        localValidationNotice = notice ?? "";
-        scenarioState = result.scenario;
-        persistLocalValidation();
-        syncRouteSelector(selectedProductId, nextRouteId);
-    }
-    render(selectedProductId);
-    if (localValidationNotice || localValidationError) {
-        productRoot.querySelector("[data-local-feedback]")?.scrollIntoView({ block: "nearest" });
-    }
+function libraryTypeMatches(item, query) {
+    return [item.name, libraryDisplayText(item.name), item.processTypeId]
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(query.trim().toLocaleLowerCase());
 }
-function renderProcessLibrary() {
+function libraryTypeOptions() {
     const zh = locale === "zh";
     const types = scenarioState.processTypes ?? [];
-    const query = libraryQuery.trim().toLocaleLowerCase();
-    const processes = [...(scenarioState.processMasters ?? [])]
-        .filter(process => {
-        if (!query)
-            return true;
-        const typeName = types.find(item => item.processTypeId === process.processType)?.name ?? process.processType;
-        return [process.processId, process.name, libraryDisplayText(process.name), process.businessCode ?? "", process.processType, typeName, libraryDisplayText(typeName), process.version]
-            .join(" ")
-            .toLocaleLowerCase()
-            .includes(query);
-    })
-        .sort((a, b) => Number(isLocalDraftProcess(b)) - Number(isLocalDraftProcess(a)) || a.name.localeCompare(b.name, zh ? "zh" : "en"));
-    const selected = (scenarioState.processMasters ?? []).find(process => process.processId === librarySelectedProcessId);
-    const localProcesses = (scenarioState.processMasters ?? []).filter(isLocalDraftProcess);
-    const stationGroups = scenarioState.stationGroups ?? [];
-    const groupName = (id) => stationGroups.find(group => group.stationGroupId === id)?.name ?? id;
-    const groupBindingRows = stationGroups.map(group => {
-        const bound = (scenarioState.processMasters ?? []).filter(process => process.compatibleStationGroupIds?.includes(group.stationGroupId));
-        return `<tr><td>${escapeHtml(group.stationGroupId)}</td><td>${escapeHtml(libraryDisplayText(group.name))}</td><td>${bound.length ? bound.map(process => `${escapeHtml(libraryDisplayText(process.name))} / ${escapeHtml(process.processId)}`).join("<br>") : `<span class="form-error">${zh ? "未绑定" : "Unbound"}</span>`}</td><td>${escapeHtml(group.stationIds.join("、") || "-")}</td></tr>`;
-    }).join("");
-    const groupOptions = (selectedIds) => (scenarioState.stationGroups ?? []).map(group => `<label class="route-editor-group-option"><input type="checkbox" value="${escapeHtml(group.stationGroupId)}" ${selectedIds.includes(group.stationGroupId) ? "checked" : ""}>${escapeHtml(libraryDisplayText(group.name))} / ${escapeHtml(group.stationGroupId)}</label>`).join("");
-    const selectedRefs = selected ? listProcessRouteReferences(scenarioState, selected.processId) : [];
-    const typeOptions = [`<option value="">${zh ? "选择工艺类型" : "Choose a process type"}</option>`]
+    const typeQuery = libraryTypeQuery.trim().toLocaleLowerCase();
+    return [`<option value="">${zh ? "选择工艺类型" : "Choose a process type"}</option>`]
         .concat(["manufacturing", "quality"].map(family => {
         const label = processFamilyLabel(family);
         const options = types
             .filter(item => processTypeFamilyOf(item) === family)
+            .filter(item => !typeQuery || libraryTypeMatches(item, typeQuery))
             .map(item => `<option value="${escapeHtml(item.processTypeId)}"${item.processTypeId === libraryForm.processTypeId ? " selected" : ""}>${escapeHtml(libraryDisplayText(item.name))}${isLocalDraftProcessType(item) ? (zh ? " · 本地类型" : " · local type") : ""}</option>`)
             .join("");
         return options ? `<optgroup label="${escapeHtml(label)}">${options}</optgroup>` : "";
     }))
         .join("");
+}
+function updateLibraryTypeResults() {
+    const results = processLibraryRoot.querySelector("#libraryTypeResults");
+    if (!results)
+        return;
+    const query = libraryTypeQuery.trim();
+    results.hidden = !query;
+    if (!query) {
+        results.innerHTML = "";
+        return;
+    }
+    const matches = (scenarioState.processTypes ?? []).filter(item => libraryTypeMatches(item, query));
+    results.innerHTML = matches.length
+        ? matches.map(item => `<button class="library-type-result" type="button" data-library-type="${escapeHtml(item.processTypeId)}" aria-pressed="${item.processTypeId === libraryForm.processTypeId}">
+      <span>${escapeHtml(libraryDisplayText(item.name))}</span><small>${escapeHtml(processFamilyLabel(processTypeFamilyOf(item)))}</small>
+    </button>`).join("")
+        : `<p class="note">${locale === "zh" ? "目录中没有匹配的类型。" : "No matching type in the catalog."}</p>`;
+    results.querySelectorAll("[data-library-type]").forEach(button => {
+        button.addEventListener("click", () => {
+            readLibraryForm();
+            libraryForm.processTypeId = button.dataset.libraryType ?? "";
+            renderProcessLibrary();
+        });
+    });
+}
+function libraryProcessSearchText(process) {
+    const typeName = scenarioState.processTypes?.find(item => item.processTypeId === process.processType)?.name ?? process.processType;
+    return [process.processId, process.name, libraryDisplayText(process.name), process.businessCode ?? "", process.processType, typeName, libraryDisplayText(typeName), process.version]
+        .join(" ")
+        .toLocaleLowerCase();
+}
+function updateLibraryProcessSearch() {
+    const query = libraryQuery.trim().toLocaleLowerCase();
+    let visible = 0;
+    processLibraryRoot.querySelectorAll("[data-library-search]").forEach(row => {
+        row.hidden = !!query && !(row.dataset.librarySearch ?? "").includes(query);
+        if (!row.hidden)
+            visible++;
+    });
+    const empty = processLibraryRoot.querySelector("#libraryNoMatches");
+    if (empty)
+        empty.hidden = visible > 0;
+}
+function renderProcessLibrary() {
+    const zh = locale === "zh";
+    const processes = [...(scenarioState.processMasters ?? [])]
+        .sort((a, b) => Number(isLocalDraftProcess(b)) - Number(isLocalDraftProcess(a)) || a.name.localeCompare(b.name, zh ? "zh" : "en"));
+    const selected = (scenarioState.processMasters ?? []).find(process => process.processId === librarySelectedProcessId);
+    const stationGroups = scenarioState.stationGroups ?? [];
+    const stationRows = (scenarioState.stations ?? []).map(station => {
+        const local = station.sourceSystem === "local-validation";
+        const status = local
+            ? station.investmentStatus === "existing" ? (zh ? "本地申报现有设备" : "Locally declared existing") : (zh ? "待投资规划资源" : "Planned resource")
+            : station.investmentStatus === "existing" ? (zh ? "样例现有" : "Sample existing") : (zh ? "样例待投资" : "Sample planned");
+        const verification = local
+            ? station.investmentStatus === "existing" ? (zh ? "本地复核 · 模拟" : "Local review · simulation") : (zh ? "未核验 · 规划" : "Unverified · planned")
+            : (zh ? "未提供现场核验" : "No site verification supplied");
+        const legacyTypes = (scenarioState.processMasters ?? [])
+            .filter(process => process.compatibleStationGroupIds?.includes(station.stationGroupId ?? ""))
+            .map(process => process.processType);
+        const types = station.qualifiedProcessTypeIds ?? [...new Set(legacyTypes)];
+        const typeText = types.map(processTypeLabel).join("、") || "-";
+        const sourceNote = station.qualifiedProcessTypeIds?.length ? "" : station.stationGroupId && stationGroups.some(group => group.stationGroupId === station.stationGroupId)
+            ? (zh ? " · 历史组规则" : " · legacy group rule") : "";
+        return `<tr><td>${escapeHtml(station.equipmentId ?? "-")}</td><td>${escapeHtml(station.stationId)}</td><td>${escapeHtml(formatKnownText(station.name))}</td><td>${escapeHtml(typeText + sourceNote)}</td><td>${status}</td><td>${escapeHtml(station.sourceReference ?? station.sourceSystem ?? "-")}</td><td>${verification}</td></tr>`;
+    }).join("");
+    const candidateTypeOptions = (scenarioState.processTypes ?? []).map(type => `<label class="library-review-check"><input type="checkbox" name="qualifiedProcessTypeIds" value="${escapeHtml(type.processTypeId)}">${escapeHtml(processTypeLabel(type.processTypeId))} / ${escapeHtml(type.processTypeId)}</label>`).join("");
+    const selectedRefs = selected ? listProcessRouteReferences(scenarioState, selected.processId) : [];
     const rows = processes.map(process => {
         const refCount = listProcessRouteReferences(scenarioState, process.processId).length;
-        return `<tr>
+        return `<tr data-library-search="${escapeHtml(libraryProcessSearchText(process))}">
       <td><button class="button secondary" type="button" data-library-process="${escapeHtml(process.processId)}">${zh ? "查看" : "View"}</button></td>
       <td>${escapeHtml(process.processId)}</td>
       <td>${escapeHtml(libraryDisplayText(process.name))}</td>
@@ -5113,7 +5378,6 @@ function renderProcessLibrary() {
       <td>${escapeHtml(processSourceLabel(process))}</td>
       <td>${escapeHtml(process.version)}</td>
       <td>${escapeHtml(processStatusLabel(process))}</td>
-      <td>${process.compatibleStationGroupIds?.length ? escapeHtml(process.compatibleStationGroupIds.map(groupName).map(libraryDisplayText).join("、")) : isLocalDraftProcess(process) ? `<span class="form-error">${zh ? "待绑定" : "Unbound"}</span>` : (zh ? "未配置" : "Not configured")}</td>
       <td>${escapeHtml(zh ? `${refCount} 条路线工序` : `${refCount} route operation${refCount === 1 ? "" : "s"}`)}</td>
     </tr>`;
     }).join("");
@@ -5121,54 +5385,72 @@ function renderProcessLibrary() {
     <div class="panel-head">
       <div>
         <p class="eyebrow">${zh ? "基础资料 · 四阶段之外" : "Master data · outside the four stages"}</p>
-        <h2>${zh ? "工艺库" : "Process library"}</h2>
+        <h2>${zh ? "工艺库" : "Process Library"}</h2>
       </div>
       <button class="button secondary" type="button" id="returnFromLibrary">${zh ? "返回排产" : "Back to scheduling"}</button>
     </div>
-    <p class="note">${zh
-        ? "本地工艺是可复用的工艺定义。路线工序是某条产品路线上的引用。物理设备不在这里登记。内部工艺编号由系统生成，不是设备编号，也不是企业业务编号。"
-        : "A local process is a reusable definition. A route operation is its use on one product route. Physical equipment is not filed here. The internal process ID is assigned by the system; it is not an equipment ID or a business code."}</p>
+    <p class="note">${zh ? "先确认工艺类型，再登记可承接该类型的设备；产品路线决定实际工站角色与放行。工站排产键不是物理设备 UID。" : "Choose a process type, register candidate equipment, then decide station roles and release on the product route. A station planning key is not a physical equipment UID."}</p>
     ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
-    <div class="split">
-      <section class="sub-card">
-        <h3>${zh ? "新增本地工艺" : "Add a local process"}</h3>
-        <div class="field-grid" style="grid-template-columns:1fr;">
-          <label class="field">${zh ? "工艺名称" : "Process name"}<input id="libraryProcessName" type="text" value="${escapeHtml(libraryForm.name)}" /></label>
-          <label class="field">${zh ? "工艺类型" : "Process type"}<select id="libraryProcessType">${typeOptions}</select></label>
-          <label class="field">${zh ? "新本地类型名称" : "New local type name"}<input id="libraryNewTypeName" type="text" value="${escapeHtml(libraryForm.newTypeName)}" /></label>
-          <label class="field">${zh ? "新类型归类" : "New type group"}<select id="libraryNewTypeFamily"><option value="manufacturing"${libraryForm.newTypeFamily === "manufacturing" ? " selected" : ""}>${zh ? "制造工艺" : "Manufacturing"}</option><option value="quality"${libraryForm.newTypeFamily === "quality" ? " selected" : ""}>${zh ? "质量门" : "Quality gate"}</option></select></label>
-          <label class="field">${zh ? "说明" : "Description"}<input id="libraryProcessDescription" type="text" value="${escapeHtml(libraryForm.description)}" /></label>
-          <label class="field">${zh ? "企业业务编号" : "Business code"}<input id="libraryBusinessCode" type="text" value="${escapeHtml(libraryForm.businessCode)}" /></label>
-          <fieldset id="libraryNewGroups"><legend>${zh ? "兼容工站组" : "Compatible station groups"}</legend>${groupOptions(libraryForm.compatibleStationGroupIds)}</fieldset>
+    <section class="library-step">
+      <h3><span>01</span>${zh ? "选择工艺类型" : "Choose a process type"}</h3>
+      <div class="mini-grid">
+        <label class="field">${zh ? "检索类型目录" : "Search type catalog"}<input id="libraryTypeSearch" type="search" value="${escapeHtml(libraryTypeQuery)}" placeholder="${zh ? "例如：机加工" : "e.g. Machining"}"></label>
+        <label class="field">${zh ? "已有工艺类型" : "Existing process type"}<select id="libraryProcessType">${libraryTypeOptions()}</select></label>
+      </div>
+      <div id="libraryTypeResults" class="library-type-results" aria-live="polite"></div>
+      <details id="libraryNewTypeDetails" ${libraryShowNewType ? "open" : ""}>
+        <summary class="backup-toggle">${zh ? "目录里没有？申请新增类型" : "Type missing? Add a local type"}</summary>
+        <div class="mini-grid">
+          <label class="field">${zh ? "新类型名称" : "New type name"}<input id="libraryNewTypeName" type="text" value="${escapeHtml(libraryForm.newTypeName)}"></label>
+          <label class="field">${zh ? "类型归类" : "Type family"}<select id="libraryNewTypeFamily"><option value="manufacturing"${libraryForm.newTypeFamily === "manufacturing" ? " selected" : ""}>${zh ? "制造工艺" : "Manufacturing"}</option><option value="quality"${libraryForm.newTypeFamily === "quality" ? " selected" : ""}>${zh ? "质量门" : "Quality gate"}</option></select></label>
         </div>
-        <div class="action-bar">
-          <button class="button secondary" type="button" id="createLibraryType">${zh ? "新增本地类型" : "Add local type"}</button>
-          <button class="button" type="button" id="createLibraryProcess">${zh ? "写入工艺库" : "Save to library"}</button>
+        <label class="library-review-check"><input id="libraryTypeReviewed" type="checkbox">${zh ? "我已检查类型目录，确认没有同义或重复类型" : "I checked the catalog for equivalent or duplicate types"}</label>
+        <button class="button secondary" type="button" id="createLibraryType">${zh ? "确认新增本地类型" : "Confirm local type"}</button>
+      </details>
+    </section>
+    <section class="library-step">
+      <h3><span>02</span>${zh ? "建立具体工艺" : "File a specific process"}</h3>
+      <div class="field-grid library-process-fields">
+        <label class="field">${zh ? "工艺名称" : "Process name"}<input id="libraryProcessName" type="text" value="${escapeHtml(libraryForm.name)}" placeholder="${zh ? "例如：压铸" : "e.g. Die casting"}" title="${zh ? "填写可复用的工艺名称；产品专属工序名称在路线编排中填写" : "Name a reusable process; set product-specific operation names in the route editor"}"></label>
+        <label class="field">${zh ? "企业业务编号 · 可选" : "Business code · optional"}<input id="libraryBusinessCode" type="text" value="${escapeHtml(libraryForm.businessCode)}"></label>
+        <label class="field">${zh ? "说明 · 可选" : "Description · optional"}<input id="libraryProcessDescription" type="text" value="${escapeHtml(libraryForm.description)}"></label>
+      </div>
+      <div class="panel-actions"><button class="button" type="button" id="createLibraryProcess" ${libraryForm.processTypeId ? "" : "disabled"}>${zh ? "写入工艺库" : "Save process"}</button></div>
+      ${libraryNotice ? `<p class="form-ok" role="status">${escapeHtml(libraryNotice)}</p>` : ""}
+      ${libraryError ? `<p class="form-error" role="alert">${escapeHtml(libraryError)}</p>` : ""}
+    </section>
+    <section class="library-step">
+      <h3><span>03</span>${zh ? "工站与设备资源" : "Station resources"}</h3>
+      <p class="note">${zh ? "前置系统尚未接入时在此补录模拟资源。申报设备编号不是物理设备 UID；本地确认只用于模拟计算，待投资资源不计入可排产能力。" : "Register local simulation resources here while upstream integration is unavailable. A declared equipment code is not a physical UID; planned resources do not count as schedulable capacity."}</p>
+      <form id="libraryStationForm" class="form-section">
+        <div class="field-grid">
+          <label class="field">${zh ? "资源状态" : "Resource status"}<select name="investmentStatus"><option value="existing">${zh ? "本地申报现有设备" : "Locally declared existing equipment"}</option><option value="plannedInvestment">${zh ? "待投资规划资源" : "Planned investment resource"}</option></select></label>
+          <label class="field" id="libraryEquipmentCodeField"><span>${zh ? "申报设备编号（非 UID）" : "Declared equipment code (not UID)"}</span><input name="equipmentId" required></label>
+          <label class="field"><span id="libraryStationKeyLabel">${zh ? "工站排产键" : "Station planning key"}</span><input name="stationId" required></label>
+          <label class="field">${zh ? "工站名称" : "Station name"}<input name="name" required></label>
+          <label class="field">${zh ? "资料来源/规划依据" : "Source / planning basis"}<input name="sourceReference" required></label>
+          <fieldset class="library-station-types"><legend id="libraryQualifiedTypeLegend">${zh ? "本地确认可承接工艺类型" : "Candidate process types"}</legend>${candidateTypeOptions}</fieldset>
         </div>
-        ${libraryNotice ? `<p class="form-ok" role="status">${escapeHtml(libraryNotice)}</p>` : ""}
-        ${libraryError ? `<p class="form-error" role="alert">${escapeHtml(libraryError)}</p>` : ""}
-      </section>
-      <section class="sub-card">
-        <h3>${zh ? "工艺清单" : "Process list"}</h3>
-        <label class="field">${zh ? "搜索" : "Search"}<input id="librarySearch" type="search" value="${escapeHtml(libraryQuery)}" /></label>
-        <div class="table-wrap">
-          <table class="library-table">
-            <thead><tr><th></th><th>${zh ? "内部工艺编号" : "Internal process ID"}</th><th>${zh ? "名称" : "Name"}</th><th>${zh ? "类型" : "Type"}</th><th>${zh ? "来源" : "Source"}</th><th>${zh ? "版本" : "Version"}</th><th>${zh ? "状态" : "Status"}</th><th>${zh ? "工站组" : "Station groups"}</th><th>${zh ? "路线引用" : "Route use"}</th></tr></thead>
-            <tbody>${rows || `<tr><td colspan="9">${zh ? "没有匹配的工艺。" : "No matching process."}</td></tr>`}</tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-    <section class="form-section">
-      <h3>${zh ? "工站组与工艺绑定" : "Station group bindings"}</h3>
-      <div class="table-wrap"><table class="library-table"><thead><tr><th>${zh ? "组编号" : "Group ID"}</th><th>${zh ? "工站组" : "Station group"}</th><th>${zh ? "已绑定工艺" : "Bound processes"}</th><th>${zh ? "成员工站" : "Stations"}</th></tr></thead><tbody>${groupBindingRows}</tbody></table></div>
-      <div class="mini-grid"><label class="field">${zh ? "新组名称" : "New group name"}<input id="libraryNewGroupName" type="text" placeholder="${zh ? "例如：压铸工站组" : "e.g. Casting stations"}"></label>
-      <label class="field">${zh ? "绑定到本地工艺" : "Bind to local process"}<select id="libraryGroupProcessId"><option value="">${zh ? "选择工艺" : "Choose process"}</option>${localProcesses.map(process => `<option value="${escapeHtml(process.processId)}" ${process.processId === librarySelectedProcessId ? "selected" : ""}>${escapeHtml(libraryDisplayText(process.name))} / ${escapeHtml(process.processId)}</option>`).join("")}</select></label></div>
-      <button class="button secondary" type="button" id="createLibraryGroup" ${localProcesses.length ? "" : "disabled"}>${zh ? "新建并绑定" : "Create and bind"}</button>
-      <p class="note">${zh ? "机加工与装配样例已绑定现有工艺，保持只读；新建工站组须同时绑定本地工艺。" : "Machining and assembly samples are already bound and read-only. New groups must bind to a local process."}</p>
+        <label class="checkbox-field" id="libraryQualificationCheck"><input name="qualificationConfirmed" type="checkbox" required> ${zh ? "已复核申报编号、来源及候选工艺类型；仅用于本地模拟" : "I reviewed the declared code, source and candidate process types for local simulation only"}</label>
+        <div class="panel-actions"><button class="button" type="submit">${zh ? "登记工站" : "Register station"}</button></div>
+      </form>
+      ${libraryNotice ? `<p class="form-ok" role="status">${escapeHtml(libraryNotice)}</p>` : ""}
+      ${libraryError ? `<p class="form-error" role="alert">${escapeHtml(libraryError)}</p>` : ""}
+      <div class="table-wrap"><table class="library-table"><thead><tr><th>${zh ? "申报设备编号" : "Declared code"}</th><th>${zh ? "工站/规划资源号" : "Station / plan key"}</th><th>${zh ? "名称" : "Name"}</th><th>${zh ? "候选工艺类型" : "Candidate types"}</th><th>${zh ? "状态" : "Status"}</th><th>${zh ? "资料来源" : "Source"}</th><th>${zh ? "核验状态" : "Verification"}</th></tr></thead><tbody>${stationRows}</tbody></table></div>
+    </section>
+    <section class="library-step">
+      <div class="panel-head"><h3><span>04</span>${zh ? "进入工艺路线" : "Continue to route"}</h3><button class="button secondary" type="button" id="libraryGoRoute">${zh ? "打开工艺路线与工站" : "Open route editor"}</button></div>
+    </section>
+    <section class="library-step">
+      <h3>${zh ? "工艺清单" : "Process list"}</h3>
+      <label class="field">${zh ? "搜索工艺" : "Search processes"}<input id="librarySearch" type="search" value="${escapeHtml(libraryQuery)}"></label>
+      <div class="table-wrap"><table class="library-table">
+        <thead><tr><th></th><th>${zh ? "内部工艺编号" : "Internal process ID"}</th><th>${zh ? "名称" : "Name"}</th><th>${zh ? "类型" : "Type"}</th><th>${zh ? "来源" : "Source"}</th><th>${zh ? "版本" : "Version"}</th><th>${zh ? "状态" : "Status"}</th><th>${zh ? "路线引用" : "Route use"}</th></tr></thead>
+        <tbody>${rows}<tr id="libraryNoMatches" ${rows ? "hidden" : ""}><td colspan="8">${zh ? "没有匹配的工艺。" : "No matching process."}</td></tr></tbody>
+      </table></div>
     </section>
     ${selected ? `
-      <section class="sub-card" style="margin-top:14px;">
+      <section class="library-step">
         <h3>${escapeHtml(libraryDisplayText(selected.name))}</h3>
         <div class="field-grid">
           ${libraryField(zh ? "内部工艺编号" : "Internal process ID", selected.processId)}
@@ -5180,9 +5462,7 @@ function renderProcessLibrary() {
           ${libraryField(zh ? "企业业务编号" : "Business code", selected.businessCode || (zh ? "未填" : "Not set"))}
           ${libraryField(zh ? "创建时间" : "Created", selected.createdAt || (zh ? "早期记录未记" : "Not recorded"))}
           ${libraryField(zh ? "说明" : "Description", selected.description || (zh ? "未填" : "Not set"))}
-          ${libraryField(zh ? "兼容工站组" : "Compatible station groups", (selected.compatibleStationGroupIds ?? []).map(id => scenarioState.stationGroups?.find(group => group.stationGroupId === id)?.name ?? id).map(libraryDisplayText).join("、") || (zh ? "未配置" : "Not configured"))}
         </div>
-        ${isLocalDraftProcess(selected) ? `<fieldset id="libraryEditGroups"><legend>${zh ? "调整兼容工站组" : "Edit compatible station groups"}</legend>${groupOptions(selected.compatibleStationGroupIds ?? [])}</fieldset><button class="button secondary" type="button" id="saveLibraryGroups">${zh ? "保存兼容规则" : "Save compatibility"}</button>` : ""}
         <p class="note">${selectedRefs.length
         ? escapeHtml(zh ? "这条工艺已被路线工序引用。改名不在本包里，已发布路线不会被静默改写。" : "Route operations already reference this process. Renaming is outside this package, and released routes are not rewritten.")
         : escapeHtml(zh ? "还没有任何路线工序引用它。" : "No route operation references it yet.")}</p>
@@ -5191,6 +5471,8 @@ function renderProcessLibrary() {
     ` : ""}
   `;
     bindProcessLibrary();
+    updateLibraryTypeResults();
+    updateLibraryProcessSearch();
 }
 function libraryField(label, value) {
     return `<div class="field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
@@ -5253,7 +5535,6 @@ function readLibraryForm() {
         businessCode: read("libraryBusinessCode"),
         newTypeName: read("libraryNewTypeName"),
         newTypeFamily: read("libraryNewTypeFamily") === "quality" ? "quality" : "manufacturing",
-        compatibleStationGroupIds: [...processLibraryRoot.querySelectorAll("#libraryNewGroups input:checked")].map(input => input.value),
     };
 }
 function similarLibraryText(warnings) {
@@ -5282,29 +5563,95 @@ function commitLibraryChange(result, notice) {
     render(selectedProductId);
 }
 function bindProcessLibrary() {
-    processLibraryRoot.querySelector("#createLibraryGroup")?.addEventListener("click", () => {
-        readLibraryForm();
-        const name = processLibraryRoot.querySelector("#libraryNewGroupName")?.value ?? "";
-        const processId = processLibraryRoot.querySelector("#libraryGroupProcessId")?.value ?? "";
-        const result = createLocalStationGroup(scenarioState, { name, processId });
-        if ("group" in result)
-            librarySelectedProcessId = processId;
-        commitLibraryChange(result, "group" in result ? (locale === "zh" ? "工站组已创建并绑定所选工艺。" : "Station group created and bound.") : "");
+    const stationForm = processLibraryRoot.querySelector("#libraryStationForm");
+    const stationStatus = stationForm?.querySelector('select[name="investmentStatus"]');
+    const updateStationFields = () => {
+        const existing = stationStatus?.value === "existing";
+        const equipmentField = stationForm?.querySelector("#libraryEquipmentCodeField");
+        const equipmentInput = stationForm?.querySelector('input[name="equipmentId"]');
+        const qualificationField = stationForm?.querySelector("#libraryQualificationCheck");
+        const qualificationInput = qualificationField?.querySelector("input");
+        const keyLabel = stationForm?.querySelector("#libraryStationKeyLabel");
+        const typeLegend = stationForm?.querySelector("#libraryQualifiedTypeLegend");
+        if (equipmentField)
+            equipmentField.hidden = !existing;
+        if (equipmentInput) {
+            equipmentInput.required = existing;
+            if (!existing)
+                equipmentInput.value = "";
+        }
+        if (qualificationField)
+            qualificationField.hidden = !existing;
+        if (qualificationInput) {
+            qualificationInput.required = existing;
+            if (!existing)
+                qualificationInput.checked = false;
+        }
+        if (keyLabel)
+            keyLabel.textContent = existing ? (locale === "zh" ? "工站排产键" : "Station planning key") : (locale === "zh" ? "规划资源号" : "Planning resource ID");
+        if (typeLegend)
+            typeLegend.textContent = existing ? (locale === "zh" ? "本地确认可承接工艺类型" : "Candidate process types") : (locale === "zh" ? "拟承接工艺类型" : "Planned process types");
+    };
+    stationStatus?.addEventListener("change", updateStationFields);
+    updateStationFields();
+    stationForm?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const values = new FormData(form);
+        const result = createLocalStation(scenarioState, {
+            stationId: String(values.get("stationId") ?? ""), equipmentId: String(values.get("equipmentId") ?? ""), name: String(values.get("name") ?? ""),
+            investmentStatus: values.get("investmentStatus") === "plannedInvestment" ? "plannedInvestment" : "existing",
+            sourceReference: String(values.get("sourceReference") ?? ""),
+            qualifiedProcessTypeIds: values.getAll("qualifiedProcessTypeIds").map(String),
+            qualificationConfirmed: values.get("qualificationConfirmed") === "on",
+        });
+        commitLibraryChange(result, locale === "zh" ? "工站已登记到本地资源库。" : "Station registered in the local resource library.");
     });
-    processLibraryRoot.querySelector("#saveLibraryGroups")?.addEventListener("click", () => {
-        const groups = [...processLibraryRoot.querySelectorAll("#libraryEditGroups input:checked")].map(input => input.value);
-        commitLibraryChange(setLocalProcessStationGroups(scenarioState, librarySelectedProcessId, groups), locale === "zh" ? "兼容规则已保存。" : "Compatibility saved.");
+    processLibraryRoot.querySelector("#libraryGoRoute")?.addEventListener("click", () => {
+        setWorkflowStage("routing");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    processLibraryRoot.querySelector("#libraryNewTypeDetails")?.addEventListener("toggle", event => {
+        libraryShowNewType = event.currentTarget.open;
+    });
+    const typeSearch = processLibraryRoot.querySelector("#libraryTypeSearch");
+    const updateTypeSearch = () => {
+        libraryTypeQuery = typeSearch?.value ?? "";
+        const selected = scenarioState.processTypes?.find(item => item.processTypeId === libraryForm.processTypeId);
+        if (libraryTypeQuery.trim() && selected && !libraryTypeMatches(selected, libraryTypeQuery)) {
+            libraryForm.processTypeId = "";
+            const create = processLibraryRoot.querySelector("#createLibraryProcess");
+            if (create)
+                create.disabled = true;
+        }
+        const select = processLibraryRoot.querySelector("#libraryProcessType");
+        if (select)
+            select.innerHTML = libraryTypeOptions();
+        updateLibraryTypeResults();
+    };
+    typeSearch?.addEventListener("input", event => {
+        if (!event.isComposing)
+            updateTypeSearch();
+    });
+    typeSearch?.addEventListener("compositionend", updateTypeSearch);
+    processLibraryRoot.querySelector("#libraryProcessType")?.addEventListener("change", () => {
+        readLibraryForm();
+        renderProcessLibrary();
     });
     processLibraryRoot.querySelector("#returnFromLibrary")?.addEventListener("click", () => {
         setWorkflowStage(libraryReturnStage);
         window.scrollTo({ top: 0, behavior: "smooth" });
     });
-    processLibraryRoot.querySelector("#librarySearch")?.addEventListener("input", event => {
-        readLibraryForm();
-        libraryQuery = event.currentTarget.value;
-        renderProcessLibrary();
-        processLibraryRoot.querySelector("#librarySearch")?.focus();
+    const processSearch = processLibraryRoot.querySelector("#librarySearch");
+    const updateProcessSearch = () => {
+        libraryQuery = processSearch?.value ?? "";
+        updateLibraryProcessSearch();
+    };
+    processSearch?.addEventListener("input", event => {
+        if (!event.isComposing)
+            updateProcessSearch();
     });
+    processSearch?.addEventListener("compositionend", updateProcessSearch);
     processLibraryRoot.querySelectorAll("[data-library-process]").forEach(button => {
         button.addEventListener("click", () => {
             readLibraryForm();
@@ -5314,6 +5661,30 @@ function bindProcessLibrary() {
     });
     processLibraryRoot.querySelector("#createLibraryType")?.addEventListener("click", () => {
         readLibraryForm();
+        if (!processLibraryRoot.querySelector("#libraryTypeReviewed")?.checked) {
+            libraryError = locale === "zh" ? "请先核对类型目录并勾选确认。" : "Review the type catalog and confirm before adding.";
+            libraryNotice = "";
+            renderProcessLibrary();
+            return;
+        }
+        if (!libraryForm.newTypeName.trim()) {
+            libraryError = locale === "zh" ? "请填写新类型名称。" : "Enter a type name.";
+            libraryNotice = "";
+            renderProcessLibrary();
+            return;
+        }
+        const matching = (scenarioState.processTypes ?? []).find(item => libraryDisplayText(item.name).toLocaleLowerCase() === libraryForm.newTypeName.trim().toLocaleLowerCase());
+        if (matching) {
+            libraryForm.processTypeId = matching.processTypeId;
+            libraryError = locale === "zh" ? `目录中已有「${libraryDisplayText(matching.name)}」，已为你选中。` : `Type ${libraryDisplayText(matching.name)} already exists and is now selected.`;
+            libraryNotice = "";
+            renderProcessLibrary();
+            return;
+        }
+        if (!window.confirm(locale === "zh"
+            ? `确认新增工艺类型「${libraryForm.newTypeName.trim()}」？此操作只建立本地类型，不建立具体工艺。`
+            : `Add local process type "${libraryForm.newTypeName.trim()}"? This does not create a process.`))
+            return;
         const result = createLocalProcessType(scenarioState, { name: libraryForm.newTypeName, family: libraryForm.newTypeFamily });
         if ("issues" in result) {
             commitLibraryChange(result, "");
@@ -5321,6 +5692,7 @@ function bindProcessLibrary() {
         }
         libraryForm.processTypeId = result.processType.processTypeId;
         libraryForm.newTypeName = "";
+        libraryShowNewType = false;
         const warning = similarLibraryText(result.warnings);
         commitLibraryChange(result, locale === "zh"
             ? `已新增本地类型：${libraryDisplayText(result.processType.name)}，归类为${processFamilyLabel(processTypeFamilyOf(result.processType))}。还没有写成工艺。${warning}`
@@ -5333,7 +5705,6 @@ function bindProcessLibrary() {
             processTypeId: libraryForm.processTypeId,
             description: libraryForm.description,
             businessCode: libraryForm.businessCode,
-            compatibleStationGroupIds: libraryForm.compatibleStationGroupIds,
         });
         if ("issues" in result) {
             commitLibraryChange(result, "");
@@ -5347,181 +5718,22 @@ function bindProcessLibrary() {
             : `Saved ${result.process.name} / ${result.process.processId}, version ${result.process.version}, local draft. It was not added to a route. ${warning}`);
     });
 }
-function renderLocalProcessList(zh) {
-    const drafts = (scenarioState.processMasters ?? []).filter(isLocalDraftProcess);
-    if (!drafts.length) {
-        return `<p class="note">${zh ? "还没有本地工艺。打开工艺库，选择类型并填写名称后再新增。" : "No local process yet. Open the process library, choose a type and enter a name."}</p>`;
-    }
-    return `<ul class="message-list">${drafts.map(process => `<li><strong>${escapeHtml(libraryDisplayText(process.name))}</strong> / ${escapeHtml(process.processId)} · ${escapeHtml(processFamilyLabel(processTypeFamilyOfId(process.processType)))} · ${escapeHtml(process.version ?? "")} · ${zh ? "草稿" : "draft"}</li>`).join("")}</ul>`;
-}
-function renderLocalValidationPanel(routingConfig) {
-    const zh = locale === "zh";
-    const route = routingConfig.route;
-    const local = route ? isLocalDraftRoute(route) : false;
-    const processes = scenarioState.processMasters ?? [];
-    const stations = scenarioState.stations ?? [];
-    const trial = route?.routeId ? assessLocalTrial(scenarioState, routingConfig.productId, route.routeId) : undefined;
-    return `
-    <section class="sub-card" style="margin-top:14px;" data-local-validation>
-      <div class="panel-head">
-        <h3>${zh ? "本地验证模式" : "Local validation mode"}</h3>
-        <span class="pill warn">${zh ? "不是正式主数据" : "Not formal master data"}</span>
-      </div>
-      <p class="note">${zh
-        ? "工艺是可复用的工艺清单。路线工序是把一条工艺放进某个产品的本地验证路线。两件事分开做。已发布样例路线不会被改写。"
-        : "A process is a reusable master. A route operation places that process on one product's local validation route. Released sample routes stay unchanged."}</p>
-      <p class="note">${zh
-        ? "工艺在工艺库建档，系统生成内部工艺编号。这里只把已有工艺选进本地验证路线，不会把工艺编号当作设备编号。"
-        : "File a process in the process library. The system assigns its internal ID. Here you only place an existing process on a local validation route."}</p>
-      <div class="action-bar">
-        <button class="button" type="button" id="openProcessLibrary">${zh ? "打开工艺库" : "Open process library"}</button>
-        <button class="button secondary" type="button" id="createLocalRoute">${zh ? "从当前已发布路线创建验证副本" : "Copy the released route"}</button>
-      </div>
-      <div data-local-feedback>
-        ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
-        ${localValidationNotice ? `<p class="form-ok" role="status">${escapeHtml(localValidationNotice)}</p>` : ""}
-        ${localValidationError ? `<p class="form-error" role="alert">${escapeHtml(localValidationError)}</p>` : ""}
-      </div>
-      <h4>${zh ? "本机工艺清单" : "Local process list"}</h4>
-      <p class="note">${zh ? "新增和查看在工艺库。下面只列出本机草稿，方便核对有没有写进去。" : "Add and inspect processes in the process library. Drafts on this browser are listed here."}</p>
-      ${renderLocalProcessList(zh)}
-      ${local ? `
-        <h4>${zh ? "加入路线工序" : "Add a route operation"}</h4>
-        <div class="field-grid">
-          <label class="field">${zh ? "选择工艺" : "Process"}<select id="localOperationProcess">${processes.map(process => `<option value="${escapeHtml(process.processId)}">${escapeHtml(process.name)} / ${escapeHtml(process.processId)}${process.status === "draft" ? (zh ? " · 草稿" : " · draft") : ""}</option>`).join("")}</select></label>
-          <label class="field">${zh ? "工序编号" : "Operation ID"}<input id="localOperationId" type="text" /></label>
-          <label class="field">${zh ? "顺序" : "Sequence"}<input id="localOperationSequence" type="number" min="1" step="1" /></label>
-          <label class="field">${zh ? "工序名称" : "Operation name"}<input id="localOperationName" type="text" /></label>
-        </div>
-        <div class="action-bar"><button class="button" type="button" id="insertLocalOperation">${zh ? "加入验证路线" : "Add to validation route"}</button></div>
-        <h4>${zh ? "分配工站与参数" : "Assign a station and parameter"}</h4>
-        <p class="note">${zh ? "备用角色和待投资工站不会变成可排产。CT、每循环件数、P、Q 留空就不会写入，也不会拿样例值填上。" : "Backup and planned-investment stations stay out of planning. Blank CT, pieces, P or Q are not stored and are not filled from the sample."}</p>
-        <div class="field-grid">
-          <label class="field">${zh ? "工序" : "Operation"}<select id="localAssignOperation">${route?.operations.map(operation => `<option value="${escapeHtml(operation.operationId)}">${escapeHtml(String(operation.sequence))} ${escapeHtml(operation.name)}</option>`).join("") ?? ""}</select></label>
-          <label class="field">${zh ? "现有工站" : "Existing station"}<select id="localAssignStation"><option value="">${zh ? "不选" : "None"}</option>${stations.filter(station => !!route?.operations[0] && stationCompatibleWithOperation(scenarioState, route.operations[0], station)).map(station => `<option value="${escapeHtml(station.stationId)}">${escapeHtml(formatKnownText(station.name))} / ${escapeHtml(station.stationId)}</option>`).join("")}</select></label>
-          <label class="field">${zh ? "或新待投资工站编号" : "Or new station ID"}<input id="localNewStationId" type="text" /></label>
-          <label class="field">${zh ? "新工站名称" : "New station name"}<input id="localNewStationName" type="text" /></label>
-          <label class="field">${zh ? "新工站所属组" : "New station group"}<select id="localNewStationGroup"><option value="">${zh ? "选择工站组" : "Choose group"}</option>${(scenarioState.stationGroups ?? []).map(group => `<option value="${escapeHtml(group.stationGroupId)}">${escapeHtml(formatKnownText(group.name))}</option>`).join("")}</select></label>
-          <label class="field">${zh ? "角色" : "Role"}<select id="localAssignRole"><option value="primary">${zh ? "主工站" : "Primary"}</option><option value="parallel">${zh ? "并行" : "Parallel"}</option><option value="backup">${zh ? "备用" : "Backup"}</option></select></label>
-          <label class="field">${zh ? "备用条件" : "Backup condition"}<input id="localBackupCondition" type="text" /></label>
-          <label class="field">CT<input id="localParamCt" type="number" min="0" step="0.1" /></label>
-          <label class="field">${zh ? "每循环件数" : "Pieces / cycle"}<input id="localParamPieces" type="number" min="1" step="1" /></label>
-          <label class="field">P<input id="localParamP" type="number" min="0" max="1" step="0.01" /></label>
-          <label class="field">Q<input id="localParamQ" type="number" min="0" max="1" step="0.01" /></label>
-        </div>
-        <div class="action-bar">
-          <button class="button" type="button" id="assignLocalStation">${zh ? "分配工站" : "Assign station"}</button>
-          <button class="button secondary" type="button" id="saveLocalParameter">${zh ? "保存参数" : "Save parameter"}</button>
-        </div>
-        ${trial ? `<p class="note">${zh ? "本地试算" : "Local trial"}：${trial.calculable ? (zh ? "参数已够做本工站试算" : "Station trial can calculate") : (zh ? "还可以记录标准 SA 和 R&R，计算仍待补" : "SA and R&R can be recorded; calculation is still incomplete")}${trial.gaps.length ? ` · ${trial.gaps.map(localIssueText).join("；")}` : ""}</p>` : ""}
-      ` : `<p class="note">${zh ? "先创建验证副本，再把工艺加入那条副本。" : "Create a validation copy, then add a process to that copy."}</p>`}
-      <div class="action-bar"><button class="button secondary" type="button" id="clearLocalValidation">${zh ? "仅清除本地验证路线" : "Clear local validation routes only"}</button></div>
-    </section>
-  `;
-}
-function bindLocalValidationPanel() {
-    const read = (id) => productRoot.querySelector(`#${id}`)?.value ?? "";
-    productRoot.querySelector("#localAssignOperation")?.addEventListener("change", () => {
-        const operation = scenarioState.routes.find(route => route.routeId === selectedRouteId())?.operations.find(item => item.operationId === read("localAssignOperation"));
-        const select = productRoot.querySelector("#localAssignStation");
-        if (!select)
-            return;
-        select.innerHTML = `<option value="">${locale === "zh" ? "不选" : "None"}</option>` + (scenarioState.stations ?? [])
-            .filter(station => !!operation && stationCompatibleWithOperation(scenarioState, operation, station))
-            .map(station => `<option value="${escapeHtml(station.stationId)}">${escapeHtml(formatKnownText(station.name))} / ${escapeHtml(station.stationId)}</option>`).join("");
-    });
-    productRoot.querySelector("#openProcessLibrary")?.addEventListener("click", () => {
-        setWorkflowStage("library");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    productRoot.querySelector("#createLocalRoute")?.addEventListener("click", () => {
-        const selected = scenarioState.routes.find(route => route.routeId === selectedRouteId());
-        const sourceId = selected && !isLocalDraftRoute(selected)
-            ? selected.routeId
-            : scenarioState.products?.find(product => product.productId === selectedProductId)?.routeId;
-        const result = createLocalRouteCopy(scenarioState, sourceId ?? "");
-        applyLocalChange(result, "route" in result ? result.route.routeId : undefined);
-    });
-    productRoot.querySelector("#insertLocalOperation")?.addEventListener("click", () => {
-        applyLocalChange(insertLocalOperation(scenarioState, {
-            routeId: selectedRouteId() ?? "",
-            processId: read("localOperationProcess"),
-            operationId: read("localOperationId"),
-            sequence: Number(read("localOperationSequence")),
-            name: read("localOperationName"),
-        }));
-    });
-    productRoot.querySelector("#assignLocalStation")?.addEventListener("click", () => {
-        const newId = read("localNewStationId").trim();
-        if (newId) {
-            const created = createLocalStation(scenarioState, { stationId: newId, name: read("localNewStationName"), stationGroupId: read("localNewStationGroup") });
-            if ("issues" in created) {
-                applyLocalChange(created);
-                return;
-            }
-            scenarioState = created.scenario;
-        }
-        const stationId = newId || read("localAssignStation");
-        applyLocalChange(assignLocalStation(scenarioState, {
-            routeId: selectedRouteId() ?? "",
-            operationId: read("localAssignOperation"),
-            stationId,
-            role: read("localAssignRole"),
-            backupCondition: read("localBackupCondition"),
-        }));
-    });
-    productRoot.querySelector("#saveLocalParameter")?.addEventListener("click", () => {
-        const ct = read("localParamCt");
-        const pieces = read("localParamPieces");
-        const performance = read("localParamP");
-        const quality = read("localParamQ");
-        if (ct === "" || pieces === "" || performance === "" || quality === "") {
-            localValidationError = locale === "zh" ? "CT、每循环件数、P、Q 都要填写，系统不会补样例值。" : "Enter CT, pieces per cycle, P and Q. Sample values are not filled in.";
-            render(selectedProductId);
-            return;
-        }
-        applyLocalChange(saveLocalStationParameter(scenarioState, {
-            routeId: selectedRouteId() ?? "",
-            operationId: read("localAssignOperation"),
-            stationId: read("localAssignStation") || read("localNewStationId"),
-            standardCycleSec: Number(ct),
-            piecesPerCycle: Number(pieces),
-            performanceRate: Number(performance),
-            qualityRate: Number(quality),
-            effectiveFrom: todayDateValue(),
-        }));
-    });
-    productRoot.querySelector("#clearLocalValidation")?.addEventListener("click", () => {
-        const confirmed = window.confirm(locale === "zh"
-            ? "只清除本机的本地验证路线、工序和工站分配。工艺库里的工艺定义会保留。样例路线和已有 R&R 会保留。继续吗？"
-            : "Clear only local validation routes, operations and station assignments. The process library, sample routes and existing R&R stay. Continue?");
-        if (!confirmed)
-            return;
-        clearLocalValidation(scenarioState);
-        dropLocalRuntimeState();
-        persistLocalValidation();
-        localValidationError = "";
-        localValidationNotice = "";
-        selectedOperationId = "";
-        selectedWorkflowStationId = "";
-        syncRouteSelector(selectedProductId, scenarioState.products?.find(product => product.productId === selectedProductId)?.routeId);
-        render(selectedProductId);
-    });
-}
 function syncRouteSelector(productId, preferredRouteId) {
     const previous = preferredRouteId || routeSelect.value;
-    const routes = scenarioState.routes.filter(route => route.productId === productId && (route.status === "released" || isLocalDraftRoute(route)));
+    const groups = groupProductRoutes(scenarioState, productId);
     const zh = locale === "zh";
-    routeSelect.innerHTML = routes
-        .map(route => {
-        const local = isLocalDraftRoute(route);
-        const label = `${route.routeId ?? route.productId}${local ? (zh ? " · 本地验证" : " · local validation") : ""}`;
-        return `<option value="${escapeHtml(route.routeId ?? route.productId)}">${escapeHtml(label)}</option>`;
-    })
-        .join("");
+    const option = (routeId, label) => `<option value="${escapeHtml(routeId)}">${escapeHtml(label)}</option>`;
+    const latest = groups.latestDraft;
+    routeSelect.innerHTML = [
+        latest ? option(latest.routeId ?? "", `${latest.routeId} · ${zh ? "当前本地草稿" : "Current local draft"}`) : "",
+        groups.released.length ? `<optgroup label="${zh ? "已发布路线" : "Released routes"}">${groups.released.map(route => option(route.routeId ?? route.productId, route.routeId ?? route.productId)).join("")}</optgroup>` : "",
+        groups.historicalDrafts.length ? `<optgroup label="${zh ? "历史本地草稿" : "Earlier local drafts"}">${groups.historicalDrafts.map(route => option(route.routeId ?? "", route.routeId ?? "")).join("")}</optgroup>` : "",
+    ].join("");
+    const routes = [latest, ...groups.released, ...groups.historicalDrafts].filter(route => route !== undefined);
     routeSelect.disabled = routes.length <= 1;
     const productRouteId = scenarioState.products?.find(product => product.productId === productId)?.routeId;
-    const wanted = previous || productRouteId;
+    const wanted = previous && routes.some(route => route.routeId === previous) ? previous
+        : latest?.routeId ?? productRouteId;
     routeSelect.value = wanted && routes.some(route => route.routeId === wanted) ? wanted : routes[0]?.routeId ?? "";
 }
 function selectedRouteId() {
@@ -5559,6 +5771,8 @@ function getRouteStatus(routingConfig) {
         return { label: "product missing", tone: "bad" };
     if (!routingConfig.route)
         return { label: "route missing", tone: "bad" };
+    if (isLocalDraftRoute(routingConfig.route))
+        return { label: "local route draft", tone: "warn" };
     if (!routingConfig.masterDataValidation.formalReady) {
         const firstIssue = routingConfig.masterDataValidation.issues[0];
         return { label: firstIssue?.code === "route_not_released" ? "route not released" : "route master data invalid", tone: "bad" };
@@ -5575,23 +5789,6 @@ function getRouteStatus(routingConfig) {
     if (blockedAssignments.length)
         return { label: "ready with backup gate", tone: "warn" };
     return { label: "ready", tone: "good" };
-}
-function getOperationCompleteness(operationView) {
-    const assignments = operationView.assignments;
-    const availableAssignments = assignments.filter(item => item.planningStatus === "available");
-    const blockedAssignments = assignments.filter(item => item.planningStatus === "blocked");
-    const parameterScope = assignments.filter(item => item.assignment.planningAllowed);
-    const completeParameters = parameterScope.filter(item => item.parameter);
-    return {
-        assignmentLabel: assignments.length
-            ? `${formatNumber(availableAssignments.length)}/${formatNumber(assignments.length)} ${t("availableWord")}${blockedAssignments.length ? `, ${formatNumber(blockedAssignments.length)} ${t("blockedWord")}` : ""}`
-            : t("missing"),
-        assignmentTone: assignments.length && availableAssignments.length ? (blockedAssignments.length ? "warn" : "good") : "bad",
-        parameterLabel: parameterScope.length
-            ? `${formatNumber(completeParameters.length)}/${formatNumber(parameterScope.length)}${t("planningStations")}`
-            : t("noPlanningStation"),
-        parameterTone: parameterScope.length && completeParameters.length === parameterScope.length ? "good" : "bad",
-    };
 }
 function formatKnownText(value) {
     if (locale !== "zh")
@@ -5770,6 +5967,7 @@ function formatRouteStatusLabel(value) {
         "no operation": "没有工序",
         incomplete: "未完整",
         "route not released": "路线未发布",
+        "local route draft": "本地草稿 · 未正式发布",
         "route master data invalid": "路线主数据无效",
         "ready with backup gate": "就绪但存在备用门禁",
         ready: "就绪",
@@ -5803,6 +6001,9 @@ function formatBatchStatus(value) {
 function metricCard(label, value, detail, tone) {
     return `<article class="metric ${tone}"><p>${escapeHtml(label)}</p><strong>${escapeHtml(value)}</strong><span>${escapeHtml(detail)}</span></article>`;
 }
+function bottleneckCard(label, card) {
+    return `<article class="metric ${card.tone}" data-current-route-bottleneck data-bottleneck-status="${card.status}"><p>${escapeHtml(label)}</p><strong>${escapeHtml(card.value)}</strong><span>${escapeHtml(card.detail)}</span></article>`;
+}
 function statusTone(tone) {
     return tone === "neutral" ? "" : tone;
 }
@@ -5821,4 +6022,14 @@ function percent(value) {
 function escapeHtml(value) {
     return value.replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char] ?? char));
 }
-init();
+setLocalStateErrorHandler(message => {
+    localStoreError = locale === "zh"
+        ? `本机数据库保存失败（${message}）；浏览器副本仍在，请勿清除站点数据。`
+        : `Local database save failed (${message}); the browser copy remains. Do not clear site data.`;
+    render(selectedProductId);
+});
+void bootstrapLocalState().catch(error => {
+    localStoreError = locale === "zh"
+        ? `本机数据库未连接（${error instanceof Error ? error.message : String(error)}）；当前仅使用浏览器数据。`
+        : `Local database unavailable (${error instanceof Error ? error.message : String(error)}); using browser data only.`;
+}).finally(init);

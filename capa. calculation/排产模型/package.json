@@ -6,10 +6,10 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc",
-    "test": "npm run build && node --test",
+    "test": "npm run build && node --test && python3 -m unittest discover -s test -p 'test_*.py'",
     "test:browser": "npm run build && node scripts/browser-navigation-smoke.mjs",
     "test:browser:week": "npm run build && node scripts/browser-week-ledger-smoke.mjs",
-    "serve": "python3 -m http.server 8785 --bind 127.0.0.1"
+    "serve": "python3 local_state_server.py --port 8785"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

@@ -112,6 +112,7 @@ export function buildRouteWindowCapacityView(input) {
             stations: engineStations,
             operationIds: input.operationIds,
             ...(input.operationUnitsPerProduct ? { operationUnitsPerProduct: input.operationUnitsPerProduct } : {}),
+            ...(input.stationFlowPolicies ? { stationFlowPolicies: input.stationFlowPolicies } : {}),
             ...(input.demandQty !== undefined ? { demandQty: input.demandQty } : {}),
         });
         const byKey = new Map(result.stations.map(station => [`${station.operationId}::${station.stationId}`, station]));
@@ -148,6 +149,8 @@ export function buildRouteWindowCapacityView(input) {
             view.bestBottleneckOperationId = result.bestBottleneckOperationId;
         if (result.actualBottleneckOperationId !== undefined)
             view.actualBottleneckOperationId = result.actualBottleneckOperationId;
+        if (result.flowIssue)
+            view.flowIssue = result.flowIssue;
         return view;
     }
     catch (error) {

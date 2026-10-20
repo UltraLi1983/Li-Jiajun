@@ -138,6 +138,17 @@ describe("temporary R&R validation fixture", () => {
     }).readyForCalculation, true);
   });
 
+  it("generates a complete die-casting sample at CT 300s", () => {
+    const casting = createRnrValidationFixture("A-Housing", "OP10A", 300, 1);
+    assert.equal(casting.standardCycleSec, 300);
+    assert.ok(casting.cycleSamplesSec.every(value => value === 300));
+    assert.ok(casting.actual.filter(event => event.kind === "production").every(event => (event.okQty ?? 0) > 0));
+    assert.equal(reconcileRnrTimeline({
+      stationId: "OP10A", startMinute: 480, endMinute: 1920,
+      planned: casting.planned, actual: casting.actual,
+    }).complete, true);
+  });
+
   it("generates a complete OP20 assembly sample without changing machining evidence", () => {
     const assembly = createRnrValidationFixture("A-Housing", "OP20", 15, 1);
     assert.notEqual(assembly.id, fixture.id);

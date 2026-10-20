@@ -13,6 +13,7 @@ import { selectEffectiveParameter } from "./parameter-versioning.js";
 
 export interface CapacityAnalysisPreflightInput {
   productId: string;
+  routeId?: string;
   availableMinutesByStation?: Record<string, number>;
   plannedQuantityByOperation?: Record<string, number>;
 }
@@ -32,7 +33,7 @@ export function runCapacityAnalysisPreflight(
   scenario: CapacityScenario,
   input: CapacityAnalysisPreflightInput,
 ): CapacityAnalysisPreflightResult {
-  const readiness = checkProductReadiness(scenario, input.productId);
+  const readiness = checkProductReadiness(scenario, input.productId, input.routeId);
   const capacityResults = calculateCapacityScenario(scenario);
   const shareEvaluations = evaluatePlanningAllowedShares(scenario, input);
   const batchChecks = checkPlannedBatchQuantities(scenario, input);
@@ -67,8 +68,10 @@ function evaluatePlanningAllowedShares(
   const evaluations: CapacityShareEvaluationResult[] = [];
   const evaluatedKeys = new Set<string>();
   const assignments = (scenario.operationStationAssignments ?? []).filter(
-    assignment => assignment.productId === input.productId && assignment.planningAllowed,
+    assignment => assignment.productId === input.productId && assignment.planningAllowed
+      && (!input.routeId || assignment.routeId === input.routeId),
   );
+  const routeKeys = new Set(assignments.map(assignment => buildShareKey(input.productId, assignment.operationId, assignment.stationId)));
 
   for (const assignment of assignments) {
     const key = buildShareKey(input.productId, assignment.operationId, assignment.stationId);
@@ -112,6 +115,7 @@ function evaluatePlanningAllowedShares(
   for (const profile of scenario.capacityShareProfiles ?? []) {
     if (profile.productId !== input.productId) continue;
     const key = buildShareKey(profile.productId, profile.operationId, profile.stationId);
+    if (input.routeId && !routeKeys.has(key)) continue;
     if (evaluatedKeys.has(key)) continue;
     evaluations.push(evaluateCapacityShare(scenario, {
       productId: profile.productId,

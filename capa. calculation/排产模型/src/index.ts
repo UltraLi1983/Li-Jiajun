@@ -27,3 +27,4 @@ export * from "./engine/rnr-best-actual-preview.js";
 export * from "./engine/route-window-capacity.js";
 export * from "./engine/week-minute-ledger.js";
 export * from "./engine/route-week-plan.js";
+export * from "./engine/current-route-bottleneck.js";

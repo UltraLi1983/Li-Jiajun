@@ -39,6 +39,63 @@ function station(overrides) {
 }
 
 describe("route week plan", () => {
+  it("uses linked station paths instead of summing incompatible parallel lanes", () => {
+    const stations = [
+      station({ operationId: "casting", stationId: "CAST", minutes: { best: 200, most: 200 } }),
+      station({ operationId: "machining", stationId: "M1", minutes: { best: 70, most: 70 } }),
+      station({ operationId: "machining", stationId: "M2", minutes: { best: 30, most: 30 } }),
+      station({ operationId: "assembly", stationId: "A1", minutes: { best: 30, most: 30 } }),
+      station({ operationId: "assembly", stationId: "A2", minutes: { best: 70, most: 70 } }),
+    ];
+    const base = { productId: "A", routeId: "route-a", weekStartDate: "2026-10-12", role: "outlook",
+      operationOrder: ["casting", "machining", "assembly"],
+      operationUnits: ["casting", "machining", "assembly"].map(operationId => ({ operationId, unitsPerFinishedProduct: 1 })), stations };
+    assert.equal(buildRouteWeekPlan(base).mostLikelyPieces, 200);
+    const policy = { fromOperationId: "machining", toOperationId: "assembly",
+      allowedPairs: [{ fromStationId: "M1", toStationId: "A1" }, { fromStationId: "M2", toStationId: "A2" }] };
+    const linked = buildRouteWeekPlan({ ...base, stationFlowPolicies: [policy] });
+    assert.equal(linked.mostLikelyPieces, 120);
+    assert.equal(linked.flowLimited, true);
+    assert.equal(linked.planBottleneckOperationId, undefined);
+    const review = buildRouteWeekPlan({ ...base, role: "review", stationFlowPolicies: [policy],
+      actual: { completeSameWeek: true, byOperationGoodPieces: { casting: 400, machining: 200, assembly: 200 } } });
+    assert.equal(review.actualPieces, undefined);
+    assert.match(review.actualBlankReason, /逐工站实绩及流向记录/);
+    const stale = buildRouteWeekPlan({ ...base, stationFlowPolicies: [{ ...policy, allowedPairs: [{ fromStationId: "M3", toStationId: "A1" }] }] });
+    assert.equal(stale.calculable, false);
+    assert.equal(stale.mostLikelyPieces, undefined);
+  });
+  it("uses the full station ledger for a blank share but blocks double-counting across operations", () => {
+    const casting = station({ allocationMode: "forecastCalculated", plannedShare: undefined });
+    const input = {
+      productId: "A", routeId: "route-a", weekStartDate: "2026-10-12", role: "outlook",
+      operationOrder: ["op-10"], operationUnits: [{ operationId: "op-10", unitsPerFinishedProduct: 1 }],
+      stations: [casting],
+    };
+    const single = buildRouteWeekPlan(input);
+    assert.equal(single.calculable, true);
+    assert.equal(single.stations[0].shareApplied, 1);
+    assert.equal(single.mostLikelyPieces, casting.capacity.mostLikelyGoodPieces);
+
+    const shared = station({ operationId: "op-20", stationId: "OP10", allocationMode: "forecastCalculated", plannedShare: undefined });
+    const duplicate = buildRouteWeekPlan({
+      ...input, operationOrder: ["op-10", "op-20"],
+      operationUnits: [...input.operationUnits, { operationId: "op-20", unitsPerFinishedProduct: 1 }],
+      stations: [casting, shared],
+    });
+    assert.equal(duplicate.calculable, false);
+    assert.equal(duplicate.mostLikelyPieces, undefined);
+    assert.match(duplicate.reasons.join(" "), /跨工序共用工站/);
+    const allocated = buildRouteWeekPlan({
+      ...input, operationOrder: ["op-10", "op-20"],
+      operationUnits: [...input.operationUnits, { operationId: "op-20", unitsPerFinishedProduct: 1 }],
+      stations: [
+        { ...casting, allocationMode: "fixedShare", plannedShare: 0.6 },
+        { ...shared, allocationMode: "fixedShare", plannedShare: 0.4 },
+      ],
+    });
+    assert.equal(allocated.calculable, true);
+  });
   it("keeps two weeks independent when CT, P and Q match but the ledgers differ", () => {
     const shared = {
       productId: "A", routeId: "route-a", role: "outlook",

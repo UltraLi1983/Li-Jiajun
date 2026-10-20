@@ -53,11 +53,11 @@ http://127.0.0.1:8785/formal.html
 http://127.0.0.1:8785/index.html
 ```
 
-端口号不是固定业务配置。如果 `8785` 被占用，可以换成 `8786`、`8787` 等。换端口时需要手动运行 `python3 -m http.server <port> --bind 127.0.0.1`，因为 `npm run serve` 当前固定使用 `8785`。
+正式版固定使用 `8785`，不再自动换端口。`npm run serve` 和双击启动文件都运行带 SQLite 存储的 `local_state_server.py`。数据库位于 `~/Library/Application Support/Production Capacity Tool/state.sqlite3`；修改项目目录或重启服务不会改变此位置。
 
 ## 端口打不开时
 
-有时 macOS 上旧的 `python3 -m http.server` 进程还在监听端口，但浏览器访问会返回空响应。此时不要继续使用旧端口，可以停止旧进程后重新运行 `npm run serve`，也可以直接换新端口启动。
+旧的 `python3 -m http.server` 若仍占用 8785，启动文件会提示关闭旧服务。不要换端口，否则浏览器缓存会分叉；关闭旧启动窗口后重新双击启动文件。
 
 检查某个端口是否被占用：
 
@@ -71,18 +71,7 @@ lsof -nP -iTCP:8785 -sTCP:LISTEN
 kill <PID>
 ```
 
-换端口启动示例：
-
-```bash
-cd "/Users/lijiajun/Documents/GitHub/Li-Jiajun/capa. calculation/排产模型"
-python3 -m http.server 8786 --bind 127.0.0.1
-```
-
-访问正式版：
-
-```text
-http://127.0.0.1:8786/formal.html
-```
+数据恢复：在第一阶段“工艺路线编排”下展开“本机路线历史”，选择保存时间并确认恢复。恢复只针对本机工艺库与路线快照；R&R 草稿另按工站自动恢复。浏览器站点数据与 SQLite 文件建议定期分别备份。
 
 ## 正式版开发入口
 

@@ -1,5 +1,6 @@
 import { reconcileRnrSpeedLoss } from "./rnr-reconciliation.js";
 import { reconcileRnrTimeline } from "./rnr-timeline-reconciliation.js";
+import { calculateStationFlow } from "./station-flow.js";
 export function calculateRouteWindowCapacity(input) {
     const windowMinutes = input.endMinute - input.startMinute;
     if (!Number.isFinite(windowMinutes) || windowMinutes <= 0 || windowMinutes > 2880) {
@@ -93,18 +94,32 @@ export function calculateRouteWindowCapacity(input) {
     });
     const bestReady = comparable && operations.every(operation => operation.bestGoodCapacity !== undefined);
     const actualReady = comparable && operations.every(operation => operation.actualGoodOutput !== undefined);
+    const constrained = (input.stationFlowPolicies?.length ?? 0) > 0;
+    const flowFor = (key) => calculateStationFlow(input.operationIds, stations.map(station => ({
+        operationId: station.operationId, stationId: station.stationId,
+        finishedPieces: station[key] / input.operationUnitsPerProduct[station.operationId],
+    })), input.stationFlowPolicies ?? []);
+    const bestFlow = bestReady && constrained ? flowFor("bestGoodCapacity") : undefined;
+    const actualFlow = actualReady && constrained ? flowFor("actualGoodOutput") : undefined;
     const bestBottleneck = bestReady ? operations.reduce((a, b) => a.bestGoodCapacity / input.operationUnitsPerProduct[a.operationId]
         <= b.bestGoodCapacity / input.operationUnitsPerProduct[b.operationId] ? a : b) : undefined;
     const actualBottleneck = actualReady ? operations.reduce((a, b) => a.actualGoodOutput / input.operationUnitsPerProduct[a.operationId]
         <= b.actualGoodOutput / input.operationUnitsPerProduct[b.operationId] ? a : b) : undefined;
-    const bestGoodCapacity = bestBottleneck
+    const bestGoodCapacity = bestFlow ? bestFlow.pieces : bestBottleneck
         ? bestBottleneck.bestGoodCapacity / input.operationUnitsPerProduct[bestBottleneck.operationId] : undefined;
-    const actualGoodOutput = actualBottleneck
+    const actualGoodOutput = actualFlow ? (actualFlow.pieces === undefined ? undefined : Math.floor(actualFlow.pieces)) : actualBottleneck
         ? Math.floor(actualBottleneck.actualGoodOutput / input.operationUnitsPerProduct[actualBottleneck.operationId]) : undefined;
+    const bestFlowLimited = bestFlow?.pieces !== undefined && bestBottleneck
+        && bestFlow.pieces < bestBottleneck.bestGoodCapacity / input.operationUnitsPerProduct[bestBottleneck.operationId] - 1e-9;
+    const actualFlowLimited = actualFlow?.pieces !== undefined && actualBottleneck
+        && actualFlow.pieces < actualBottleneck.actualGoodOutput / input.operationUnitsPerProduct[actualBottleneck.operationId] - 1e-9;
     return {
         windowMinutes, stations, operations,
-        ...(bestBottleneck ? { bestGoodCapacity: bestGoodCapacity, bestBottleneckOperationId: bestBottleneck.operationId } : {}),
-        ...(actualBottleneck ? { actualGoodOutput: actualGoodOutput, actualBottleneckOperationId: actualBottleneck.operationId } : {}),
+        ...(bestGoodCapacity === undefined ? {} : { bestGoodCapacity }),
+        ...(actualGoodOutput === undefined ? {} : { actualGoodOutput }),
+        ...(bestBottleneck && !bestFlowLimited && bestGoodCapacity !== undefined ? { bestBottleneckOperationId: bestBottleneck.operationId } : {}),
+        ...(actualBottleneck && !actualFlowLimited && actualGoodOutput !== undefined ? { actualBottleneckOperationId: actualBottleneck.operationId } : {}),
+        ...(bestFlow?.issue || actualFlow?.issue ? { flowIssue: bestFlow?.issue ?? actualFlow.issue } : {}),
         ...(input.demandQty !== undefined ? { demandQty: input.demandQty } : {}),
         ...(input.demandQty !== undefined && bestGoodCapacity !== undefined ? { bestGap: bestGoodCapacity - input.demandQty } : {}),
         ...(input.demandQty !== undefined && actualGoodOutput !== undefined ? { actualGap: actualGoodOutput - input.demandQty } : {}),

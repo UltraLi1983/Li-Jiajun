@@ -15,7 +15,7 @@ function sheet(input, plan, scale, scaleLabel, page) {
     const zh = input.zh;
     const review = plan.role === "review";
     const title = review ? (zh ? "上周回顾" : "Last week review") : (zh ? "下周计划" : "Next week plan");
-    const key = keyStation(plan);
+    const key = plan.flowLimited ? undefined : keyStation(plan);
     const demand = plan.demandQty;
     const margin = plan.planMargin;
     const decision = review ? reviewDecision(plan, zh) : outlookDecision(plan, zh);
@@ -70,7 +70,7 @@ function sheet(input, plan, scale, scaleLabel, page) {
       </table></div>
     </section>
     <section class="section">
-      <div class="section-head"><h2>${zh ? "关键参数" : "Key parameters"} · ${escapeHtml(key?.operationId ?? "-")}</h2><span>${zh ? "计划列来自该周账；实际列只在有完整同周实绩时填写" : "Plan comes from this week's ledger"}</span></div>
+      <div class="section-head"><h2>${zh ? "关键参数" : "Key parameters"} · ${escapeHtml(key?.operationId ?? (plan.flowLimited ? (zh ? "工站流转约束" : "Station links") : "-"))}</h2><span>${plan.flowLimited ? (zh ? "多路径约束，无单一关键工站" : "No single key station across linked paths") : (zh ? "计划列来自该周账；实际列只在有完整同周实绩时填写" : "Plan comes from this week's ledger")}</span></div>
       <div class="spq">
         ${spq(zh ? "SA · 时间开动率" : "SA", zh ? "计划 · 含休息" : "Plan · with breaks", rate(key?.withBreaksSa), zh ? "实际 · Actual" : "Actual", rate(review ? plan.actualSa : undefined), key?.shareRule ?? "")}
         ${spq(zh ? "P · 节拍达成率" : "P", zh ? "计划 · 已发布" : "Published plan", key && !key.mixedParameters ? rate(key.performanceRate) : (key?.mixedParameters ? (zh ? "按日取版本" : "By day") : "—"), zh ? "实际 · Actual" : "Actual", rate(review ? plan.actualPerformanceRate : undefined), key?.mixedParameters ? key.parameterIds.join(" · ") : (key?.standardCycleSec === undefined ? "" : `CT ${formatNumber(key.standardCycleSec, 1)}s`))}
@@ -96,6 +96,7 @@ function sheet(input, plan, scale, scaleLabel, page) {
         ? "Best 不乘 P、Q。Most likely 只乘当日已发布的 P、Q 一次。计划余量 = ML 路线成品件数 − 需求。没有历史计划快照时标为当前参数回算。本机草稿不是整周实绩归档。"
         : "Best ignores P and Q. Most likely multiplies the published P and Q once. Plan margin is route ML minus demand. Without a historical snapshot this is a current-parameter recalculation. A local draft is not a full-week actual archive."}
       ${plan.planBasis === "currentParameterRecalc" ? (zh ? " 本页计划为当前参数回算。" : " This page is a current-parameter recalculation.") : plan.planBasis === "snapshot" ? (zh ? " 本页计划来自排产快照。" : " This page uses a planning snapshot.") : ""}
+      ${plan.flowLimited ? (zh ? " 工序行是各站独立上限；路线件数仅计入已连通的工站路径。" : " Operation rows are standalone limits; route pieces include only connected station paths.") : ""}
     </section>
     <footer class="footer"><span>${zh ? "内部评估 · 非客户产能承诺" : "Internal only"}</span><span>${zh ? `第 ${page} / 2 页` : `Page ${page} / 2`}</span></footer>
   </article>`;
@@ -118,7 +119,7 @@ function reviewDecision(plan, zh) {
     const gap = plan.planMargin ?? 0;
     return {
         label: gap < 0 ? (zh ? "Most likely 低于需求" : "Most likely is below demand") : (zh ? "Most likely 覆盖需求" : "Most likely covers demand"),
-        title: plan.planBottleneckOperationId ? (zh ? `${plan.planBottleneckOperationId} 是计划瓶颈` : `${plan.planBottleneckOperationId} is the plan bottleneck`) : (zh ? "计划已汇总" : "Plan is complete"),
+        title: plan.flowLimited ? (zh ? "工站流转约束限制了路线能力" : "Station links limit route capacity") : plan.planBottleneckOperationId ? (zh ? `${plan.planBottleneckOperationId} 是计划瓶颈` : `${plan.planBottleneckOperationId} is the plan bottleneck`) : (zh ? "计划已汇总" : "Plan is complete"),
         body: plan.actualPieces === undefined
             ? (zh ? "Actual 留空。计划余量不是实际余量。" : "Actual stays blank. Plan margin is not an actual gap.")
             : (zh ? "Actual 来自完整同周实绩，不由 Most likely 复制。" : "Actual comes from a complete same-week record."),
@@ -130,7 +131,7 @@ function outlookDecision(plan, zh) {
     const gap = plan.planMargin ?? 0;
     return {
         label: gap < 0 ? (zh ? "计划未覆盖需求" : "Plan does not cover demand") : (zh ? "计划覆盖需求" : "Plan covers demand"),
-        title: plan.planBottleneckOperationId ? (zh ? `${plan.planBottleneckOperationId} 是计划瓶颈` : `${plan.planBottleneckOperationId} is the plan bottleneck`) : (zh ? "计划已汇总" : "Plan is complete"),
+        title: plan.flowLimited ? (zh ? "工站流转约束限制了路线能力" : "Station links limit route capacity") : plan.planBottleneckOperationId ? (zh ? `${plan.planBottleneckOperationId} 是计划瓶颈` : `${plan.planBottleneckOperationId} is the plan bottleneck`) : (zh ? "计划已汇总" : "Plan is complete"),
         body: zh ? "尚未发生的 Actual 留空。Most likely 是计划线，也是产出预测，但不写入结果列。" : "Future Actual stays blank. Most likely is the plan and the forecast, and it is not copied into Actual.",
     };
 }

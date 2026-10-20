@@ -13,6 +13,7 @@ import { calculateActualCapacityShare, calculateRequiredCapacityShare, evaluateC
 import { expandPlannedActivityRules } from "../dist/engine/planned-activity-engine.js";
 import { checkProductReadiness } from "../dist/engine/readiness-engine.js";
 import { runCapacityAnalysisPreflight } from "../dist/engine/analysis-summary-engine.js";
+import { assignLocalStation, createLocalRouteCopy } from "../dist/engine/local-validation-route.js";
 import { buildProductRoutingConfiguration } from "../dist/engine/routing-configuration-engine.js";
 import { validateProductRoutingMasterData } from "../dist/engine/routing-master-data-engine.js";
 
@@ -435,6 +436,27 @@ describe("setup and production segment smoke test", () => {
 });
 
 describe("capacity analysis preflight smoke test", () => {
+  it("limits readiness and share risks to the selected route version", () => {
+    const data = structuredClone(sampleScenario);
+    const old = createLocalRouteCopy(data, "route-a-housing-v1").route;
+    const selected = createLocalRouteCopy(data, "route-a-housing-v1").route;
+    for (const route of [old, selected]) {
+      const operationId = route.operations[0].operationId;
+      assignLocalStation(data, { routeId: route.routeId, operationId, stationId: "OP10", role: "primary" });
+      data.operationStationParameters.push({
+        ...sampleScenario.operationStationParameters.find(item => item.operationId === "op-a-10" && item.stationId === "OP10"),
+        parameterId: `param-${route.routeId}`, operationId,
+      });
+    }
+    const result = runCapacityAnalysisPreflight(data, {
+      productId: "A-Housing", routeId: selected.routeId,
+      availableMinutesByStation: { OP10: 2880 },
+    });
+    assert.equal(result.readiness.operationsChecked, selected.operations.length);
+    assert.ok(result.shareEvaluations.some(item => item.operationId === selected.operations[0].operationId));
+    assert.ok(result.shareEvaluations.every(item => selected.operations.some(operation => operation.operationId === item.operationId)));
+    assert.ok(result.readiness.issues.every(item => !item.operationId || selected.operations.some(operation => operation.operationId === item.operationId)));
+  });
   it("summarizes readiness, share, HU and capacity results for Product A", () => {
     const result = runCapacityAnalysisPreflight(sampleScenario, {
       productId: "A-Housing",
