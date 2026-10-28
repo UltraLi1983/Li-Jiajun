@@ -42,7 +42,9 @@ export function renderScopedWeekReport(input) {
   </article>`;
 }
 function reportMinute(minute) {
-    return Number.isFinite(minute) ? new Date(minute * 60_000).toISOString().slice(0, 16).replace("T", " ") : "—";
+    const date = new Date(minute * 60_000);
+    return Number.isFinite(minute) && Number.isFinite(date.getTime())
+        ? date.toISOString().slice(0, 16).replace("T", " ") : "—";
 }
 function renderSourceWindowEvidence(input) {
     const { zh } = input;
