@@ -26,6 +26,8 @@ export interface CapacityShareRisk {
   message: string;
 }
 
+export type RequiredShareBasis = "weekLedger" | "demoSample" | "storedProfile" | "unavailable";
+
 export interface CapacityShareEvaluationResult {
   productId: string;
   operationId: string;
@@ -33,6 +35,8 @@ export interface CapacityShareEvaluationResult {
   requestedCapacityShare?: number;
   requiredCapacityShare?: number;
   actualCapacityShare?: number;
+  /** Where the required-share denominator came from. Absent on direct evaluateCapacityShare calls. */
+  requiredShareBasis?: RequiredShareBasis;
   risks: CapacityShareRisk[];
   status: CapacityShareRiskLevel;
 }

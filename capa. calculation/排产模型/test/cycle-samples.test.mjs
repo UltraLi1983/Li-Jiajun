@@ -107,7 +107,7 @@ describe("legacy cycle draft migration", () => {
 describe("initial local preset from cycle samples", () => {
   const samples = fill(emptyCycleSampleDraft(2), [2200, 2200]);
   const request = {
-    operationId: "op-b-10", stationId: "OP10", standardCycleSec: 22, piecesPerCycle: 2,
+    operationId: "op-b-10", stationId: "OP20A", standardCycleSec: 22, piecesPerCycle: 2,
     performanceRate: 0.9, performanceReviewed: true, performanceOverrideConfirmed: true, samples, evidenceRef: "cycle-check:B:op-b-10:OP10",
     parameterId: "local-baseline-test", effectiveFrom: "2026-10-15",
   };
@@ -129,7 +129,7 @@ describe("initial local preset from cycle samples", () => {
     assert.throws(() => establishInitialLocalPreset({
       ...request,
       existingParameters: [{
-        parameterId: "planned", operationId: "op-b-10", stationId: "OP10", standardCycleSec: 24,
+        parameterId: "planned", operationId: "op-b-10", stationId: "OP20A", standardCycleSec: 24,
         piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, parameterSource: "engineeringEstimate",
         approvalStatus: "approved",
       }],
@@ -161,9 +161,9 @@ describe("initial local preset from cycle samples", () => {
       { date: "2026-10-15", workingDay: true, stale: false, bestCaseProductionMinutes: 400, mostLikelyProductionMinutes: 380 },
     ];
     const ledger = structuredClone(days);
-    const before = buildPeriodCapacity({ operationId: "op-b-10", stationId: "OP10", parameters: [], days });
+    const before = buildPeriodCapacity({ operationId: "op-b-10", stationId: "OP20A", parameters: [], days });
     const preset = establishInitialLocalPreset(request);
-    const after = buildPeriodCapacity({ operationId: "op-b-10", stationId: "OP10", parameters: [preset], days });
+    const after = buildPeriodCapacity({ operationId: "op-b-10", stationId: "OP20A", parameters: [preset], days });
     assert.equal(before.calculable, false);
     assert.equal(before.bestCaseGoodPieces, undefined);
     assert.equal(after.days[0].status, "blocked");
@@ -176,13 +176,13 @@ describe("initial local preset from cycle samples", () => {
 
 describe("correct an existing planned CT from a confirmed cycle check", () => {
   const existing = {
-    parameterId: "planned", operationId: "op-a-10", stationId: "OP10", standardCycleSec: 24,
+    parameterId: "planned", operationId: "op-a-10", stationId: "OP20A", standardCycleSec: 24,
     piecesPerCycle: 1, performanceRate: 0.97, qualityRate: 0.99, parameterSource: "engineeringEstimate",
     approvalStatus: "approved", effectiveFrom: "2026-01-01",
   };
   const samples = fill(emptyCycleSampleDraft(2), [2200, 2300]);
   const request = {
-    operationId: "op-a-10", stationId: "OP10", existingParameters: [existing], standardCycleSec: 22.5,
+    operationId: "op-a-10", stationId: "OP20A", existingParameters: [existing], standardCycleSec: 22.5,
     ctConfirmed: true, samples, evidenceRef: "cycle-check:A:op-a-10:OP10",
     parameterId: "local-correct-ct", effectiveFrom: "2026-10-15",
   };

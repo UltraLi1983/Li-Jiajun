@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工艺库方案预览</title>
+  <style>
+    :root { color-scheme: light; --bg:#f4f7f8; --side:#eef4f5; --surface:#fff; --line:#d8e1e6; --text:#17212b; --muted:#637281; --teal:#226b70; --green:#177245; --blue:#2367a8; --amber:#9a620d; --red:#b23b3b; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    .shell { min-height:100vh; display:grid; grid-template-columns:300px minmax(0,1fr); }
+    aside { padding:22px 17px; background:var(--side); border-right:1px solid var(--line); }
+    .brand { font-size:21px; font-weight:800; line-height:1.25; }
+    .aside-note { margin:8px 0 24px; color:var(--muted); font-size:13px; line-height:1.45; }
+    .nav { display:grid; gap:4px; }
+    .nav a,.nav .current { display:flex; align-items:center; gap:11px; min-height:48px; padding:9px 11px; border-radius:7px; color:#364653; font-weight:700; text-decoration:none; }
+    .nav .current { color:var(--teal); background:#dcebed; outline:1px solid #b8d1d5; }
+    .nav .num { display:grid; place-items:center; width:26px; height:26px; flex:none; border-radius:50%; background:#fff; font-size:12px; }
+    .aside-foot { margin-top:30px; padding:13px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--muted); font-size:12px; line-height:1.5; }
+    main { min-width:0; padding:22px 24px 50px; }
+    .page-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    h1 { margin:0; font-size:25px; line-height:1.2; }
+    .page-head p { margin:6px 0 0; color:var(--muted); font-size:14px; }
+    .demo-label { flex:none; padding:7px 10px; border:1px solid #b9d7de; border-radius:20px; background:#eef9fb; color:var(--teal); font-size:12px; font-weight:700; }
+    .workspace { padding:16px; border:1px solid var(--line); border-radius:8px; background:var(--surface); }
+    .workspace-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+    .workspace-head small { display:block; margin-bottom:4px; color:var(--muted); font-size:11px; font-weight:800; }
+    .workspace-head h2 { margin:0; font-size:21px; }
+    .workspace-head p { margin:6px 0 0; color:var(--muted); font-size:13px; }
+    .text-link { align-self:flex-start; color:var(--teal); font-size:13px; font-weight:700; text-decoration:none; }
+    section { padding:18px 0 20px; border-bottom:1px solid var(--line); }
+    section:last-child { border-bottom:0; padding-bottom:2px; }
+    .section-title { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .step { display:grid; place-items:center; width:29px; height:29px; border-radius:6px; background:#e5f0f1; color:var(--teal); font-size:12px; font-weight:800; }
+    h3 { margin:0; font-size:16px; }
+    .section-meta { margin-left:auto; color:var(--muted); font-size:12px; }
+    .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .fields.three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .field { display:block; min-width:0; margin:0; padding:10px; border:1px solid #e1e8ed; border-radius:7px; background:#fbfdfe; }
+    .field > span { display:block; margin-bottom:6px; color:var(--muted); font-size:12px; font-weight:700; }
+    input,select { width:100%; height:42px; padding:0 10px; border:1px solid #aebbc6; border-radius:6px; background:#fff; color:var(--text); font-size:14px; }
+    input:focus,select:focus { outline:2px solid #71b7c0; outline-offset:1px; }
+    input[readonly] { background:#eef4f6; color:#344752; }
+    .actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:12px; }
+    .button { min-height:39px; padding:8px 14px; border:0; border-radius:6px; background:var(--teal); color:#fff; font-size:13px; font-weight:750; }
+    .button.secondary { background:#52616e; }
+    .button.ghost { border:1px solid var(--line); background:#f7fafb; color:var(--teal); }
+    .button:disabled { background:#aebbc6; cursor:not-allowed; }
+    details { margin-top:12px; }
+    summary { width:max-content; max-width:100%; padding:9px 12px; border-radius:6px; background:#edf3f7; color:#445462; font-size:13px; font-weight:750; cursor:pointer; }
+    .application { margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:7px; background:#fbfdfe; }
+    .checkline { display:flex; align-items:flex-start; gap:9px; margin-top:11px; font-size:12px; font-weight:650; }
+    .checkline input { width:17px; height:17px; flex:none; margin:0; accent-color:var(--teal); }
+    .type-results { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+    .type-option { min-height:34px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; color:#445462; font-size:13px; }
+    .type-option[aria-pressed="true"] { border-color:var(--teal); background:#e8f3f3; color:var(--teal); font-weight:750; }
+    .mode { display:inline-flex; max-width:100%; padding:3px; border:1px solid var(--line); border-radius:7px; background:#eef3f5; }
+    .mode button { min-height:36px; padding:7px 14px; border:0; border-radius:5px; background:transparent; color:#52616e; font-size:13px; font-weight:700; }
+    .mode button[aria-pressed="true"] { background:#fff; color:var(--teal); box-shadow:0 1px 4px #17212b1c; }
+    .process-body { margin-top:12px; }
+    .inline-note { color:var(--muted); font-size:12px; line-height:1.5; }
+    .status { display:inline-block; padding:5px 8px; border:1px solid #abd9c1; border-radius:20px; background:#eefaf3; color:var(--green); font-size:11px; font-weight:750; }
+    .process-list { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; font-size:12px; }
+    .process-chip { padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:#f7fafb; color:#445462; }
+    .message { min-height:20px; margin:9px 0 0; font-size:12px; font-weight:700; }
+    .message.error { color:var(--red); }
+    .message.good { color:var(--green); }
+    .table-scroll { overflow-x:auto; margin-top:10px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { padding:10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+    th { background:#f4f8f9; color:var(--muted); font-size:12px; font-weight:750; }
+    tbody tr:last-child td { border-bottom:0; }
+    .muted { color:var(--muted); }
+    .tag { display:inline-block; padding:4px 7px; border:1px solid #d4e3e7; border-radius:5px; background:#eef7f8; color:var(--teal); font-size:11px; font-weight:700; }
+    .tag.warn { border-color:#e6c887; background:#fff8e8; color:var(--amber); }
+    [hidden] { display:none !important; }
+    @media (max-width:850px) { .shell { grid-template-columns:1fr; } aside { padding:12px 16px; border-right:0; border-bottom:1px solid var(--line); } .brand { font-size:17px; } .aside-note,.aside-foot { display:none; } .nav { display:flex; overflow-x:auto; } .nav .current,.nav a { min-width:max-content; min-height:40px; } main { padding:16px; } .fields.three { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:560px) { .page-head,.workspace-head { flex-wrap:wrap; } .fields,.fields.three { grid-template-columns:1fr; } .section-meta { display:none; } .mode { width:100%; } .mode button { flex:1; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">排产产能参数工具</div>
+      <p class="aside-note">产品路线、工站分配、参数检查、计划 SA 和产能预检。</p>
+      <nav class="nav" aria-label="页面导航">
+        <span class="current"><span class="num">▥</span>工艺库</span>
+        <a href="formal.html"><span class="num">1</span>返回正式应用</a>
+      </nav>
+      <div class="aside-foot">界面方案预览<br>此页操作仅保存在本次页面内，不写入正式应用或数据库。</div>
+    </aside>
+    <main>
+      <div class="page-head"><div><h1>工艺库</h1><p>维护可复用的工艺类型、工艺定义与候选设备资源。</p></div><span class="demo-label">方案 Demo · 不写入数据</span></div>
+      <div class="workspace">
+        <div class="workspace-head"><div><small>基础资料 · 四阶段之外</small><h2>工艺库</h2><p>产品专属工序名称与参数仍在工艺路线中维护。</p></div><a class="text-link" href="formal.html">返回排产</a></div>
+        <section aria-labelledby="typeTitle">
+          <div class="section-title"><span class="step">01</span><h3 id="typeTitle">选择工艺类型</h3><span class="section-meta">受控类型目录</span></div>
+          <div class="fields">
+            <label class="field"><span>检索类型目录</span><input id="typeSearch" type="search" placeholder="例如：机加工、压铸" autocomplete="off"></label>
+            <label class="field"><span>已有工艺类型</span><select id="typeSelect" aria-label="已有工艺类型"></select></label>
+          </div>
+          <div class="type-results" id="typeResults" aria-label="匹配工艺类型"></div>
+          <details id="newType"><summary>目录里没有？申请新工艺类型</summary>
+            <div class="application">
+              <div class="fields"><label class="field"><span>新类型名称</span><input id="newTypeName" maxlength="60" placeholder="输入可跨产品复用的类型名称"></label><label class="field"><span>类型归类</span><select id="newTypeFamily"><option value="制造工艺">制造工艺</option><option value="质量门">质量门</option></select></label></div>
+              <label class="checkline"><input id="typeReviewed" type="checkbox"><span>已检查目录，确认没有同义或重复类型</span></label>
+              <div class="actions"><button class="button secondary" id="createType" type="button">加入本次 Demo 类型目录</button></div>
+              <p class="message" id="typeMessage" role="status"></p>
+            </div>
+          </details>
+        </section>
+        <section aria-labelledby="processTitle">
+          <div class="section-title"><span class="step">02</span><h3 id="processTitle">采用或建立可复用工艺</h3><span class="section-meta">不录入产品专属工序</span></div>
+          <div class="mode" role="group" aria-label="工艺建立方式"><button id="defaultMode" type="button" aria-pressed="true">默认工艺</button><button id="detailMode" type="button" aria-pressed="false">另建细分工艺</button></div>
+          <div class="process-body" id="defaultPanel">
+            <div class="fields three"><label class="field"><span>工艺名称</span><input id="defaultProcessName" readonly></label><label class="field"><span>工艺类型</span><input id="defaultProcessType" readonly></label><label class="field"><span>内部工艺编号</span><input id="defaultProcessId" readonly></label></div>
+            <div class="actions"><button class="button" id="createDefault" type="button">建立默认工艺</button><span class="status" id="defaultStatus" hidden>已有标准工艺</span></div>
+          </div>
+          <div class="process-body" id="detailPanel" hidden>
+            <div class="fields three"><label class="field"><span>细分工艺名称</span><input id="detailName" maxlength="80" placeholder="仅录入跨产品可复用的定义"></label><label class="field"><span>企业业务编号 · 可选</span><input id="businessCode" maxlength="60"></label><label class="field"><span>说明 · 可选</span><input id="detailDescription" maxlength="120"></label></div>
+            <div class="actions"><button class="button" id="createDetail" type="button">建立细分工艺</button><span class="inline-note">产品特定加工内容留在路线工序中。</span></div>
+          </div>
+          <p class="message" id="processMessage" role="status"></p>
+          <div class="process-list"><strong>当前类型下的工艺</strong><span id="processList"></span></div>
+        </section>
+        <section aria-labelledby="stationTitle">
+          <div class="section-title"><span class="step">03</span><h3 id="stationTitle">工站与设备资源</h3><span class="section-meta">本页仅展示验证模板</span></div>
+          <div class="table-scroll"><table><thead><tr><th>申报设备编号</th><th>工站排产键</th><th>工站名称</th><th>候选工艺类型</th><th>资源身份</th></tr></thead><tbody id="stationRows"></tbody></table></div>
+          <p class="inline-note">正式物理设备 UID 需在身份核实后建立；此处模板不代表真实设备。</p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script>
+    const types = [
+      { id:"die-casting", name:"压铸", en:"Die casting", family:"制造工艺" },
+      { id:"machining", name:"机加工", en:"Machining", family:"制造工艺" },
+      { id:"assembly", name:"装配", en:"Assembly", family:"制造工艺" },
+      { id:"quality-gate", name:"质量门", en:"Quality gate", family:"质量门" },
+      { id:"packaging", name:"包装", en:"Packaging", family:"制造工艺" },
+    ];
+    const processes = [
+      { id:"process-machining", typeId:"machining", name:"机加工", standard:true },
+      { id:"process-assembly", typeId:"assembly", name:"装配", standard:true },
+      { id:"process-gp12", typeId:"quality-gate", name:"质量门", standard:true },
+      { id:"process-packaging", typeId:"packaging", name:"包装", standard:true },
+    ];
+    const stations = [
+      { code:"压铸-001", key:"OP10A", name:"Die casting", typeId:"die-casting", state:"验证模板" },
+      { code:"机加工-001", key:"OP10", name:"机加工01", typeId:"machining", state:"验证模板" },
+      { code:"机加工-002", key:"OP10B", name:"机加工02", typeId:"machining", state:"验证模板" },
+      { code:"装配-001", key:"OP20", name:"装配01", typeId:"assembly", state:"验证模板" },
+    ];
+    const $ = id => document.getElementById(id);
+    const escape = value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+    let selectedTypeId = "die-casting";
+    let processMode = "default";
+    let composing = false;
+    function selectedType() { return types.find(type => type.id === selectedTypeId); }
+    function showMessage(id, text, error=false) { const node=$(id); node.textContent=text; node.className=`message ${error ? "error" : "good"}`; }
+    function renderTypes() {
+      const query=$("typeSearch").value.trim().toLocaleLowerCase();
+      const matches=types.filter(type => `${type.name} ${type.en} ${type.id}`.toLocaleLowerCase().includes(query));
+      $("typeSelect").innerHTML=types.map(type => `<option value="${escape(type.id)}">${escape(type.name)} / ${escape(type.en)}</option>`).join("");
+      $("typeSelect").value=selectedTypeId;
+      $("typeResults").innerHTML=matches.length ? matches.map(type => `<button class="type-option" type="button" data-type="${escape(type.id)}" aria-pressed="${type.id===selectedTypeId}">${escape(type.name)}</button>`).join("") : `<span class="inline-note">目录中没有匹配类型。</span>`;
+      $("typeResults").querySelectorAll("[data-type]").forEach(button => button.addEventListener("click", () => chooseType(button.dataset.type)));
+    }
+    function chooseType(id) { selectedTypeId=id; $("typeSearch").value=""; $("processMessage").textContent=""; render(); }
+    function renderProcess() {
+      const type=selectedType();
+      if (!type) return;
+      $("defaultMode").setAttribute("aria-pressed",String(processMode==="default"));
+      $("detailMode").setAttribute("aria-pressed",String(processMode==="detail"));
+      $("defaultPanel").hidden=processMode!=="default";
+      $("detailPanel").hidden=processMode!=="detail";
+      $("defaultProcessName").value=type.name;
+      $("defaultProcessType").value=type.name;
+      const existing=processes.find(item => item.typeId===type.id && item.standard);
+      $("defaultProcessId").value=existing?.id ?? `process-${type.id}`;
+      $("createDefault").hidden=Boolean(existing);
+      $("defaultStatus").hidden=!existing;
+      $("processList").innerHTML=processes.filter(item => item.typeId===type.id).map(item => `<span class="process-chip">${escape(item.name)}${item.standard ? " · 标准" : " · 细分"}</span>`).join("") || `<span class="muted">尚未建立</span>`;
+    }
+    function renderStations() {
+      const rows=stations.filter(item => item.typeId===selectedTypeId);
+      $("stationRows").innerHTML=rows.length ? rows.map(item => `<tr><td>${escape(item.code)}</td><td>${escape(item.key)}</td><td>${escape(item.name)}</td><td>${escape(selectedType().name)}</td><td><span class="tag warn">${escape(item.state)}</span></td></tr>`).join("") : `<tr><td colspan="5" class="muted">当前类型暂无验证工站模板。</td></tr>`;
+    }
+    function render() { renderTypes(); renderProcess(); renderStations(); }
+    $("typeSearch").addEventListener("compositionstart", () => { composing=true; });
+    $("typeSearch").addEventListener("compositionend", () => { composing=false; renderTypes(); });
+    $("typeSearch").addEventListener("input", () => { if (!composing) renderTypes(); });
+    $("typeSelect").addEventListener("change", event => chooseType(event.target.value));
+    $("defaultMode").addEventListener("click", () => { processMode="default"; renderProcess(); });
+    $("detailMode").addEventListener("click", () => { processMode="detail"; renderProcess(); $("detailName").focus(); });
+    $("createType").addEventListener("click", () => {
+      const name=$("newTypeName").value.trim();
+      if (!name) return showMessage("typeMessage","请填写新类型名称。",true);
+      if (!$("typeReviewed").checked) return showMessage("typeMessage","请先确认已检查类型目录。",true);
+      if (types.some(type => type.name.toLocaleLowerCase()===name.toLocaleLowerCase() || type.en.toLocaleLowerCase()===name.toLocaleLowerCase())) return showMessage("typeMessage","目录中已有同名类型，请直接选择。",true);
+      const id=`local-type-${types.length+1}`;
+      types.push({ id,name,en:name,family:$("newTypeFamily").value });
+      $("newTypeName").value=""; $("typeReviewed").checked=false;
+      chooseType(id); showMessage("typeMessage",`“${name}”已加入本次 Demo 类型目录。`);
+    });
+    $("createDefault").addEventListener("click", () => {
+      const type=selectedType(); if (!type) return;
+      processes.push({id:$("defaultProcessId").value,typeId:type.id,name:type.name,standard:true});
+      renderProcess(); showMessage("processMessage",`已建立“${type.name}”默认工艺，仅在本次 Demo 生效。`);
+    });
+    $("createDetail").addEventListener("click", () => {
+      const name=$("detailName").value.trim();
+      if (!name) return showMessage("processMessage","请填写可复用的细分工艺名称。",true);
+      if (processes.some(item => item.typeId===selectedTypeId && item.name.toLocaleLowerCase()===name.toLocaleLowerCase())) return showMessage("processMessage","该类型下已有同名工艺。",true);
+      processes.push({id:`local-process-${processes.length+1}`,typeId:selectedTypeId,name,standard:false});
+      $("detailName").value=""; $("businessCode").value=""; $("detailDescription").value="";
+      renderProcess(); showMessage("processMessage",`“${name}”已加入本次 Demo 工艺清单。`);
+    });
+    render();
+  </script>
+</body>
+</html>

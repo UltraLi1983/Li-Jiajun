@@ -134,6 +134,8 @@ export function buildRouteWindowCapacityView(input) {
                 ...(engineRow.actualSa === undefined ? {} : { actualSa: engineRow.actualSa }),
                 ...(engineRow.bestGoodCapacity === undefined ? {} : { bestGoodCapacity: engineRow.bestGoodCapacity }),
                 ...(engineRow.actualGoodOutput === undefined ? {} : { actualGoodOutput: engineRow.actualGoodOutput }),
+                ...(engineRow.unrecordedIntervals ? { unrecordedIntervals: engineRow.unrecordedIntervals } : {}),
+                ...(engineRow.plannedGapIntervals ? { plannedGapIntervals: engineRow.plannedGapIntervals } : {}),
             };
         });
         view.operations = result.operations;

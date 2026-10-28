@@ -11,8 +11,15 @@ export function standardWindowFingerprint(events) {
         productId: event.productId ?? null,
         orderId: event.orderId ?? null,
         changeoverKey: event.changeoverKey ?? null,
-        label: event.label ?? null,
-        note: event.note ?? null,
+    })));
+}
+export function legacyStandardWindowFingerprint(events) {
+    return JSON.stringify(sortTimelineEvents(events).map(event => ({
+        id: event.id, stationId: event.stationId, kind: event.kind,
+        startMinute: event.startMinute, endMinute: event.endMinute, source: event.source,
+        productId: event.productId ?? null, orderId: event.orderId ?? null,
+        changeoverKey: event.changeoverKey ?? null,
+        label: event.label ?? null, note: event.note ?? null,
     })));
 }
 export function isFrozenStandardWindowCurrent(snapshot, events, dayConfig) {

@@ -117,18 +117,18 @@ describe("current route bottleneck", () => {
       current = created.scenario;
     }
     assert.equal(current.routes.some(route => route.routeId === routeId), true);
-    const before = calculateCapacityScenario(current).find(item => item.stationId === "OP10");
+    const before = calculateCapacityScenario(current).find(item => item.stationId === "OP20A");
     current.operationStationParameters = [...(current.operationStationParameters ?? []), parameter({
       parameterId: "die-cast-v6",
       operationId: `${routeId}--op-a-10`,
-      stationId: "OP10",
+      stationId: "OP20A",
       piecesPerCycle: 4,
     })];
-    const after = calculateCapacityScenario(current).find(item => item.stationId === "OP10");
+    const after = calculateCapacityScenario(current).find(item => item.stationId === "OP20A");
     assert.ok(before && after);
     assert.equal(Math.round(before.gapMinutes), Math.round(after.gapMinutes));
     assert.equal(Math.round(before.gapMinutes), -4910);
-    assert.equal(before.stationId, "OP10");
+    assert.equal(before.stationId, "OP20A");
     assert.equal("operationId" in before, false);
 
     const unavailable = presentCurrentRouteBottleneck(cardFor(undefined, {
@@ -165,7 +165,7 @@ describe("current route bottleneck", () => {
     assert.equal(castCard.detail.includes("分钟"), false);
     assert.match(downstream.value, /装配 · op-asm \/ 装配01 · AS01/);
     assert.match(downstream.detail, /Most likely 50 件/);
-    assert.equal(downstream.detail.includes("OP10"), false);
+    assert.equal(downstream.detail.includes("OP20A"), false);
     assert.equal(downstream.detail.includes("4910"), false);
   });
 
@@ -241,10 +241,10 @@ describe("current route bottleneck", () => {
   it("marks a station whose date matches but whose ledger was never generated", () => {
     const gaps = listRouteReportGaps([
       { operationId: "op-cast", operationName: "压铸", stationId: "DC01", stationName: "压铸01", weeks: ["2026-10-19"], draftWeekStart: "2026-10-19", generated: true },
-      { operationId: "op-asm", operationName: "装配", stationId: "OP20", stationName: "装配01", weeks: [], draftWeekStart: "2026-10-19", generated: false },
+      { operationId: "op-asm", operationName: "装配", stationId: "OP30", stationName: "装配01", weeks: [], draftWeekStart: "2026-10-19", generated: false },
     ], "zh");
     assert.equal(gaps.length, 1);
-    assert.equal(gaps[0].stationId, "OP20");
+    assert.equal(gaps[0].stationId, "OP30");
     assert.equal(gaps[0].code, "ledger_not_generated");
     assert.match(gaps[0].detail, /整周起始日期是 2026-10-19/);
     assert.match(gaps[0].detail, /还没有生成周账/);
@@ -254,7 +254,7 @@ describe("current route bottleneck", () => {
   it("marks every station when the generated weeks do not overlap or an operation has no planning station", () => {
     const mismatch = listRouteReportGaps([
       { operationId: "op-cast", operationName: "压铸", stationId: "DC01", stationName: "压铸01", weeks: ["2026-10-19"], draftWeekStart: "2026-10-19", generated: true },
-      { operationId: "op-asm", operationName: "装配", stationId: "OP20", stationName: "装配01", weeks: ["2026-10-26"], draftWeekStart: "2026-10-26", generated: true },
+      { operationId: "op-asm", operationName: "装配", stationId: "OP30", stationName: "装配01", weeks: ["2026-10-26"], draftWeekStart: "2026-10-26", generated: true },
     ], "zh");
     assert.deepEqual(mismatch.map(item => item.code), ["week_mismatch", "week_mismatch"]);
     const unassigned = listRouteReportGaps([

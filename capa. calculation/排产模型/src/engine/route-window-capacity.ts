@@ -1,6 +1,6 @@
 import type { OperationStationParameter, TimelineEvent } from "../domain/types.js";
 import { reconcileRnrSpeedLoss, type RnrSpeedOptions } from "./rnr-reconciliation.js";
-import { reconcileRnrTimeline } from "./rnr-timeline-reconciliation.js";
+import { mergeStatusIntervals, reconcileRnrTimeline, type CoverageInterval } from "./rnr-timeline-reconciliation.js";
 import { calculateStationFlow } from "./station-flow.js";
 import type { StationFlowPolicy } from "../domain/types.js";
 
@@ -42,6 +42,10 @@ export interface StationWindowCapacity {
   bestGoodCapacity?: number;
   actualGoodOutput?: number;
   blockers: string[];
+  /** On-shift minutes that have a plan but no actual record. */
+  unrecordedIntervals?: CoverageInterval[];
+  /** On-shift minutes with no planned state. A different state is not a gap. */
+  plannedGapIntervals?: CoverageInterval[];
 }
 
 export interface OperationWindowCapacity {
@@ -110,12 +114,16 @@ export function calculateRouteWindowCapacity(input: RouteWindowCapacityInput): R
     }
     result.plannedProductionMinutes = timeline.plannedProductionMinutes;
     result.actualProductionMinutes = timeline.actualProductionMinutes;
+    const unrecordedIntervals = mergeStatusIntervals(timeline.rows, "unrecorded");
+    const plannedGapIntervals = mergeStatusIntervals(timeline.rows, "plannedGap");
+    if (unrecordedIntervals.length) result.unrecordedIntervals = unrecordedIntervals;
+    if (plannedGapIntervals.length) result.plannedGapIntervals = plannedGapIntervals;
     if (timeline.plannedGapMinutes > 0) result.blockers.push("planned_window_gap");
     if (parameter && !result.blockers.length) {
       result.bestGoodCapacity = timeline.plannedProductionMinutes * 60
         / parameter.standardCycleSec * parameter.piecesPerCycle;
     }
-    if (!timeline.complete) {
+    if (timeline.unrecordedMinutes > 0) {
       result.blockers.push("actual_window_incomplete");
       return result;
     }

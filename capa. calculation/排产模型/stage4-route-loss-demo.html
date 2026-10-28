@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>第四阶段版式预览 · 路线损失与成品影响</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f8;
+      --surface: #ffffff;
+      --line: #d8e1e6;
+      --text: #17212b;
+      --muted: #637281;
+      --teal: #226b70;
+      --green: #177245;
+      --amber: #9a620d;
+      --red: #b23b3b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+    aside { border-right: 1px solid var(--line); background: #eef4f5; padding: 22px 18px; }
+    aside h1 { margin: 0; font-size: 22px; line-height: 1.2; }
+    aside p { margin: 8px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .nav-step { display: flex; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: 8px; background: transparent; color: #364653; font: inherit; font-weight: 650; text-align: left; }
+    .nav-step.active { background: #dcebed; color: var(--teal); }
+    .nav-step span { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; background: #fff; font-size: 13px; }
+    .nav-step small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    main { padding: 22px; }
+    .banner { margin: 0 0 16px; padding: 12px 14px; border: 1px solid #ead7a4; border-radius: 8px; background: #fffaf0; color: #6d5010; font-size: 14px; line-height: 1.5; }
+    .page-head { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 16px; }
+    .page-head h2 { margin: 0; font-size: 24px; }
+    .page-head p { margin: 6px 0 0; color: var(--muted); }
+    .badge { padding: 7px 10px; border: 1px solid #b9d7de; border-radius: 999px; color: var(--teal); background: #eef9fb; font-weight: 700; font-size: 12px; white-space: nowrap; }
+    .scope { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+    .scope span { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-weight: 750; }
+    .scope small { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .outcome { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 12px; margin-bottom: 14px; }
+    .outcome article { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+    .outcome p { margin: 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .outcome strong { display: block; margin-top: 8px; font-size: 28px; line-height: 1.1; }
+    .outcome .note { margin-top: 8px; font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.45; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+    .panel h3 { margin: 0; font-size: 18px; }
+    .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+    .hint { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; font-weight: 800; background: #f8fbfc; }
+    tr.station { cursor: pointer; }
+    tr.station:hover { background: #f3f8f8; }
+    tr.station.selected { background: #e7f3f3; }
+    tr.station:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+    .num { font-variant-numeric: tabular-nums; }
+    .impact-zero { color: var(--muted); }
+    .impact-hit { color: var(--teal); font-weight: 800; }
+    .group { color: var(--muted); font-size: 12px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .detail-grid div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #f8fbfc; }
+    .detail-grid span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .detail-grid strong { display: block; margin-top: 4px; font-size: 22px; }
+    .button { border: 0; border-radius: 7px; padding: 8px 12px; background: #52616e; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+    .button[aria-pressed="true"] { background: var(--teal); }
+    .empty { margin: 8px 0 0; color: var(--muted); }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .outcome, .detail-grid { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>排产产能参数工具</h1>
+      <p>版式预览。尚未替换正式页面。</p>
+      <button class="nav-step" type="button"><span>1</span><div>工艺路线与工站</div></button>
+      <button class="nav-step" type="button"><span>2</span><div>标准 SA 设定<small>逐工站录入</small></div></button>
+      <button class="nav-step" type="button"><span>3</span><div>现场 R&amp;R 跟踪<small>逐工站跟踪</small></div></button>
+      <button class="nav-step active" type="button"><span>4</span><div>参数校准与验证<small>先看整条路线</small></div></button>
+      <button class="nav-step" type="button"><span>5</span><div>路线产能总览</div></button>
+    </aside>
+    <main>
+      <p class="banner">这是讨论用的版式，不是正式计算结果。压铸的 110 分钟和 6 分钟来自当前工站页面。机加工、装配的损失分钟这次没有读取，所以留空。件数来自当前同窗：压铸 970、机加工 4,638 件按每件成品 2 件折成 2,319、装配 365。</p>
+      <div class="page-head">
+        <div>
+          <h2>参数校准与验证</h2>
+          <p>进页先看整条路线。损失分钟说明这一站发生了什么；成品影响说明这一窗的路线件数跟谁走。</p>
+        </div>
+        <span class="badge">整条路线</span>
+      </div>
+      <div class="scope">
+        <span><small>产品</small>产品A壳体 / A-Housing</span>
+        <span><small>当前路线</small>local-route-a-housing-v1-1</span>
+        <span><small>观察窗口</small>10-22 08:30 – 10-23 08:30</span>
+      </div>
+      <section class="outcome">
+        <article>
+          <p>本窗口路线成品</p>
+          <strong>365</strong>
+          <p class="note">跟着装配。压铸虽有 110 分钟异常，折合成品仍有 970。</p>
+        </article>
+        <article>
+          <p>怎么读这两列</p>
+          <p class="note">左列是本站时钟损失，各站不相加，也不按分钟从大到小排队。右列只在该工序的折合成品成为这一窗最少值时写出影响。工序之间的在制品缓冲还没建，所以右列只代表同一窗口的直接比较。</p>
+        </article>
+      </section>
+      <section class="panel">
+        <div class="panel-head">
+          <h3>路线损失与成品影响</h3>
+          <span class="badge">点一行查看该工站</span>
+        </div>
+        <p class="hint">机加工两台先合成一道工序，再和压铸、装配比较。并行站各自的停机不单独决定路线件数。</p>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>工序</th>
+                <th>工站</th>
+                <th>已记录异常</th>
+                <th>推断损失</th>
+                <th>待补录</th>
+                <th>工序实跑折合成品</th>
+                <th>本窗口成品影响</th>
+              </tr>
+            </thead>
+            <tbody id="routeBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel" id="stationDetail">
+        <div class="panel-head">
+          <div>
+            <h3 id="detailTitle">当前工站</h3>
+            <p class="hint" id="detailLead"></p>
+          </div>
+          <button class="button" type="button" id="diffOnly" aria-pressed="false">仅聚焦差异</button>
+        </div>
+        <div class="detail-grid" id="detailFacts"></div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>来源</th>
+                <th>类别</th>
+                <th>起止</th>
+                <th>分钟</th>
+                <th>这条损失怎么计入</th>
+              </tr>
+            </thead>
+            <tbody id="detailRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const stations = [
+      {
+        id: "cast",
+        operation: "OP10 压铸",
+        station: "压铸",
+        recorded: "110",
+        inferred: "6",
+        missing: "0",
+        operationPieces: "970",
+        span: 1,
+        impact: "0",
+        impactClass: "impact-zero",
+        lead: "这一站的异常最长，但这一窗的路线成品不由它决定。",
+        facts: [
+          ["已记录异常", "110 分钟"],
+          ["推断损失", "6 分钟"],
+          ["本窗口成品影响", "0 件"],
+        ],
+        rows: [
+          ["已记录异常", "设备故障", "19:30–20:50", "80", "整段离开生产，只减少压铸自己的实际生产时间"],
+          ["已记录异常", "设备故障", "22:30–23:00", "30", "同上，80 与 30 在本站相加为 110"],
+          ["推断损失", "待归因", "20:50–22:30 的生产段", "6", "这段生产走了 100 分钟，按标准节拍只需 94 分钟"],
+          ["计划对照", "生产", "其余已对齐时段", "—", "差异列为「-」，筛选后隐藏"],
+        ],
+      },
+      {
+        id: "mach-a",
+        operation: "OP20 机加工",
+        station: "机加工01",
+        recorded: "未读取",
+        inferred: "未读取",
+        missing: "未读取",
+        operationPieces: "2,319",
+        span: 2,
+        impact: "0",
+        impactClass: "impact-zero",
+        lead: "机加工01、机加工02 先加总再按每件成品 2 件折算。工序合计仍高于装配。",
+        facts: [
+          ["工序实跑", "4,638 件"],
+          ["折合成品", "2,319"],
+          ["本窗口成品影响", "0 件"],
+        ],
+        rows: [
+          ["本站明细", "尚未带入", "—", "—", "正式页面会在这里只展开这一台工站的对账"],
+        ],
+      },
+      {
+        id: "mach-b",
+        operation: "",
+        station: "机加工02",
+        recorded: "未读取",
+        inferred: "未读取",
+        missing: "未读取",
+        operationPieces: "",
+        span: 0,
+        impact: "",
+        impactClass: "",
+        lead: "这一台停得再久，也要先看机加工整道工序还剩多少件。",
+        facts: [
+          ["工序实跑", "4,638 件"],
+          ["折合成品", "2,319"],
+          ["本窗口成品影响", "0 件"],
+        ],
+        rows: [
+          ["本站明细", "尚未带入", "—", "—", "与机加工01分开记录，不把两台损失分钟合成一个总数"],
+        ],
+      },
+      {
+        id: "assy",
+        operation: "OP30 装配",
+        station: "装配01",
+        recorded: "未读取",
+        inferred: "未读取",
+        missing: "未读取",
+        operationPieces: "365",
+        span: 1,
+        impact: "路线成品 365",
+        impactClass: "impact-hit",
+        lead: "这一窗四站折合后，装配最少。路线成品写 365。它的损失分钟可以少于压铸。",
+        facts: [
+          ["工序实跑", "365 件"],
+          ["计划良品", "396 件"],
+          ["本窗口成品影响", "路线跟着这道工序"],
+        ],
+        rows: [
+          ["本站明细", "尚未带入", "—", "—", "点进后只看装配自己的停机、推断损失和对账差异"],
+        ],
+      },
+    ];
+
+    const body = document.querySelector("#routeBody");
+    let selected = "cast";
+    let diffOnly = false;
+
+    function renderTable() {
+      body.innerHTML = stations.map(item => {
+        const pieces = item.span
+          ? `<td class="num" rowspan="${item.span}">${item.operationPieces}</td><td class="${item.impactClass}" rowspan="${item.span}">${item.impact}</td>`
+          : "";
+        return `<tr class="station${item.id === selected ? " selected" : ""}" data-id="${item.id}" tabindex="0">
+          <td>${item.operation}</td>
+          <td>${item.station}</td>
+          <td class="num">${item.recorded}</td>
+          <td class="num">${item.inferred}</td>
+          <td class="num">${item.missing}</td>
+          ${pieces}
+        </tr>`;
+      }).join("");
+      body.querySelectorAll("tr").forEach(row => {
+        const open = () => {
+          selected = row.dataset.id;
+          renderTable();
+          renderDetail();
+        };
+        row.addEventListener("click", open);
+        row.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            open();
+          }
+        });
+      });
+    }
+
+    function renderDetail() {
+      const item = stations.find(station => station.id === selected);
+      document.querySelector("#detailTitle").textContent = `当前工站 · ${item.operation || "OP20 机加工"} ${item.station}`;
+      document.querySelector("#detailLead").textContent = item.lead;
+      document.querySelector("#detailFacts").innerHTML = item.facts.map(([label, value]) =>
+        `<div><span>${label}</span><strong>${value}</strong></div>`).join("");
+      const rows = diffOnly ? item.rows.filter(row => row[3] !== "—") : item.rows;
+      document.querySelector("#detailRows").innerHTML = rows.map(row =>
+        `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td class="num">${row[3]}</td><td>${row[4]}</td></tr>`).join("")
+        || `<tr><td colspan="5">当前没有可聚焦的损失行。</td></tr>`;
+    }
+
+    document.querySelector("#diffOnly").addEventListener("click", event => {
+      diffOnly = !diffOnly;
+      event.currentTarget.setAttribute("aria-pressed", diffOnly ? "true" : "false");
+      event.currentTarget.textContent = diffOnly ? "显示全部" : "仅聚焦差异";
+      renderDetail();
+    });
+
+    renderTable();
+    renderDetail();
+  </script>
+</body>
+</html>

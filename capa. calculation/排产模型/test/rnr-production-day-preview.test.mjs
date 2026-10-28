@@ -3,12 +3,12 @@ import { it } from "node:test";
 import { buildRnrBestActualPreview } from "../dist/engine/rnr-best-actual-preview.js";
 
 const event = (id, kind, startMinute, endMinute, extra = {}) => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "manual", ...extra,
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "manual", ...extra,
 });
 
 it("uses the full production day for R&R SA without requiring off-shift actual records", () => {
   const result = buildRnrBestActualPreview({
-    stationId: "OP10",
+    stationId: "OP20A",
     planned: [event("planned-production", "production", 0, 570), event("planned-rest", "unscheduled", 570, 960)],
     actual: [event("actual-production", "production", 0, 570, { okQty: 570, nokQty: 0 }), event("actual-rest", "unscheduled", 570, 960)],
     windowStartMinute: 0,

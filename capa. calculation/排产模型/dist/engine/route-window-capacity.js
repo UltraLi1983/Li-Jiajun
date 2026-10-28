@@ -1,5 +1,5 @@
 import { reconcileRnrSpeedLoss } from "./rnr-reconciliation.js";
-import { reconcileRnrTimeline } from "./rnr-timeline-reconciliation.js";
+import { mergeStatusIntervals, reconcileRnrTimeline } from "./rnr-timeline-reconciliation.js";
 import { calculateStationFlow } from "./station-flow.js";
 export function calculateRouteWindowCapacity(input) {
     const windowMinutes = input.endMinute - input.startMinute;
@@ -48,13 +48,19 @@ export function calculateRouteWindowCapacity(input) {
         }
         result.plannedProductionMinutes = timeline.plannedProductionMinutes;
         result.actualProductionMinutes = timeline.actualProductionMinutes;
+        const unrecordedIntervals = mergeStatusIntervals(timeline.rows, "unrecorded");
+        const plannedGapIntervals = mergeStatusIntervals(timeline.rows, "plannedGap");
+        if (unrecordedIntervals.length)
+            result.unrecordedIntervals = unrecordedIntervals;
+        if (plannedGapIntervals.length)
+            result.plannedGapIntervals = plannedGapIntervals;
         if (timeline.plannedGapMinutes > 0)
             result.blockers.push("planned_window_gap");
         if (parameter && !result.blockers.length) {
             result.bestGoodCapacity = timeline.plannedProductionMinutes * 60
                 / parameter.standardCycleSec * parameter.piecesPerCycle;
         }
-        if (!timeline.complete) {
+        if (timeline.unrecordedMinutes > 0) {
             result.blockers.push("actual_window_incomplete");
             return result;
         }

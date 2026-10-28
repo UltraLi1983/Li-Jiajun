@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>路线产能报告 · 参数齐备目标态</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #18232c; background: #f1f5f6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1240px; margin: auto; padding: 24px; }
+    header { background: #fff; border-bottom: 1px solid #d5e0e4; }
+    .header-inner { max-width: 1240px; margin: auto; padding: 19px 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    h1 { margin: 3px 0 7px; font-size: 25px; }
+    h2 { font-size: 17px; margin: 0 0 15px; }
+    h3 { font-size: 14px; margin: 0 0 10px; }
+    p { margin: 0; line-height: 1.55; }
+    .eyebrow, small { color: #607281; font-size: 12px; }
+    .badge { border: 1px solid #9bcdd0; border-radius: 4px; padding: 6px 9px; color: #16666b; background: #e8f6f6; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .notice { padding: 12px 16px; border-left: 4px solid #b7791f; background: #fff6e9; color: #694413; font-size: 13px; margin-bottom: 16px; }
+    section { padding: 20px 0; border-bottom: 1px solid #d5e0e4; }
+    section:last-child { border-bottom: 0; }
+    .meta, .metrics, .status { display: grid; gap: 10px; }
+    .meta { grid-template-columns: repeat(4, 1fr); margin-bottom: 12px; }
+    .metrics { grid-template-columns: repeat(3, 1fr); }
+    .status { grid-template-columns: repeat(2, 1fr); }
+    .box { border: 1px solid #d5e0e4; background: #fff; padding: 11px 13px; min-width: 0; }
+    .box small, .box strong, .box span { display: block; }
+    .box strong { margin-top: 5px; font-size: 18px; font-variant-numeric: tabular-nums; }
+    .box span { color: #607281; font-size: 12px; margin-top: 4px; }
+    .box.good { border-top: 3px solid #237449; }
+    .box.plan { border-top: 3px solid #2469aa; }
+    .decision { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 20px; margin: 14px 0; padding: 12px 15px; background: #fff; border-left: 4px solid #2469aa; }
+    .decision strong { font-size: 18px; }
+    .decision span { font-size: 13px; color: #455764; }
+    .chart { background: #fff; border: 1px solid #d5e0e4; padding: 18px; }
+    .legend { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; color: #485b68; font-size: 12px; }
+    .key { display: inline-block; width: 13px; height: 8px; margin-right: 5px; vertical-align: middle; }
+    .best { background: #226b70; } .ml { background: #2469aa; }
+    .chart-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 68px; gap: 8px; align-items: center; margin: 7px 0; font-size: 13px; }
+    .chart-row b { text-align: right; font-variant-numeric: tabular-nums; }
+    .track { position: relative; height: 12px; background: #eaf0f2; }
+    .track::after { content: ""; position: absolute; left: 81.82%; top: -4px; height: 20px; width: 2px; background: #8b5c15; }
+    .track > i { display: block; height: 100%; }
+    .chart-note { margin-top: 14px; color: #607281; font-size: 12px; }
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #d5e0e4; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e0e8eb; text-align: left; white-space: nowrap; }
+    th { background: #f5f8f9; color: #526674; font-size: 12px; }
+    tr:last-child td { border-bottom: 0; }
+    td.num { text-align: right; }
+    .critical { color: #a43030; font-weight: 700; }
+    .subnote { color: #607281; font-size: 12px; margin: 9px 0 13px; }
+    ul { padding-left: 20px; margin: 0; line-height: 1.7; font-size: 13px; }
+    .source { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; }
+    .source div { padding: 10px 0; border-bottom: 1px solid #d5e0e4; display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+    .source span { color: #607281; }
+    footer { color: #607281; font-size: 12px; padding: 16px 0 30px; }
+    @media (max-width: 760px) { main { padding: 16px; } .header-inner { padding: 16px; } .meta, .metrics, .status { grid-template-columns: repeat(2, minmax(0, 1fr)); } .source { grid-template-columns: 1fr; } }
+    @media (max-width: 460px) { .meta { grid-template-columns: 1fr 1fr; } .chart-row { grid-template-columns: 72px minmax(0, 1fr) 48px; font-size: 11px; } .header-inner { flex-direction: column; } .badge { white-space: normal; } }
+    @media print { :root { background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; } main { max-width: none; padding: 10mm; } section { break-inside: avoid; } .notice { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <header><div class="header-inner"><div><p class="eyebrow">CAPACITY REPORT / PLAN DEMO</p><h1>路线产能报告</h1><p>产品 A 壳体 · OP10 压铸 → OP20 机加工 → OP30 装配</p></div><span class="badge">计划侧展示示意</span></div></header>
+  <main>
+    <div class="notice"><strong>计划侧演示数据，非当前系统结果。</strong>本页仅示意周需求、Best case 与 Most likely 的报告排版。真实数字以阶段 5 的当前数据报告为准。</div>
+    <div class="meta">
+      <div class="box"><small>报告对象</small><strong>产品 A 壳体</strong><span>路线版本 V1</span></div>
+      <div class="box"><small>观察周期</small><strong>示例生产周</strong><span>周计划能力</span></div>
+      <div class="box"><small>周需求</small><strong>1,800 件</strong><span>产品需求主数据</span></div>
+      <div class="box"><small>数据条件</small><strong>计划侧示例</strong><span>周账、工序用量、参数</span></div>
+    </div>
+
+    <section aria-labelledby="decision"><h2 id="decision">一眼判断</h2>
+      <div class="metrics">
+        <div class="box"><small>客户周需求</small><strong>1,800 件</strong><span>不是阶段 4 临时填报</span></div>
+        <div class="box plan"><small>计划 · Most likely</small><strong>1,862 件</strong><span>较需求 +62 件</span></div>
+        <div class="box good"><small>挑战 · Best case</small><strong>1,920 件</strong><span>非默认排产目标</span></div>
+      </div>
+      <div class="decision"><strong>OP30 装配是计划瓶颈</strong><span>Most likely 为 1,862 件，较示例需求 1,800 件多 62 件。</span></div>
+      <div class="chart" role="img" aria-label="计划侧虚构演示：同一周需求 1800 件，Best 1920 件，Most likely 1862 件">
+        <div class="legend"><span><i class="key best"></i>Best case</span><span><i class="key ml"></i>Most likely</span><span>竖线：需求 1,800</span></div>
+        <div class="chart-row"><span>Best case</span><div class="track"><i class="best" style="width:87.27%"></i></div><b>1,920</b></div>
+        <div class="chart-row"><span>Most likely</span><div class="track"><i class="ml" style="width:84.64%"></i></div><b>1,862</b></div>
+        <p class="chart-note">统一刻度 0–2,200 件；路线总产出取各工序有效产能中的最小值，不把不同工序相加。</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="operation"><h2 id="operation">工序计划能力与需求差额</h2><p class="subnote">同工序多工站先按分配份额与每件成品用量折算，再汇总；不同工序之间取路线瓶颈。</p>
+      <div class="table-wrap"><table><thead><tr><th>工序</th><th>工站</th><th>Best</th><th>Most likely</th><th>ML − 需求</th></tr></thead><tbody>
+        <tr><td>OP10 压铸</td><td>压铸01</td><td class="num">2,070</td><td class="num">2,008</td><td class="num">+208</td></tr>
+        <tr><td>OP20 机加工</td><td>机加工01 / 机加工02</td><td class="num">2,160</td><td class="num">2,070</td><td class="num">+270</td></tr>
+        <tr><td class="critical">OP30 装配 · 瓶颈</td><td>装配01</td><td class="num">1,920</td><td class="num">1,862</td><td class="num">+62</td></tr>
+      </tbody></table></div>
+      <p class="subnote">OP20 的计划 2,070 = 机加工01 贡献 1,449 + 机加工02 贡献 621。以上为示例折算结果。</p>
+    </section>
+
+    <section aria-labelledby="station"><h2 id="station">工站计划参数</h2><p class="subnote">CT、P、Q、SA 保留工站粒度。跨工站直接平均这些比率会误导，工序级只汇总可比较的件数。</p>
+      <div class="table-wrap"><table><thead><tr><th>工站</th><th>分配份额</th><th>标准 CT</th><th>计划 SA</th><th>计划 P / Q</th></tr></thead><tbody>
+        <tr><td>压铸01</td><td>100%</td><td>35.0 秒</td><td>85.4%</td><td>99.0% / 99.5%</td></tr>
+        <tr><td>机加工01</td><td>70%</td><td>30.0 秒</td><td>85.4%</td><td>100% / 100%</td></tr>
+        <tr><td>机加工02</td><td>30%</td><td>35.0 秒</td><td>85.4%</td><td>100% / 100%</td></tr>
+        <tr><td>装配01</td><td>100%</td><td>30.0 秒</td><td>80.0%</td><td>98.0% / 99.0%</td></tr>
+      </tbody></table></div>
+      <p class="subnote">装配示意口径：计划排班 1,200 分钟，Best 生产 960 分钟（SA 80%）；Best = 960 × 60 ÷ 30.0 = 1,920；ML = ⌊1,920 × 98% × 99%⌋ = 1,862。</p>
+    </section>
+
+    <section aria-labelledby="gaps"><h2 id="gaps">从目标态反推需补齐的链路</h2>
+      <div class="status">
+        <div class="box"><small>需求与路线</small><strong>来源明确</strong><span>周需求、路线版本、工序用量、工站份额</span></div>
+        <div class="box"><small>计划与能力</small><strong>保留快照</strong><span>各站同周周账、冻结 SA、已发布 CT/P/Q</span></div>
+      </div>
+      <ul style="margin-top:14px"><li>优先确认路线版本、工序用量和 70% / 30% 份额的业务含义，保证工站贡献可加。</li><li>固化每周计划及参数版本快照，避免历史报告随新参数重算而变化。</li></ul>
+    </section>
+    <footer>内部设计验证 · 所有数值均为演示，不代表当前系统已采集的事实或客户产能承诺。</footer>
+  </main>
+</body>
+</html>

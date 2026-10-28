@@ -7,6 +7,7 @@ import {
   findCapacityShareProfile,
   type CapacityShareEvaluationInput,
   type CapacityShareEvaluationResult,
+  type RequiredShareBasis,
 } from "./capacity-share-engine.js";
 import { checkProductReadiness, type ProductReadinessResult } from "./readiness-engine.js";
 import { selectEffectiveParameter } from "./parameter-versioning.js";
@@ -14,7 +15,11 @@ import { selectEffectiveParameter } from "./parameter-versioning.js";
 export interface CapacityAnalysisPreflightInput {
   productId: string;
   routeId?: string;
+  asOfDate?: string;
+  throughDate?: string;
   availableMinutesByStation?: Record<string, number>;
+  /** weekLedger is the only basis treated as the current route schedule. Other supplied minutes stay demo sample. */
+  availableMinutesBasis?: "weekLedger" | "demoSample";
   plannedQuantityByOperation?: Record<string, number>;
 }
 
@@ -33,7 +38,7 @@ export function runCapacityAnalysisPreflight(
   scenario: CapacityScenario,
   input: CapacityAnalysisPreflightInput,
 ): CapacityAnalysisPreflightResult {
-  const readiness = checkProductReadiness(scenario, input.productId, input.routeId);
+  const readiness = checkProductReadiness(scenario, input.productId, input.routeId, input.asOfDate, input.throughDate);
   const capacityResults = calculateCapacityScenario(scenario);
   const shareEvaluations = evaluatePlanningAllowedShares(scenario, input);
   const batchChecks = checkPlannedBatchQuantities(scenario, input);
@@ -45,7 +50,8 @@ export function runCapacityAnalysisPreflight(
 
   const warnings = [
     ...readiness.issues.filter(issue => issue.severity === "warning").map(issue => issue.message),
-    ...shareEvaluations.flatMap(evaluation => evaluation.risks.map(risk => risk.message)),
+    ...shareEvaluations.flatMap(evaluation => evaluation.risks
+      .filter(risk => risk.code === "required_exceeds_ceiling").map(risk => risk.message)),
     ...batchChecks.filter(check => check.status === "needsApproval").map(check => check.message),
   ];
 
@@ -96,18 +102,20 @@ function evaluatePlanningAllowedShares(
       if (profile?.actualCapacityShare !== undefined) {
         evaluationInput.actualCapacityShare = profile.actualCapacityShare;
       }
-      evaluations.push(evaluateCapacityShare(scenario, evaluationInput));
+      evaluations.push(withShareBasis(evaluateCapacityShare(scenario, evaluationInput), input.availableMinutesBasis === "weekLedger" ? "weekLedger" : "demoSample"));
       evaluatedKeys.add(key);
       continue;
     }
 
     if (profile) {
-      evaluations.push(evaluateCapacityShare(scenario, {
+      const basis: RequiredShareBasis = profile.requiredCapacityShare !== undefined || profile.actualCapacityShare !== undefined
+        ? "storedProfile" : "unavailable";
+      evaluations.push(withShareBasis(evaluateCapacityShare(scenario, {
         productId: input.productId,
         operationId: assignment.operationId,
         stationId: assignment.stationId,
         requestedCapacityShare: assignment.plannedShare ?? profile.requestedCapacityShare ?? 1,
-      }));
+      }), basis));
       evaluatedKeys.add(key);
     }
   }
@@ -117,11 +125,13 @@ function evaluatePlanningAllowedShares(
     const key = buildShareKey(profile.productId, profile.operationId, profile.stationId);
     if (input.routeId && !routeKeys.has(key)) continue;
     if (evaluatedKeys.has(key)) continue;
-    evaluations.push(evaluateCapacityShare(scenario, {
+    const basis: RequiredShareBasis = profile.requiredCapacityShare !== undefined || profile.actualCapacityShare !== undefined
+      ? "storedProfile" : "unavailable";
+    evaluations.push(withShareBasis(evaluateCapacityShare(scenario, {
       productId: profile.productId,
       operationId: profile.operationId,
       stationId: profile.stationId,
-    }));
+    }), basis));
     evaluatedKeys.add(key);
   }
 
@@ -141,6 +151,10 @@ function checkPlannedBatchQuantities(
     }));
   }
   return checks;
+}
+
+function withShareBasis(result: CapacityShareEvaluationResult, basis: RequiredShareBasis): CapacityShareEvaluationResult {
+  return { ...result, requiredShareBasis: basis };
 }
 
 function buildShareKey(productId: string, operationId: string, stationId: string): string {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { sampleScenario } from "../dist/domain/sample-data.js";
 import { createRnrValidationFixture } from "../dist/engine/rnr-validation-fixture.js";
+import { actualScopeKeyForRoute, planScopeKeyForRoute } from "../dist/ui/actual-scope.js";
 import {
   buildRouteWindowCapacityView,
   collectRouteWindowCandidates,
@@ -41,9 +42,9 @@ function routeInput(stations, units = { "op-a-10": 1, "op-a-20": 1 }, memory) {
 }
 
 const threeStations = [
-  station("op-a-10", "OP10", 0.7),
-  station("op-a-10", "OP10B", 0.3),
-  station("op-a-20", "OP20", 1),
+  station("op-a-10", "OP20A", 0.7),
+  station("op-a-10", "OP20B", 0.3),
+  station("op-a-20", "OP30", 1),
 ];
 
 describe("route operation navigation", () => {
@@ -55,38 +56,58 @@ describe("route operation navigation", () => {
       { operationId: "op-a-10", label: "OP10 机加工" },
       { operationId: "op-a-20", label: "OP20 装配" },
     ]);
-    assert.equal(nextStationId("OP10", ["OP10", "OP10B"]), "OP10");
-    assert.equal(nextStationId("OP10", ["OP20"]), "OP20");
+    assert.equal(nextStationId("OP20A", ["OP20A", "OP20B"]), "OP20A");
+    assert.equal(nextStationId("OP20A", ["OP30"]), "OP30");
     assert.equal(nextStationId("", []), "");
   });
 
   it("keeps saved station records when the focused operation changes", () => {
-    const actuals = new Map([[stationActualKey("A-Housing", "op-a-10", "OP10"), threeStations[0].actual]]);
-    const plans = new Map([[stationPlanKey("A-Housing", "OP10"), threeStations[0].planned]]);
-    const focusedStation = nextStationId("OP10", ["OP20"]);
-    assert.equal(focusedStation, "OP20");
-    assert.equal(actuals.get(stationActualKey("A-Housing", "op-a-10", "OP10")), threeStations[0].actual);
-    assert.equal(plans.get(stationPlanKey("A-Housing", "OP10")), threeStations[0].planned);
-    assert.equal(actuals.has(stationActualKey("A-Housing", "op-a-20", "OP20")), false);
+    const actuals = new Map([[stationActualKey("A-Housing", "op-a-10", "OP20A"), threeStations[0].actual]]);
+    const plans = new Map([[stationPlanKey("A-Housing", "OP20A"), threeStations[0].planned]]);
+    const focusedStation = nextStationId("OP20A", ["OP30"]);
+    assert.equal(focusedStation, "OP30");
+    assert.equal(actuals.get(stationActualKey("A-Housing", "op-a-10", "OP20A")), threeStations[0].actual);
+    assert.equal(plans.get(stationPlanKey("A-Housing", "OP20A")), threeStations[0].planned);
+    assert.equal(actuals.has(stationActualKey("A-Housing", "op-a-20", "OP30")), false);
   });
 });
 
 describe("route observation window", () => {
+  it("calculates actual output from route-scoped OP20 station records", () => {
+    const routeId = "local-route-a-housing-v1-1";
+    const operationId = `${routeId}--op-a-10`;
+    const actuals = new Map(threeStations.slice(0, 2).map(item => [
+      actualScopeKeyForRoute(item.productId, operationId, item.stationId, routeId), item.actual,
+    ]));
+    const plans = new Map(threeStations.slice(0, 2).map(item => [
+      planScopeKeyForRoute(item.productId, item.stationId, routeId), item.planned,
+    ]));
+    const restored = threeStations.slice(0, 2).map(item => ({
+      ...item,
+      operationId,
+      planned: plans.get(planScopeKeyForRoute(item.productId, item.stationId, routeId)) ?? [],
+      actual: actuals.get(actualScopeKeyForRoute(item.productId, operationId, item.stationId, routeId)) ?? [],
+    }));
+    const view = buildRouteWindowCapacityView({ stations: restored, operationIds: [operationId], operationUnitsPerProduct: { [operationId]: 1 } });
+    assert.ok(view.stations.every(item => (item.actualGoodOutput ?? 0) > 0));
+    assert.ok((view.actualGoodOutput ?? 0) > 0);
+  });
+
   it("dedupes identical station windows and requires an explicit choice when they differ", () => {
     const same = collectRouteWindowCandidates([
-      { stationId: "OP10", standardWindow: sameWindow },
-      { stationId: "OP10B", standardWindow: sameWindow },
-      { stationId: "OP20", standardWindow: sameWindow },
+      { stationId: "OP20A", standardWindow: sameWindow },
+      { stationId: "OP20B", standardWindow: sameWindow },
+      { stationId: "OP30", standardWindow: sameWindow },
     ]);
     assert.equal(same.length, 1);
-    assert.deepEqual(same[0].stationIds, ["OP10", "OP10B", "OP20"]);
+    assert.deepEqual(same[0].stationIds, ["OP20A", "OP20B", "OP30"]);
     const only = resolveRouteObservationWindow(undefined, same);
     assert.equal(only.selected?.startMinute, 480);
     assert.equal(only.memory?.explicit, false);
 
     const mixed = collectRouteWindowCandidates([
-      { stationId: "OP10", standardWindow: sameWindow },
-      { stationId: "OP20", standardWindow: otherWindow },
+      { stationId: "OP20A", standardWindow: sameWindow },
+      { stationId: "OP30", standardWindow: otherWindow },
     ]);
     const pending = resolveRouteObservationWindow(undefined, mixed);
     assert.equal(pending.selected, undefined);
@@ -103,7 +124,7 @@ describe("route observation window", () => {
   it("does not silently replace an explicit window after it disappears", () => {
     const resolution = resolveRouteObservationWindow(
       { key: "510:1950", explicit: true },
-      collectRouteWindowCandidates([{ stationId: "OP10", standardWindow: sameWindow }]),
+      collectRouteWindowCandidates([{ stationId: "OP20A", standardWindow: sameWindow }]),
     );
     assert.equal(resolution.selected, undefined);
     assert.equal(resolution.needsExplicitChoice, true);
@@ -134,7 +155,7 @@ describe("route observation window", () => {
     const mismatched = buildRouteWindowCapacityView(routeInput([
       threeStations[0],
       threeStations[1],
-      station("op-a-20", "OP20", 1, otherWindow),
+      station("op-a-20", "OP30", 1, otherWindow),
     ], { "op-a-10": 1, "op-a-20": 1 }, { key: "480:1920", explicit: true }));
     assert.equal(mismatched.actualGoodOutput, undefined);
     assert.equal(mismatched.bestGoodCapacity, undefined);
@@ -144,8 +165,8 @@ describe("route observation window", () => {
 
     const unselected = buildRouteWindowCapacityView({
       stations: [
-        station("op-a-10", "OP10", 0.7, sameWindow),
-        station("op-a-20", "OP20", 1, otherWindow),
+        station("op-a-10", "OP20A", 0.7, sameWindow),
+        station("op-a-20", "OP30", 1, otherWindow),
       ],
       operationIds: ["op-a-10", "op-a-20"],
       operationUnitsPerProduct: { "op-a-10": 1, "op-a-20": 1 },
@@ -157,7 +178,7 @@ describe("route observation window", () => {
     const incomplete = buildRouteWindowCapacityView(routeInput([
       threeStations[0],
       threeStations[1],
-      station("op-a-20", "OP20", 1, sameWindow, false),
+      station("op-a-20", "OP30", 1, sameWindow, false),
     ]));
     assert.equal(incomplete.actualGoodOutput, undefined);
     assert.ok(incomplete.stations[2].blockers.includes("actual_window_incomplete"));

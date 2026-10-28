@@ -4,7 +4,7 @@ import { calculateRequiredCapacityShare, evaluateCapacityShare, findCapacityShar
 import { checkProductReadiness } from "./readiness-engine.js";
 import { selectEffectiveParameter } from "./parameter-versioning.js";
 export function runCapacityAnalysisPreflight(scenario, input) {
-    const readiness = checkProductReadiness(scenario, input.productId, input.routeId);
+    const readiness = checkProductReadiness(scenario, input.productId, input.routeId, input.asOfDate, input.throughDate);
     const capacityResults = calculateCapacityScenario(scenario);
     const shareEvaluations = evaluatePlanningAllowedShares(scenario, input);
     const batchChecks = checkPlannedBatchQuantities(scenario, input);
@@ -14,7 +14,8 @@ export function runCapacityAnalysisPreflight(scenario, input) {
     ];
     const warnings = [
         ...readiness.issues.filter(issue => issue.severity === "warning").map(issue => issue.message),
-        ...shareEvaluations.flatMap(evaluation => evaluation.risks.map(risk => risk.message)),
+        ...shareEvaluations.flatMap(evaluation => evaluation.risks
+            .filter(risk => risk.code === "required_exceeds_ceiling").map(risk => risk.message)),
         ...batchChecks.filter(check => check.status === "needsApproval").map(check => check.message),
     ];
     return {
@@ -57,17 +58,19 @@ function evaluatePlanningAllowedShares(scenario, input) {
             if (profile?.actualCapacityShare !== undefined) {
                 evaluationInput.actualCapacityShare = profile.actualCapacityShare;
             }
-            evaluations.push(evaluateCapacityShare(scenario, evaluationInput));
+            evaluations.push(withShareBasis(evaluateCapacityShare(scenario, evaluationInput), input.availableMinutesBasis === "weekLedger" ? "weekLedger" : "demoSample"));
             evaluatedKeys.add(key);
             continue;
         }
         if (profile) {
-            evaluations.push(evaluateCapacityShare(scenario, {
+            const basis = profile.requiredCapacityShare !== undefined || profile.actualCapacityShare !== undefined
+                ? "storedProfile" : "unavailable";
+            evaluations.push(withShareBasis(evaluateCapacityShare(scenario, {
                 productId: input.productId,
                 operationId: assignment.operationId,
                 stationId: assignment.stationId,
                 requestedCapacityShare: assignment.plannedShare ?? profile.requestedCapacityShare ?? 1,
-            }));
+            }), basis));
             evaluatedKeys.add(key);
         }
     }
@@ -79,11 +82,13 @@ function evaluatePlanningAllowedShares(scenario, input) {
             continue;
         if (evaluatedKeys.has(key))
             continue;
-        evaluations.push(evaluateCapacityShare(scenario, {
+        const basis = profile.requiredCapacityShare !== undefined || profile.actualCapacityShare !== undefined
+            ? "storedProfile" : "unavailable";
+        evaluations.push(withShareBasis(evaluateCapacityShare(scenario, {
             productId: profile.productId,
             operationId: profile.operationId,
             stationId: profile.stationId,
-        }));
+        }), basis));
         evaluatedKeys.add(key);
     }
     return evaluations;
@@ -98,6 +103,9 @@ function checkPlannedBatchQuantities(scenario, input) {
         }));
     }
     return checks;
+}
+function withShareBasis(result, basis) {
+    return { ...result, requiredShareBasis: basis };
 }
 function buildShareKey(productId, operationId, stationId) {
     return `${productId}::${operationId}::${stationId}`;

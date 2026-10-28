@@ -59,6 +59,62 @@ describe("routing master-data validator", () => {
     assert.equal(result.formalReady, false);
     assert.equal(result.issues.some(issue => issue.code === "stage_bom_mismatch"), true);
   });
+
+  it("blocks a downstream operation when its input item differs from the predecessor output", () => {
+    const scenario = cloneScenario();
+    scenario.stageBoms.find(item => item.stageBomId === "bom-a-op20-out").inputItems = ["different-wip"];
+    const result = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1");
+
+    assert.equal(result.formalReady, false);
+    assert.equal(result.issues.some(issue => issue.code === "stage_material_disconnected"
+      && issue.operationId === "op-a-20" && issue.subjectId === "bom-a-op10-out"), true);
+  });
+
+  it("blocks an obsolete predecessor BOM reference even when it belongs to the same operation", () => {
+    const scenario = cloneScenario();
+    scenario.stageBoms.push({
+      ...scenario.stageBoms.find(item => item.stageBomId === "bom-a-op10-out"),
+      stageBomId: "bom-a-op10-old",
+    });
+    scenario.routes.find(item => item.routeId === "route-a-housing-v1")
+      .operations.find(item => item.operationId === "op-a-20").inputStageBomId = "bom-a-op10-old";
+    const result = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1");
+
+    assert.equal(result.formalReady, false);
+    assert.equal(result.issues.some(issue => issue.code === "stage_bom_mismatch"
+      && issue.operationId === "op-a-20" && issue.subjectId === "bom-a-op10-old"), true);
+  });
+
+  it("identifies the operation when its output stage BOM reference is absent", () => {
+    const scenario = cloneScenario();
+    delete scenario.routes.find(route => route.routeId === "route-a-housing-v1").operations[1].outputStageBomId;
+    const result = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1");
+
+    assert.equal(result.formalReady, false);
+    assert.equal(result.issues.some(issue => issue.code === "stage_bom_missing" && issue.operationId === "op-a-20"), true);
+  });
+
+  it("rejects a stage BOM outside the observed date and allows it once effective", () => {
+    const scenario = cloneScenario();
+    scenario.stageBoms.find(item => item.stageBomId === "bom-a-op20-out").effectiveFrom = "2026-10-26";
+    const invalid = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1", { asOfDate: "2026-10-19" });
+    const valid = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1", { asOfDate: "2026-10-26" });
+
+    assert.equal(invalid.formalReady, false);
+    assert.equal(invalid.issues.some(issue => issue.code === "stage_bom_not_effective" && issue.operationId === "op-a-20"), true);
+    assert.equal(valid.formalReady, true);
+  });
+
+  it("rejects a stage BOM that expires during the observed week", () => {
+    const scenario = cloneScenario();
+    scenario.stageBoms.find(item => item.stageBomId === "bom-a-op20-out").effectiveTo = "2026-10-21";
+    const result = validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1", {
+      asOfDate: "2026-10-19", throughDate: "2026-10-25",
+    });
+
+    assert.equal(result.formalReady, false);
+    assert.equal(result.issues.some(issue => issue.code === "stage_bom_not_effective" && issue.operationId === "op-a-20"), true);
+  });
 });
 
 describe("product readiness smoke test", () => {
@@ -102,7 +158,7 @@ describe("product readiness smoke test", () => {
   it("blocks capacity analysis when an allowed assignment has no parameter", () => {
     const scenario = cloneScenario({
       operationStationParameters: sampleScenario.operationStationParameters.filter(
-        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP20"),
+        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP30"),
       ),
     });
     const result = checkProductReadiness(scenario, "A-Housing");
@@ -116,7 +172,7 @@ describe("product readiness smoke test", () => {
 
     assert.equal(Array.isArray(results), true);
     assert.equal(results.length > 0, true);
-    assert.equal(results.some(result => result.stationId === "OP10"), true);
+    assert.equal(results.some(result => result.stationId === "OP20A"), true);
   });
 });
 
@@ -125,7 +181,7 @@ describe("capacity share smoke test", () => {
     const result = calculateRequiredCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-10",
-      stationId: "OP10",
+      stationId: "OP20A",
       availableMinutes: 2880,
     });
 
@@ -135,7 +191,7 @@ describe("capacity share smoke test", () => {
   });
 
   it("finds the project phase requested share profile", () => {
-    const profile = findCapacityShareProfile(sampleScenario, "A-Housing", "op-a-10", "OP10");
+    const profile = findCapacityShareProfile(sampleScenario, "A-Housing", "op-a-10", "OP20A");
 
     assert.equal(profile?.requestedCapacityShare, 0.25);
   });
@@ -144,7 +200,7 @@ describe("capacity share smoke test", () => {
     const result = evaluateCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-10",
-      stationId: "OP10",
+      stationId: "OP20A",
       requestedCapacityShare: 0.25,
       requiredCapacityShare: 0.32,
     });
@@ -159,7 +215,7 @@ describe("capacity share smoke test", () => {
     const result = evaluateCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-10",
-      stationId: "OP10",
+      stationId: "OP20A",
       requestedCapacityShare: 0.25,
       requiredCapacityShare: 0.25,
     });
@@ -174,7 +230,7 @@ describe("capacity share smoke test", () => {
     const result = evaluateCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-20",
-      stationId: "OP20",
+      stationId: "OP30",
       requiredCapacityShare: 0.98,
     });
 
@@ -187,7 +243,7 @@ describe("capacity share smoke test", () => {
     const result = evaluateCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-20",
-      stationId: "OP20",
+      stationId: "OP30",
       requiredCapacityShare: 1.08,
     });
 
@@ -200,7 +256,7 @@ describe("capacity share smoke test", () => {
     const actual = calculateActualCapacityShare({
       productId: "A-Housing",
       operationId: "op-a-10",
-      stationId: "OP10",
+      stationId: "OP20A",
       actualMinutes: 900,
       availableMinutes: 2880,
     });
@@ -212,7 +268,7 @@ describe("capacity share smoke test", () => {
     const result = evaluateCapacityShare(sampleScenario, {
       productId: "A-Housing",
       operationId: "op-a-10",
-      stationId: "OP10",
+      stationId: "OP20A",
       requestedCapacityShare: 0.25,
       actualCapacityShare: 0.3125,
     });
@@ -342,7 +398,7 @@ describe("demand normalization smoke test", () => {
 
 describe("planned activity rule smoke test", () => {
   it("expands approved recurring planned activity rules", () => {
-    const events = expandPlannedActivityRules(sampleScenario, { stationId: "OP10", repetitions: 2 });
+    const events = expandPlannedActivityRules(sampleScenario, { stationId: "OP20A", repetitions: 2 });
 
     assert.equal(events.filter(event => event.kind === "break").length, 2);
     assert.equal(events.filter(event => event.kind === "maintenance").length, 2);
@@ -350,7 +406,7 @@ describe("planned activity rule smoke test", () => {
   });
 
   it("does not expand proposed schedule-source rule unless explicitly included and approved", () => {
-    const events = expandPlannedActivityRules(sampleScenario, { stationId: "OP20", includeScheduleSource: true });
+    const events = expandPlannedActivityRules(sampleScenario, { stationId: "OP30", includeScheduleSource: true });
 
     assert.equal(events.length, 0);
   });
@@ -360,23 +416,23 @@ describe("planned activity rule smoke test", () => {
 describe("timeline and SA smoke test", () => {
   it("detects overlaps and finds explicit timeline gaps", () => {
     const events = [
-      { id: "e1", stationId: "OP10", kind: "production", startMinute: 0, endMinute: 120, source: "manual" },
-      { id: "e2", stationId: "OP10", kind: "break", startMinute: 100, endMinute: 150, source: "manual" },
+      { id: "e1", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 120, source: "manual" },
+      { id: "e2", stationId: "OP20A", kind: "break", startMinute: 100, endMinute: 150, source: "manual" },
     ];
 
     const issues = validateTimelineEvents(events, 240);
-    const gaps = findTimelineGaps([events[0]], "OP10", 240);
+    const gaps = findTimelineGaps([events[0]], "OP20A", 240);
 
     assert.equal(issues.some(issue => issue.code === "overlap"), true);
-    assert.deepEqual(gaps, [{ stationId: "OP10", startMinute: 120, endMinute: 240 }]);
+    assert.deepEqual(gaps, [{ stationId: "OP20A", startMinute: 120, endMinute: 240 }]);
   });
 
   it("fills timeline gaps as unscheduled / not planned", () => {
     const events = [
-      { id: "e1", stationId: "OP10", kind: "production", startMinute: 0, endMinute: 120, source: "manual" },
+      { id: "e1", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 120, source: "manual" },
     ];
 
-    const filled = fillGapsAsUnscheduled(events, "OP10", 240);
+    const filled = fillGapsAsUnscheduled(events, "OP20A", 240);
 
     assert.equal(filled.length, 2);
     assert.equal(filled[1].kind, "unscheduled");
@@ -387,7 +443,7 @@ describe("timeline and SA smoke test", () => {
   it("calculates planned SA and real SA from planned and abnormal losses", () => {
     const calendar = {
       date: "2026-09-18",
-      stationId: "OP10",
+      stationId: "OP20A",
       scheduledMinutes: 600,
       projectShare: 1,
       events: [
@@ -405,7 +461,7 @@ describe("timeline and SA smoke test", () => {
 describe("setup and production segment smoke test", () => {
   it("generates sequence-related setup events", () => {
     const events = generateSetupEvents(sampleScenario.orders, sampleScenario.routes, sampleScenario.setupRules);
-    const op10 = events.get("OP10") ?? [];
+    const op10 = events.get("OP20A") ?? [];
 
     assert.equal(op10.length, 1);
     assert.equal(op10[0].kind, "setup");
@@ -416,7 +472,7 @@ describe("setup and production segment smoke test", () => {
   it("calculates production segment observed CT and hidden loss", () => {
     const result = calculateProductionSegment({
       segmentId: "seg-test",
-      stationId: "OP10",
+      stationId: "OP20A",
       productId: "A-Housing",
       startMinute: 0,
       endMinute: 60,
@@ -442,15 +498,15 @@ describe("capacity analysis preflight smoke test", () => {
     const selected = createLocalRouteCopy(data, "route-a-housing-v1").route;
     for (const route of [old, selected]) {
       const operationId = route.operations[0].operationId;
-      assignLocalStation(data, { routeId: route.routeId, operationId, stationId: "OP10", role: "primary" });
+      assignLocalStation(data, { routeId: route.routeId, operationId, stationId: "OP20A", role: "primary" });
       data.operationStationParameters.push({
-        ...sampleScenario.operationStationParameters.find(item => item.operationId === "op-a-10" && item.stationId === "OP10"),
+        ...sampleScenario.operationStationParameters.find(item => item.operationId === "op-a-10" && item.stationId === "OP20A"),
         parameterId: `param-${route.routeId}`, operationId,
       });
     }
     const result = runCapacityAnalysisPreflight(data, {
       productId: "A-Housing", routeId: selected.routeId,
-      availableMinutesByStation: { OP10: 2880 },
+      availableMinutesByStation: { OP20A: 2880 },
     });
     assert.equal(result.readiness.operationsChecked, selected.operations.length);
     assert.ok(result.shareEvaluations.some(item => item.operationId === selected.operations[0].operationId));
@@ -467,9 +523,9 @@ describe("capacity analysis preflight smoke test", () => {
     assert.equal(result.ready, true);
     assert.equal(result.readiness.ready, true);
     assert.equal(result.blockers.length, 0);
-    assert.equal(result.capacityResults.some(item => item.stationId === "OP10"), true);
-    const op10 = result.shareEvaluations.find(item => item.operationId === "op-a-10" && item.stationId === "OP10");
-    const op20 = result.shareEvaluations.find(item => item.operationId === "op-a-20" && item.stationId === "OP20");
+    assert.equal(result.capacityResults.some(item => item.stationId === "OP20A"), true);
+    const op10 = result.shareEvaluations.find(item => item.operationId === "op-a-10" && item.stationId === "OP20A");
+    const op20 = result.shareEvaluations.find(item => item.operationId === "op-a-20" && item.stationId === "OP30");
 
     assert.equal(op10?.requestedCapacityShare, 0.7);
     assert.equal(op10?.status, "ok");
@@ -485,13 +541,13 @@ describe("capacity analysis preflight smoke test", () => {
     });
     assert.equal(result.ready, false);
     assert.equal(result.blockers.some(item => item.includes("no operation-station parameter")), true);
-    assert.equal(result.shareEvaluations.some(item => item.stationId === "OP10" && item.operationId === "op-b-10"), false);
+    assert.equal(result.shareEvaluations.some(item => item.stationId === "OP20A" && item.operationId === "op-b-10"), false);
   });
 
   it("turns readiness errors into business blockers", () => {
     const scenario = cloneScenario({
       operationStationParameters: sampleScenario.operationStationParameters.filter(
-        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP20"),
+        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP30"),
       ),
     });
 
@@ -523,7 +579,7 @@ describe("routing configuration smoke test", () => {
   it("marks a planning-allowed station assignment as missing parameter for UI blocking", () => {
     const scenario = cloneScenario({
       operationStationParameters: sampleScenario.operationStationParameters.filter(
-        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP20"),
+        parameter => !(parameter.operationId === "op-a-20" && parameter.stationId === "OP30"),
       ),
     });
 
@@ -548,7 +604,7 @@ describe("routing configuration smoke test", () => {
               sequence: 99,
               name: "Selected Route Test Operation",
               processType: "test",
-              stationId: "OP20",
+              stationId: "OP30",
               standardCycleSec: 30,
               plannedPerformanceRate: 1,
               plannedQualityRate: 1,

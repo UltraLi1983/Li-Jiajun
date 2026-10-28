@@ -6,7 +6,7 @@ import {
 } from "../dist/index.js";
 
 describe("temporary R&R validation fixture", () => {
-  const fixture = createRnrValidationFixture("A-Housing", "OP10");
+  const fixture = createRnrValidationFixture("A-Housing", "OP20A");
 
   it("moves actual records onto the current standard window without changing their durations", () => {
     const placed = placeFixtureActualsOnWindow(fixture.actual, 510);
@@ -21,19 +21,19 @@ describe("temporary R&R validation fixture", () => {
     assert.equal(fixture.planned[0].startMinute, 480);
     assert.equal(fixture.planned.at(-1).endMinute, 1920);
     const timeline = reconcileRnrTimeline({
-      stationId: "OP10", startMinute: 480, endMinute: 1920,
+      stationId: "OP20A", startMinute: 480, endMinute: 1920,
       planned: fixture.planned, actual: fixture.actual,
     });
     assert.equal(timeline.complete, true);
     assert.equal(timeline.plannedProductionMinutes, 1290);
     assert.equal(timeline.actualProductionMinutes, 1230);
     assert.equal(timeline.explicitAbnormalMinutes, 30);
-    assert.deepEqual(createRnrValidationFixture("A-Housing", "OP10"), fixture);
+    assert.deepEqual(createRnrValidationFixture("A-Housing", "OP20A"), fixture);
   });
 
   it("explains the Best case to actual-good gap without double counting", () => {
     const preview = buildRnrBestActualPreview({
-      stationId: "OP10", planned: fixture.planned, actual: fixture.actual,
+      stationId: "OP20A", planned: fixture.planned, actual: fixture.actual,
       standardCycleSec: fixture.standardCycleSec, piecesPerCycle: fixture.piecesPerCycle,
       plannedQualityRate: 0.98,
       publishedPerformanceRate: 0.9,
@@ -68,15 +68,15 @@ describe("temporary R&R validation fixture", () => {
 
   it("counts extra actual break time once through Actual SA", () => {
     const planned = [
-      { id: "plan-prod", kind: "production", stationId: "OP10", startMinute: 0, endMinute: 60, source: "standard" },
-      { id: "plan-break", kind: "break", stationId: "OP10", startMinute: 60, endMinute: 70, source: "standard" },
+      { id: "plan-prod", kind: "production", stationId: "OP20A", startMinute: 0, endMinute: 60, source: "standard" },
+      { id: "plan-break", kind: "break", stationId: "OP20A", startMinute: 60, endMinute: 70, source: "standard" },
     ];
     const actual = [
-      { id: "actual-prod", kind: "production", stationId: "OP10", startMinute: 0, endMinute: 50, source: "runRate", okQty: 50, nokQty: 0 },
-      { id: "actual-break", kind: "break", stationId: "OP10", startMinute: 50, endMinute: 70, source: "runRate" },
+      { id: "actual-prod", kind: "production", stationId: "OP20A", startMinute: 0, endMinute: 50, source: "runRate", okQty: 50, nokQty: 0 },
+      { id: "actual-break", kind: "break", stationId: "OP20A", startMinute: 50, endMinute: 70, source: "runRate" },
     ];
     const preview = buildRnrBestActualPreview({
-      stationId: "OP10", planned, actual, standardCycleSec: 60, piecesPerCycle: 1,
+      stationId: "OP20A", planned, actual, standardCycleSec: 60, piecesPerCycle: 1,
     });
     assert.equal(preview.complete, true);
     assert.equal(preview.timeGapUnits, 10);
@@ -88,12 +88,12 @@ describe("temporary R&R validation fixture", () => {
 
   it("keeps an unknown cause visible without blocking SA calculation", () => {
     const speed = reconcileRnrSpeedLoss(fixture.actual.filter(item => item.kind === "production").map(item => ({
-      id: item.id, productId: "A-Housing", operationId: "op-a-10", stationId: "OP10",
+      id: item.id, productId: "A-Housing", operationId: "op-a-10", stationId: "OP20A",
       startMinute: item.startMinute, endMinute: item.endMinute,
       okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
     })), { verifiedStandardCycleSec: 24 });
     const evidence = buildRnrEvidence({
-      productId: "A-Housing", operationId: "op-a-10", stationId: "OP10",
+      productId: "A-Housing", operationId: "op-a-10", stationId: "OP20A",
       startMinute: 480, endMinute: 1920,
       planned: fixture.planned, actual: fixture.actual, speed,
     });
@@ -105,7 +105,7 @@ describe("temporary R&R validation fixture", () => {
 
   it("does not claim a comparable result while actual time is missing", () => {
     const preview = buildRnrBestActualPreview({
-      stationId: "OP10", planned: fixture.planned, actual: fixture.actual.slice(0, -1),
+      stationId: "OP20A", planned: fixture.planned, actual: fixture.actual.slice(0, -1),
       standardCycleSec: 24, piecesPerCycle: 1,
     });
     assert.equal(preview.complete, false);
@@ -113,67 +113,67 @@ describe("temporary R&R validation fixture", () => {
   });
 
   it("generates an independent OP10B sample at the station's effective CT", () => {
-    const parallel = createRnrValidationFixture("A-Housing", "OP10B", 25, 1);
+    const parallel = createRnrValidationFixture("A-Housing", "OP20B", 25, 1);
     assert.notEqual(parallel.id, fixture.id);
     assert.equal(parallel.standardCycleSec, 25);
     assert.equal(parallel.cycleSamplesSec.length, 20);
     assert.ok(parallel.cycleSamplesSec.every(value => value === 25));
-    assert.ok(parallel.planned.every(item => item.stationId === "OP10B"));
-    assert.ok(parallel.actual.every(item => item.stationId === "OP10B"));
+    assert.ok(parallel.planned.every(item => item.stationId === "OP20B"));
+    assert.ok(parallel.actual.every(item => item.stationId === "OP20B"));
     assert.ok(parallel.actual.every(item => !fixture.actual.some(original => original.id === item.id)));
     assert.equal(reconcileRnrTimeline({
-      stationId: "OP10B", startMinute: 480, endMinute: 1920,
+      stationId: "OP20B", startMinute: 480, endMinute: 1920,
       planned: parallel.planned, actual: parallel.actual,
     }).complete, true);
     const speed = reconcileRnrSpeedLoss(parallel.actual.filter(item => item.kind === "production").map(item => ({
-      id: item.id, productId: "A-Housing", operationId: "op-a-10", stationId: "OP10B",
+      id: item.id, productId: "A-Housing", operationId: "op-a-10", stationId: "OP20B",
       startMinute: item.startMinute, endMinute: item.endMinute,
       okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
     })), { verifiedStandardCycleSec: 25 });
     assert.ok(speed.segments.every(item => item.status !== "faster_than_verified_standard"));
     assert.equal(buildRnrEvidence({
-      productId: "A-Housing", operationId: "op-a-10", stationId: "OP10B",
+      productId: "A-Housing", operationId: "op-a-10", stationId: "OP20B",
       startMinute: 480, endMinute: 1920,
       planned: parallel.planned, actual: parallel.actual, speed,
     }).readyForCalculation, true);
   });
 
   it("generates a complete die-casting sample at CT 300s", () => {
-    const casting = createRnrValidationFixture("A-Housing", "OP10A", 300, 1);
+    const casting = createRnrValidationFixture("A-Housing", "OP10", 300, 1);
     assert.equal(casting.standardCycleSec, 300);
     assert.ok(casting.cycleSamplesSec.every(value => value === 300));
     assert.ok(casting.actual.filter(event => event.kind === "production").every(event => (event.okQty ?? 0) > 0));
     assert.equal(reconcileRnrTimeline({
-      stationId: "OP10A", startMinute: 480, endMinute: 1920,
+      stationId: "OP10", startMinute: 480, endMinute: 1920,
       planned: casting.planned, actual: casting.actual,
     }).complete, true);
   });
 
   it("generates a complete OP20 assembly sample without changing machining evidence", () => {
-    const assembly = createRnrValidationFixture("A-Housing", "OP20", 15, 1);
+    const assembly = createRnrValidationFixture("A-Housing", "OP30", 15, 1);
     assert.notEqual(assembly.id, fixture.id);
     assert.equal(assembly.standardCycleSec, 15);
     assert.equal(assembly.cycleSamplesSec.length, 20);
     assert.ok(assembly.cycleSamplesSec.every(value => value === 15));
-    assert.ok(assembly.planned.every(item => item.stationId === "OP20"));
-    assert.ok(assembly.actual.every(item => item.stationId === "OP20"));
+    assert.ok(assembly.planned.every(item => item.stationId === "OP30"));
+    assert.ok(assembly.actual.every(item => item.stationId === "OP30"));
     assert.ok(assembly.actual.every(item => !fixture.actual.some(original => original.id === item.id)));
     assert.equal(reconcileRnrTimeline({
-      stationId: "OP20", startMinute: 480, endMinute: 1920,
+      stationId: "OP30", startMinute: 480, endMinute: 1920,
       planned: assembly.planned, actual: assembly.actual,
     }).complete, true);
     const speed = reconcileRnrSpeedLoss(assembly.actual.filter(item => item.kind === "production").map(item => ({
-      id: item.id, productId: "A-Housing", operationId: "op-a-20", stationId: "OP20",
+      id: item.id, productId: "A-Housing", operationId: "op-a-20", stationId: "OP30",
       startMinute: item.startMinute, endMinute: item.endMinute,
       okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
     })), { verifiedStandardCycleSec: 15 });
     assert.ok(speed.segments.every(item => item.status !== "faster_than_verified_standard"));
     assert.equal(buildRnrEvidence({
-      productId: "A-Housing", operationId: "op-a-20", stationId: "OP20",
+      productId: "A-Housing", operationId: "op-a-20", stationId: "OP30",
       startMinute: 480, endMinute: 1920,
       planned: assembly.planned, actual: assembly.actual, speed,
     }).readyForCalculation, true);
     assert.equal(fixture.standardCycleSec, 24);
-    assert.equal(fixture.actual[0].stationId, "OP10");
+    assert.equal(fixture.actual[0].stationId, "OP20A");
   });
 });

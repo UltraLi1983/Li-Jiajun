@@ -338,7 +338,7 @@ function validDemand(value: number | undefined): value is number {
 }
 
 function actualBlank(input: RouteWeekPlanInput): string {
-  if (input.role === "outlook") return "尚未发生。Actual 留空，Most likely 只出现在计划线，不写成结果或预测。";
+  if (input.role === "outlook") return "目标周完整实绩未接入。Actual 留空，Most likely 仅用于计划与预测。";
   if (!input.actual?.completeSameWeek) {
     return input.actual?.note
       ?? "未提供完整同周实绩。48 小时 R&R 不能按比例扩成整周 Actual。";

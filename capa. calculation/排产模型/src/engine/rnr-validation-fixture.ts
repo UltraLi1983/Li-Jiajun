@@ -43,7 +43,7 @@ export function createRnrValidationFixture(
     throw new RangeError("Validation fixture requires a positive CT and whole pieces per cycle");
   }
   const outputScale = 24 / standardCycleSec * piecesPerCycle;
-  const fixturePrefix = stationId === "OP10" ? "validation" : `validation-${stationId.toLowerCase()}`;
+  const fixturePrefix = stationId === "OP20A" ? "validation" : `validation-${stationId.toLowerCase()}`;
   const planned = [
     ["production", 480, 660], ["break", 660, 690], ["production", 690, 1020],
     ["break", 1020, 1050], ["production", 1050, 1140], ["setup", 1140, 1200],
@@ -58,7 +58,7 @@ export function createRnrValidationFixture(
     ["production", 1530, 1920, 966, 9],
   ] as const;
   return {
-    id: stationId === "OP10" && standardCycleSec === 24 && piecesPerCycle === 1
+    id: stationId === "OP20A" && standardCycleSec === 24 && piecesPerCycle === 1
       ? RNR_VALIDATION_FIXTURE_ID
       : `rnr-validation-${stationId.toLowerCase()}-ct${standardCycleSec}-p${piecesPerCycle}-24h-v1`,
     planned: planned.map(([kind, startMinute, endMinute], index) => ({

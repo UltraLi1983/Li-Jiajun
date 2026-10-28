@@ -5,7 +5,7 @@ import { calculateRequiredCapacityShare } from "../dist/engine/capacity-share-en
 import { buildProductRoutingConfiguration } from "../dist/engine/routing-configuration-engine.js";
 import { createLocalBaselineParameter, publishParameterVersion, selectEffectiveParameter } from "../dist/engine/parameter-versioning.js";
 
-const base = sampleScenario.operationStationParameters.find(item => item.stationId === "OP10");
+const base = sampleScenario.operationStationParameters.find(item => item.stationId === "OP20A");
 function confirmed(target, proposedValue, effectiveFrom = "2026-09-27") {
   return {
     suggestionId: `A-Housing:op-a-10:OP10:${target}`, target,

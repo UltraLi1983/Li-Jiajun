@@ -5,7 +5,7 @@ import { buildPeriodCapacity } from "../dist/engine/week-month-capacity.js";
 
 function parameter(overrides = {}) {
   return {
-    parameterId: "param-a", operationId: "op-10", stationId: "OP10",
+    parameterId: "param-a", operationId: "op-10", stationId: "OP20A",
     standardCycleSec: 60, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1,
     parameterSource: "manual", approvalStatus: "approved", effectiveFrom: "2026-10-01",
     ...overrides,
@@ -23,7 +23,7 @@ function capacity(parameters, stationId, operationId, minutes) {
 
 function station(overrides) {
   const operationId = overrides.operationId ?? "op-10";
-  const stationId = overrides.stationId ?? "OP10";
+  const stationId = overrides.stationId ?? "OP20A";
   const parameters = overrides.parameters ?? [parameter({ operationId, stationId })];
   const minutes = overrides.minutes ?? { best: 100, most: 80 };
   return {
@@ -77,7 +77,7 @@ describe("route week plan", () => {
     assert.equal(single.stations[0].shareApplied, 1);
     assert.equal(single.mostLikelyPieces, casting.capacity.mostLikelyGoodPieces);
 
-    const shared = station({ operationId: "op-20", stationId: "OP10", allocationMode: "forecastCalculated", plannedShare: undefined });
+    const shared = station({ operationId: "op-20", stationId: "OP20A", allocationMode: "forecastCalculated", plannedShare: undefined });
     const duplicate = buildRouteWeekPlan({
       ...input, operationOrder: ["op-10", "op-20"],
       operationUnits: [...input.operationUnits, { operationId: "op-20", unitsPerFinishedProduct: 1 }],
@@ -109,7 +109,7 @@ describe("route week plan", () => {
     assert.notEqual(first.bestCasePieces, second.bestCasePieces);
     assert.equal(first.planMargin, first.mostLikelyPieces - 50);
     assert.equal(first.actualPieces, undefined);
-    assert.match(first.actualBlankReason, /尚未发生/);
+    assert.match(first.actualBlankReason, /目标周完整实绩未接入/);
     assert.equal(first.planBasis, "currentParameterRecalc");
   });
 
@@ -120,7 +120,7 @@ describe("route week plan", () => {
       { date: "2026-10-12", workingDay: true, stale: false, bestCaseProductionMinutes: 100, mostLikelyProductionMinutes: 100 },
       { date: "2026-10-13", workingDay: true, stale: false, bestCaseProductionMinutes: 100, mostLikelyProductionMinutes: 100 },
     ];
-    const period = buildPeriodCapacity({ operationId: "op-10", stationId: "OP10", parameters: [early, later], days });
+    const period = buildPeriodCapacity({ operationId: "op-10", stationId: "OP20A", parameters: [early, later], days });
     const plan = buildRouteWeekPlan({
       productId: "A", routeId: "route-a", weekStartDate: "2026-10-12", role: "review",
       operationOrder: ["op-10"], operationUnits: [{ operationId: "op-10", unitsPerFinishedProduct: 1 }],
@@ -135,11 +135,11 @@ describe("route week plan", () => {
 
   it("merges parallel shares, converts units, and leaves the route blank when one station plan is missing", () => {
     const machining = [
-      station({ stationId: "OP10", plannedShare: 0.7, minutes: { best: 100, most: 100 } }),
-      station({ stationId: "OP10B", plannedShare: 0.3, minutes: { best: 100, most: 100 } }),
+      station({ stationId: "OP20A", plannedShare: 0.7, minutes: { best: 100, most: 100 } }),
+      station({ stationId: "OP20B", plannedShare: 0.3, minutes: { best: 100, most: 100 } }),
     ];
     const assembly = station({
-      operationId: "op-20", stationId: "OP20", allocationMode: "forecastCalculated", plannedShare: undefined,
+      operationId: "op-20", stationId: "OP30", allocationMode: "forecastCalculated", plannedShare: undefined,
       minutes: { best: 50, most: 40 },
     });
     const units = [
@@ -159,7 +159,7 @@ describe("route week plan", () => {
     assert.equal(complete.mostLikelyPieces, 40);
     assert.equal(complete.planMargin, 30);
     assert.match(complete.shareNote, /48 小时/);
-    assert.match(assembly && complete.stations.find(item => item.stationId === "OP20").shareRule, /未套用 48 小时/);
+    assert.match(assembly && complete.stations.find(item => item.stationId === "OP30").shareRule, /未套用 48 小时/);
 
     const missing = buildRouteWeekPlan({
       productId: "A", routeId: "route-a", weekStartDate: "2026-10-12", role: "review",
@@ -168,7 +168,7 @@ describe("route week plan", () => {
     });
     assert.equal(missing.calculable, false);
     assert.equal(missing.mostLikelyPieces, undefined);
-    assert.equal(missing.stations.find(item => item.stationId === "OP10").nativeMostLikelyPieces, 200);
+    assert.equal(missing.stations.find(item => item.stationId === "OP20A").nativeMostLikelyPieces, 200);
     assert.match(missing.reasons.join(" "), /缺少这一周的周账/);
   });
 
@@ -198,7 +198,7 @@ describe("route week plan", () => {
       actual: { completeSameWeek: true, byOperationGoodPieces: { "op-10": 70 } },
     });
     assert.equal(outlook.actualPieces, undefined);
-    assert.match(outlook.actualBlankReason, /尚未发生/);
+    assert.match(outlook.actualBlankReason, /目标周完整实绩未接入/);
     assert.notEqual(outlook.mostLikelyPieces, undefined);
   });
 

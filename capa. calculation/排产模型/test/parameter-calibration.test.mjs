@@ -5,17 +5,17 @@ import {
 } from "../dist/index.js";
 
 const event = (id, kind, startMinute, endMinute, extra = {}) => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "runRate", ...extra,
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "runRate", ...extra,
 });
 const parameter = {
-  parameterId: "param-op10", operationId: "op10", stationId: "OP10",
+  parameterId: "param-op10", operationId: "op10", stationId: "OP20A",
   standardCycleSec: 24, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1,
   parameterSource: "engineeringEstimate", approvalStatus: "approved",
 };
 
 function input(overrides = {}) {
   return {
-    productId: "A", operationId: "op10", stationId: "OP10",
+    productId: "A", operationId: "op10", stationId: "OP20A",
     planned: [event("plan-prod", "production", 0, 60), event("plan-break", "break", 60, 90)],
     actual: [event("actual-prod", "production", 0, 50, { okQty: 95, nokQty: 5 }),
       event("actual-break", "break", 50, 90)],

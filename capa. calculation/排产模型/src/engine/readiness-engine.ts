@@ -30,6 +30,10 @@ export interface ReadinessIssue {
   operationId?: string;
   stationId?: string;
   assignmentId?: string;
+  /** Original routing-master-data code when this row was folded into route_master_invalid. */
+  causeCode?: string;
+  /** Related process, stage BOM, or WIP id. Kept for traceability, not for the main label. */
+  subjectId?: string;
 }
 
 export interface ProductReadinessResult {
@@ -41,7 +45,7 @@ export interface ProductReadinessResult {
   blockedBackupAssignments: OperationStationAssignment[];
 }
 
-export function checkProductReadiness(scenario: CapacityScenario, productId: string, routeId?: string): ProductReadinessResult {
+export function checkProductReadiness(scenario: CapacityScenario, productId: string, routeId?: string, asOfDate?: string, throughDate?: string): ProductReadinessResult {
   const issues: ReadinessIssue[] = [];
   const product = scenario.products?.find(item => item.productId === productId);
   const planningAllowedAssignments: OperationStationAssignment[] = [];
@@ -59,13 +63,18 @@ export function checkProductReadiness(scenario: CapacityScenario, productId: str
     return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
   }
 
-  const routeMasterData = validateProductRoutingMasterData(scenario, productId, route.routeId);
+  const routeMasterData = validateProductRoutingMasterData(scenario, productId, route.routeId, {
+    ...(asOfDate ? { asOfDate } : {}),
+    ...(throughDate ? { throughDate } : {}),
+  });
   for (const issue of routeMasterData.issues) {
     issues.push({
       severity: issue.severity,
       code: "route_master_invalid",
+      causeCode: issue.code,
       productId,
       ...(issue.operationId ? { operationId: issue.operationId } : {}),
+      ...(issue.subjectId ? { subjectId: issue.subjectId } : {}),
       message: issue.message,
     });
   }

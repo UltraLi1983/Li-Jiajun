@@ -99,6 +99,8 @@ export interface ProductRoute {
   effectiveFrom?: string;
   effectiveTo?: string;
   sourceSystem?: string;
+  /** Local review request only; it never authorizes a formal release. */
+  reviewRequest?: { submittedAt: string; fingerprint: string };
   operations: Operation[];
   /** Absent transition means stations may feed any station at the next operation. */
   stationFlowPolicies?: StationFlowPolicy[];

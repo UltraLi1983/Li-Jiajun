@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { buildStandardSaSampleSlots, intervalCoveredByShifts, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../dist/engine/standard-sa-day.js";
 
 const event = (id, kind, startMinute, endMinute) => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "manual",
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "manual",
 });
 const config = { startMinute: 510, dayCount: 1, shiftMinutes: 720, shiftsPerDay: 1 };
 const events = [
@@ -90,6 +90,9 @@ describe("standard SA production day", () => {
     const secondDayGap = { ...event("planned-unscheduled-1790000000000-0", "unscheduled", 1950, 2670), label: "未排产" };
     const manualProduction = event("manual-production", "production", 2670, 2700);
     const next = reconcileAutoFilledGaps([...events, secondDayGap, manualProduction], config);
+    assert.deepEqual(reconcileAutoFilledGaps([...events, { ...secondDayGap, label: "" }, manualProduction], config)
+      .map(event => [event.id, event.startMinute, event.endMinute]),
+      next.map(event => [event.id, event.startMinute, event.endMinute]));
     assert.ok(!next.some(item => item.id === secondDayGap.id));
     assert.ok(next.some(item => item.id === manualProduction.id));
     assert.deepEqual(validateStandardSaDay(reconcileAutoFilledGaps([...events, secondDayGap], config), config), []);

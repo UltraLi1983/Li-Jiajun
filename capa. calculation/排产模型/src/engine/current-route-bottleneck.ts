@@ -273,8 +273,9 @@ function gap(
   ambiguousWeeks: readonly string[] = [],
 ): RouteReportGap {
   const weeks = [...position.weeks];
+  const stationMark = locale === "zh" ? `工站 ${position.stationId}` : `station ${position.stationId}`;
   const place = position.stationId
-    ? `${position.operationName} / ${position.stationName} · ${position.stationId}`
+    ? `${position.operationName} / ${position.stationName} · ${stationMark}`
     : position.operationName;
   const date = position.draftWeekStart || (locale === "zh" ? "未填" : "blank");
   const detail = {

@@ -11,6 +11,8 @@ export type RoutingMasterDataIssueCode =
   | "process_master_not_released"
   | "stage_bom_missing"
   | "stage_bom_mismatch"
+  | "stage_bom_not_effective"
+  | "stage_material_disconnected"
   | "wip_state_missing"
   | "wip_state_mismatch";
 
@@ -19,6 +21,8 @@ export interface RoutingMasterDataIssue {
   code: RoutingMasterDataIssueCode;
   routeId?: string;
   operationId?: string;
+  /** Related process, stage BOM, or WIP id. Display stays separate from this key. */
+  subjectId?: string;
   message: string;
 }
 
@@ -31,6 +35,7 @@ export interface RoutingMasterDataValidationResult {
 
 export interface RoutingMasterDataValidationOptions {
   asOfDate?: string;
+  throughDate?: string;
   requireReleased?: boolean;
 }
 
@@ -55,15 +60,16 @@ export function validateProductRoutingMasterData(
   if (requireReleased && route.status !== "released") {
     issues.push({ severity: "error", code: "route_not_released", routeId: route.routeId ?? route.productId, message: `${route.routeId ?? productId} is not released` });
   }
-  if (isOutsideEffectivePeriod(route, options.asOfDate)) {
-    issues.push({ severity: "error", code: "route_not_effective", routeId: route.routeId ?? route.productId, message: `${route.routeId ?? productId} is not effective on ${options.asOfDate}` });
+  if (isOutsideEffectivePeriod(route, options.asOfDate, options.throughDate)) {
+    issues.push({ severity: "error", code: "route_not_effective", routeId: route.routeId ?? route.productId, message: `${route.routeId ?? productId} is not effective for ${options.asOfDate ?? "-"} to ${options.throughDate ?? options.asOfDate ?? "-"}` });
   }
   if (!route.operations.length) {
     issues.push({ severity: "error", code: "route_has_no_operations", routeId: route.routeId ?? route.productId, message: `${route.routeId ?? productId} has no operations` });
   }
 
   validateOperationSequence(route, issues);
-  for (const operation of route.operations) validateOperationReferences(scenario, route, operation, issues);
+  for (const operation of route.operations) validateOperationReferences(scenario, route, operation, issues, options.asOfDate, options.throughDate);
+  validateStageMaterialFlow(scenario, route, issues);
 
   return {
     valid: !issues.some(issue => issue.severity === "error"),
@@ -96,47 +102,94 @@ function validateOperationReferences(
   route: ProductRoute,
   operation: Operation,
   issues: RoutingMasterDataIssue[],
+  asOfDate?: string,
+  throughDate?: string,
 ): void {
   if (!operation.processId) {
     issues.push({ severity: "error", code: "process_master_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `${operation.operationId} has no ProcessMaster reference` });
   } else {
     const process = scenario.processMasters?.find(item => item.processId === operation.processId);
     if (!process) {
-      issues.push({ severity: "error", code: "process_master_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `${operation.operationId} references missing ProcessMaster ${operation.processId}` });
+      issues.push({ severity: "error", code: "process_master_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: operation.processId, message: `${operation.operationId} references missing ProcessMaster ${operation.processId}` });
     } else if (process.status !== "released") {
-      issues.push({ severity: "error", code: "process_master_not_released", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `${operation.operationId} references ProcessMaster ${operation.processId}, which is not released` });
+      issues.push({ severity: "error", code: "process_master_not_released", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: operation.processId, message: `${operation.operationId} references ProcessMaster ${operation.processId}, which is not released` });
     }
   }
 
-  const predecessorOperationId = route.operations
-    .filter(item => item.sequence < operation.sequence)
-    .sort((a, b) => b.sequence - a.sequence)[0]?.operationId;
+  const predecessors = routePredecessors(route, operation);
+  if (operation.inputStageBomId && predecessors.length
+    && !predecessors.some(item => item.outputStageBomId === operation.inputStageBomId)) {
+    issues.push({
+      severity: "error", code: "stage_bom_mismatch", routeId: route.routeId ?? route.productId,
+      operationId: operation.operationId, subjectId: operation.inputStageBomId,
+      message: `${operation.operationId} input Stage BOM ${operation.inputStageBomId} is not the current output Stage BOM of its route predecessor`,
+    });
+  }
+  if (!operation.outputStageBomId) {
+    issues.push({ severity: "error", code: "stage_bom_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `${operation.operationId} has no output Stage BOM reference` });
+  }
   const stageBomReferences = [
-    { stageBomId: operation.inputStageBomId, expectedOperationId: predecessorOperationId },
-    { stageBomId: operation.outputStageBomId, expectedOperationId: operation.operationId },
+    { stageBomId: operation.inputStageBomId, expectedOperationIds: predecessors.map(item => item.operationId) },
+    { stageBomId: operation.outputStageBomId, expectedOperationIds: [operation.operationId] },
   ];
-  for (const { stageBomId, expectedOperationId } of stageBomReferences) {
+  for (const { stageBomId, expectedOperationIds } of stageBomReferences) {
     if (!stageBomId) continue;
     const stageBom = scenario.stageBoms?.find(item => item.stageBomId === stageBomId);
     if (!stageBom) {
-      issues.push({ severity: "error", code: "stage_bom_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `${operation.operationId} references missing Stage BOM ${stageBomId}` });
+      issues.push({ severity: "error", code: "stage_bom_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: stageBomId, message: `${operation.operationId} references missing Stage BOM ${stageBomId}` });
       continue;
     }
-    if (stageBom.productId !== route.productId || stageBom.routeId !== route.routeId || stageBom.operationId !== expectedOperationId) {
-      issues.push({ severity: "error", code: "stage_bom_mismatch", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `Stage BOM ${stageBomId} does not belong to the expected ${route.productId}/${route.routeId}/${expectedOperationId ?? "stage"}` });
+    if (stageBom.productId !== route.productId || stageBom.routeId !== route.routeId || !expectedOperationIds.includes(stageBom.operationId)) {
+      issues.push({ severity: "error", code: "stage_bom_mismatch", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: stageBomId, message: `Stage BOM ${stageBomId} does not belong to the expected ${route.productId}/${route.routeId}/${expectedOperationIds.join(" or ") || "predecessor stage"}` });
+    }
+    if (isOutsideEffectivePeriod(stageBom, asOfDate, throughDate)) {
+      issues.push({ severity: "error", code: "stage_bom_not_effective", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: stageBomId, message: `Stage BOM ${stageBomId} is not effective for ${asOfDate ?? "-"} to ${throughDate ?? asOfDate ?? "-"}` });
     }
     const wipState = scenario.wipStates?.find(item => item.wipStateId === stageBom.wipStateId);
     if (!wipState) {
-      issues.push({ severity: "error", code: "wip_state_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `Stage BOM ${stageBomId} references missing WIP state ${stageBom.wipStateId}` });
+      issues.push({ severity: "error", code: "wip_state_missing", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: stageBom.wipStateId, message: `Stage BOM ${stageBomId} references missing WIP state ${stageBom.wipStateId}` });
     } else if (wipState.productId !== route.productId || wipState.routeId !== route.routeId || wipState.operationId !== stageBom.operationId) {
-      issues.push({ severity: "error", code: "wip_state_mismatch", routeId: route.routeId ?? route.productId, operationId: operation.operationId, message: `WIP state ${wipState.wipStateId} does not belong to Stage BOM ${stageBomId}` });
+      issues.push({ severity: "error", code: "wip_state_mismatch", routeId: route.routeId ?? route.productId, operationId: operation.operationId, subjectId: wipState.wipStateId, message: `WIP state ${wipState.wipStateId} does not belong to Stage BOM ${stageBomId}` });
     }
   }
 }
 
-function isOutsideEffectivePeriod(route: ProductRoute, asOfDate?: string): boolean {
-  if (!asOfDate || (!route.effectiveFrom && !route.effectiveTo)) return false;
-  if (route.effectiveFrom && asOfDate < route.effectiveFrom) return true;
-  if (route.effectiveTo && asOfDate > route.effectiveTo) return true;
+function routePredecessors(route: ProductRoute, operation: Operation): Operation[] {
+  const ids = new Set([
+    ...(operation.predecessorOperationIds ?? []),
+    ...route.operations.filter(item => item.successorOperationIds?.includes(operation.operationId)).map(item => item.operationId),
+  ]);
+  return route.operations.filter(item => ids.has(item.operationId));
+}
+
+function validateStageMaterialFlow(
+  scenario: CapacityScenario,
+  route: ProductRoute,
+  issues: RoutingMasterDataIssue[],
+): void {
+  for (const operation of route.operations) {
+    const target = scenario.stageBoms?.find(item => item.stageBomId === operation.outputStageBomId);
+    if (!target || target.productId !== route.productId || target.routeId !== route.routeId || target.operationId !== operation.operationId) continue;
+    for (const predecessor of routePredecessors(route, operation)) {
+      const source = scenario.stageBoms?.find(item => item.stageBomId === predecessor.outputStageBomId);
+      if (!source || source.productId !== route.productId || source.routeId !== route.routeId || source.operationId !== predecessor.operationId) continue;
+      if (!source.outputItem.trim() || !target.inputItems?.includes(source.outputItem)) {
+        issues.push({
+          severity: "error", code: "stage_material_disconnected", routeId: route.routeId ?? route.productId,
+          operationId: operation.operationId,
+          ...(predecessor.outputStageBomId ? { subjectId: predecessor.outputStageBomId } : {}),
+          message: `${operation.operationId} input materials do not include ${predecessor.operationId} output ${source.outputItem || "(empty)"}`,
+        });
+      }
+    }
+  }
+}
+
+function isOutsideEffectivePeriod(item: { effectiveFrom?: string; effectiveTo?: string }, asOfDate?: string, throughDate?: string): boolean {
+  if ((!asOfDate && !throughDate) || (!item.effectiveFrom && !item.effectiveTo)) return false;
+  if (item.effectiveFrom && asOfDate && asOfDate < item.effectiveFrom) return true;
+  if (item.effectiveFrom && throughDate && throughDate < item.effectiveFrom) return true;
+  if (item.effectiveTo && asOfDate && asOfDate > item.effectiveTo) return true;
+  if (item.effectiveTo && throughDate && throughDate > item.effectiveTo) return true;
   return false;
 }

@@ -24,6 +24,14 @@
     .app-shell { min-height: 100vh; display: grid; grid-template-columns: 320px minmax(0, 1fr); }
     aside { border-right: 1px solid var(--line); background: #eef4f5; padding: 22px 18px; }
     main { padding: 22px; overflow: auto; }
+    @media (min-width: 1181px) {
+      html, body { height: 100%; overflow: hidden; }
+      .app-shell { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+      .app-shell > aside, .app-shell > main { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+      .app-shell > aside { overflow-x: hidden; }
+      .app-shell > main { padding-top: 0; }
+      .page-context { display: flow-root; margin: 0 -22px; padding: 22px 22px 0; }
+    }
     .brand h1 { margin: 0; font-size: 22px; line-height: 1.2; }
     .brand p { margin: 8px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.45; }
     .nav-step { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: 8px; color: #364653; background: transparent; font: inherit; font-weight: 650; text-align: left; cursor: pointer; }
@@ -32,18 +40,25 @@
     .nav-step > span:first-child { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; background: #fff; font-size: 13px; }
     .nav-step > span:first-child svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .nav-step > span:last-child { flex: 1; min-width: 0; line-height: 1.35; }
+    .nav-step strong, .nav-step small { display: block; }
+    .nav-step small { margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    .nav-group { margin: 16px 12px 5px; color: var(--muted); font-size: 11px; font-weight: 800; }
     .workflow-stage[hidden] { display: none; }
     .stage-footer { display: flex; justify-content: flex-end; margin-top: 14px; }
     .control-card { margin-top: 24px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
     .scope-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
     .scope-strip[hidden] { display: none; }
     .scope-strip span { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-weight: 750; overflow-wrap: anywhere; }
+    .scope-strip span[hidden] { display: none; }
     .scope-strip small { color: var(--muted); font-size: 11px; font-weight: 800; }
     label { display: block; color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 8px; }
     select, input { width: 100%; height: 42px; border: 1px solid #aebbc6; border-radius: 7px; background: #fff; color: var(--text); padding: 0 10px; font: inherit; }
     .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
     .page-head h2 { margin: 0; font-size: 24px; }
     .page-head p { margin: 6px 0 0; color: var(--muted); }
+    @media (min-width: 1181px) {
+      .page-context.is-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); box-shadow: 0 1px 0 var(--line); }
+    }
     .badge { padding: 7px 10px; border: 1px solid #b9d7de; border-radius: 999px; color: var(--teal); background: #eef9fb; font-weight: 700; font-size: 12px; }
     .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
     .metric, .panel, .operation-row, .assignment-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
@@ -67,9 +82,18 @@
     .pill, .status { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 4px 9px; border-radius: 999px; border: 1px solid #c9d7de; color: #52616e; background: #f6fafb; font-size: 12px; font-weight: 800; white-space: nowrap; }
     .pill.good, .status.good { color: var(--green); border-color: #abd9c1; background: #eefaf3; }
     .pill.bad, .status.bad { color: var(--red); border-color: #e4b0b0; background: #fff2f2; }
+    .trial-layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .trial-layer { border: 1px solid #c9d7de; border-radius: 12px; padding: 12px 14px; background: #f6fafb; }
+    .trial-layer span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .trial-layer strong { display: block; margin-top: 4px; font-size: 18px; }
+    .trial-layer p { margin: 6px 0 0; color: #52616e; font-size: 13px; line-height: 1.45; }
+    .trial-layer.good { border-color: #abd9c1; background: #eefaf3; }
+    .trial-layer.warn { border-color: #ead7a4; background: #fffaf0; }
+    .trial-layer.bad { border-color: #e4b0b0; background: #fff2f2; }
     .status.warn { color: var(--amber); border-color: #e6c887; background: #fff8e8; }
     .field-grid, .mini-grid { display: grid; gap: 10px; margin-top: 14px; }
     .field-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    [data-schedule-review-form][hidden], [data-schedule-review-actions][hidden] { display: none; }
     .field-grid.shift-config-grid { grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
     .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .field { border: 1px solid #e1e8ed; border-radius: 7px; padding: 10px; background: #fbfdfe; min-width: 0; }
@@ -170,8 +194,12 @@
     .split h3 { margin: 0; font-size: 15px; }
     .action-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px; border-radius: 8px; background: #f8fbfc; border: 1px solid var(--line); }
     .button { border: 0; border-radius: 7px; padding: 10px 14px; background: var(--teal); color: #fff; font: inherit; font-weight: 800; }
+    a.button { display: inline-flex; align-items: center; text-decoration: none; }
     .button.secondary { background: #52616e; }
+    .button.secondary[aria-pressed="true"] { background: var(--teal); }
     .button:disabled { background: #aebbc6; cursor: not-allowed; }
+    .button.freeze-current:disabled { background: var(--green); color: #fff; opacity: 1; }
+    .button.freeze-stale { background: var(--amber); }
     .backup-toggle { display: inline-flex; align-items: center; min-height: 40px; padding: 9px 14px; border-radius: 7px; background: #52616e; color: #fff; font: inherit; font-weight: 800; cursor: pointer; list-style: none; }
     .backup-toggle::-webkit-details-marker { display: none; }
     .backup-toggle::before { content: ""; width: 7px; height: 7px; margin-right: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
@@ -199,7 +227,15 @@
     .timeline-station { padding: 14px 10px; border-right: 1px solid #e4ebef; font-weight: 850; color: var(--teal); background: #f8fbfc; }
     .timeline-track { position: relative; margin: 14px 12px; border-radius: 8px; background: repeating-linear-gradient(to right, #edf2f5 0, #edf2f5 1px, transparent 1px, transparent 12.5%); min-height: 66px; }
     .timeline-offshift { position: absolute; top: 3px; height: 58px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #e3e9ec; color: #54636d; font-size: 11px; font-weight: 750; white-space: nowrap; }
+    .timeline-gap { position: absolute; top: 3px; height: 58px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #9a3b32; background: repeating-linear-gradient(-45deg, rgba(180, 61, 67, 0.18), rgba(180, 61, 67, 0.18) 6px, rgba(180, 61, 67, 0.05) 6px, rgba(180, 61, 67, 0.05) 12px); color: #8d2c32; font-size: 11px; font-weight: 750; }
+    .preflight-tech { margin-top: 6px; }
+    .preflight-tech summary { cursor: pointer; color: #54636d; font-size: 12px; }
+    .preflight-tech p, .rnr-gap-list { margin: 6px 0 0; color: #54636d; font-size: 12px; word-break: break-word; }
     .timeline-segment { position: absolute; top: 3px; min-width: 6px; height: 58px; padding: 0; color: #fff; font-size: 12px; font-weight: 850; overflow: visible; white-space: nowrap; text-overflow: ellipsis; container-type: inline-size; }
+    .timeline-segment.is-editable { border: 0; text-align: left; cursor: pointer; }
+    .timeline-segment.is-editable:hover, .timeline-segment.is-editable:focus-visible, .timeline-segment.is-selected { z-index: 1; outline: 3px solid var(--blue); outline-offset: 2px; }
+    tr[data-sa-event-row], tr[data-rnr-row] { cursor: pointer; }
+    tr[data-sa-event-row].is-selected td, tr[data-rnr-row].is-selected td { background: #e7f2f3; }
     .timeline-segment-label { display: block; height: 28px; padding: 6px 8px; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; background: inherit; }
     .timeline-segment-time { display: block; padding: 5px 3px 0; overflow: hidden; text-overflow: ellipsis; color: #fff; font-size: 11px; font-weight: 850; text-align: center; }
     .timeline-segment.production { background: var(--green); --segment-ink: #116b49; }
@@ -230,8 +266,42 @@
     .rnr-comparison .timeline-station small { display: block; color: var(--muted); font-weight: 600; }
     .nav-step[data-stage-nav="library"] { margin-bottom: 10px; }
     .form-error { margin: 10px 0 0; color: var(--red); font-weight: 800; }
+    .sa-change-panel { margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--amber); background: #fffaf0; }
+    .sa-change-panel > strong { font-size: 14px; }
+    .sa-change-panel p { margin: 5px 0 0; font-size: 13px; line-height: 1.45; }
+    .sa-change-panel ol { margin: 8px 0 0; padding-left: 20px; }
+    .sa-change-panel li + li { margin-top: 4px; }
+    .sa-change-link { border: 0; padding: 2px 0; background: transparent; color: var(--teal); font: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+    .sa-change-link:hover { text-decoration: underline; }
+    #plannedSaPanel .sa-change-context { background: #fff6df; }
+    #plannedSaPanel .sa-change-target { outline: 2px solid #b77916; outline-offset: 2px; }
+    #plannedSaPanel .sa-refreeze-target { outline: 2px solid var(--teal); outline-offset: 2px; }
+    .sa-change-badge { display: block; margin-top: 5px; color: #80510c; font-size: 11px; font-weight: 750; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; }
     .form-ok { margin: 10px 0 0; color: var(--green); font-weight: 800; }
     .table-wrap { margin-top: 14px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .part-identity-table { min-width: 880px; }
+    .part-identity-table input, .part-identity-table select { width: 100%; min-width: 130px; }
+    .part-identity-table .button { white-space: nowrap; padding: 7px 11px; }
+    .part-identity-table td { vertical-align: middle; }
+    .material-link-table { min-width: 780px; }
+    .material-link-table td { vertical-align: middle; }
+    .material-link-table .button { white-space: nowrap; padding: 7px 11px; }
+    .operation-station-scroll { max-height: min(52vh, 460px); }
+    .operation-station-scroll thead th { position: sticky; top: 0; z-index: 1; }
+    .operation-difference-scroll { max-height: min(42vh, 360px); }
+    .operation-difference-scroll thead th { position: sticky; top: 0; z-index: 1; }
+    .calibration-station-details, .calibration-route-details, .calibration-preflight-details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+    .calibration-station-details > summary, .calibration-route-details > summary, .calibration-preflight-details > summary { cursor: pointer; color: var(--teal); font-weight: 750; padding: 7px 0; }
+    .calibration-station-details > summary:focus-visible, .calibration-route-details > summary:focus-visible, .calibration-preflight-details > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+    tr.operation-station-row { cursor: pointer; }
+    tr.operation-station-row.selected { background: #e7f3f3; }
+    tr.operation-station-row:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+    .preflight-share-title { margin: 20px 0 0; font-size: 16px; }
+    .evidence-layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 10px 0 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .evidence-layers > div { min-width: 0; padding: 10px 12px; border-left: 1px solid var(--line); }
+    .evidence-layers > div:first-child { border-left: 0; padding-left: 0; }
+    .evidence-layers dt { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .evidence-layers dd { margin: 4px 0 0; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
     .library-table th, .library-table td { vertical-align: middle; text-align: left; white-space: nowrap; line-height: 1.4; }
     .library-table .button { min-height: 32px; padding: 6px 12px; }
     .library-step { padding: 18px 0; border-top: 1px solid var(--line); }
@@ -244,6 +314,49 @@
     .library-step details .backup-toggle { background: #edf3f7; color: #42515e; }
     .library-step details .backup-toggle:hover { background: #dcebed; }
     .library-process-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .library-process-mode { display: inline-flex; max-width: 100%; margin-bottom: 12px; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: #edf3f5; }
+    .library-process-mode button { min-height: 36px; padding: 7px 14px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .library-process-mode button[aria-pressed="true"] { background: #fff; color: var(--teal); box-shadow: 0 1px 4px #17212b1c; }
+    .library-process-mode button:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+    .library-process-fields input[readonly] { background: #eef4f6; color: #344752; }
+    .library-process-status { color: var(--green); font-size: 13px; font-weight: 700; }
+    .overview-toolbar { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+    .overview-toolbar label { width: min(240px, 100%); margin: 0; }
+    .overview-toolbar input { margin-top: 5px; }
+    .overview-section { margin-top: 24px; }
+    .overview-section h3 { margin: 0 0 4px; font-size: 16px; }
+    #futureSchedulePanel [data-schedule-collection] input[type="datetime-local"] { min-width: 195px; }
+    #futureSchedulePanel [data-schedule-collection] input[type="time"] { min-width: 110px; }
+    #futureSchedulePanel [data-schedule-collection] input[type="number"], #futureSchedulePanel [data-schedule-collection] select { min-width: 125px; }
+    .overview-table td, .overview-table th { white-space: nowrap; }
+    .overview-table td:first-child { min-width: 170px; white-space: normal; }
+    .overview-table .button { min-height: 32px; padding: 5px 10px; }
+    .route-chart-section .panel-head { align-items: baseline; }
+    .route-chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 8px; color: #445462; font-size: 12px; font-weight: 700; }
+    .route-chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .route-chart-legend span::before { content: ""; display: inline-block; width: 18px; height: 9px; background: var(--teal); }
+    .route-chart-legend-likely::before { height: 0 !important; border-top: 3px solid var(--blue); background: none !important; }
+    .route-chart-legend-demand::before { height: 0 !important; border-top: 2px dashed var(--amber); background: none !important; }
+    .route-chart-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+    .route-chart { display: block; width: 100%; height: auto; font-family: inherit; }
+    .route-chart-axis { fill: #536373; font-size: 11px; }
+    .route-chart-grid { stroke: #e1e9ed; stroke-width: 1; }
+    .route-chart-demand { stroke: var(--amber); stroke-width: 2; stroke-dasharray: 6 5; }
+    .route-chart-best { fill: var(--teal); }
+    .route-chart-best-inside { fill: #fff; font-size: 17px; font-weight: 800; }
+    .route-chart-best-outside { fill: var(--teal); font-size: 15px; font-weight: 800; }
+    .route-chart-likely-line { fill: none; stroke: var(--blue); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .route-chart-likely-dot { fill: #fff; stroke: var(--blue); stroke-width: 4; }
+    .route-chart-likely-value { fill: var(--blue); font-size: 16px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+    .route-chart-detail { fill: #526371; font-size: 11px; font-weight: 650; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+    .route-chart-operation { fill: var(--text); font-size: 13px; font-weight: 750; }
+    .route-chart-missing { fill: var(--amber); font-size: 12px; font-weight: 700; }
+    .calibration-route-status { margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .calibration-route-status h3 { margin: 0 0 4px; font-size: 17px; }
+    .calibration-route-status .table-wrap table { min-width: 900px; }
+    .calibration-route-status td:nth-child(7) { min-width: 185px; white-space: normal; }
+    .calibration-route-status tr.selected { background: #eaf5f5; }
+    .calibration-route-status .button { min-height: 32px; padding: 5px 10px; }
     .library-review-check { display: flex; align-items: center; gap: 9px; margin: 12px 0; color: var(--text); font-size: 13px; }
     .library-review-check input { width: 18px; height: 18px; flex: none; padding: 0; accent-color: var(--teal); }
     .library-station-types { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
@@ -297,13 +410,18 @@
     @media (max-width: 1180px) {
       .app-shell { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
-      .metrics, .assignment-grid, .field-grid, .setup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metrics, .assignment-grid, .field-grid, .setup-grid, .trial-layers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 760px) {
+      .evidence-layers { grid-template-columns: 1fr; }
+      .evidence-layers > div, .evidence-layers > div:first-child { padding: 10px 0; border-left: 0; border-top: 1px solid var(--line); }
+      .evidence-layers > div:first-child { border-top: 0; }
       .assignment-card .local-baseline-grid { grid-template-columns: 1fr; }
       main { padding: 14px; }
-      .metrics, .assignment-grid, .field-grid, .mini-grid, .split, .setup-grid { grid-template-columns: 1fr; }
+      .metrics, .assignment-grid, .field-grid, .mini-grid, .split, .setup-grid, .trial-layers { grid-template-columns: 1fr; }
       .library-process-fields { grid-template-columns: 1fr; }
+      .library-process-mode { display: flex; }
+      .library-process-mode button { flex: 1; }
       .scope-strip { display: grid; grid-template-columns: 1fr; }
       .control-card { margin-top: 12px; }
       .page-head { display: block; }
@@ -346,6 +464,7 @@
     .route-week-report .footer, #routeWeekPrintRoot .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
     #routeWeekPrintRoot[hidden] { display: none; }
     @media print {
+      html, body { height: auto !important; overflow: visible !important; }
       body.printing-week-report .app-shell { display: none !important; }
       body.printing-week-report #routeWeekPrintRoot { display: block !important; }
       body.printing-week-report #routeWeekPrintRoot .sheet { break-after: page; }
@@ -362,11 +481,17 @@
         <p id="localValidationBanner" class="note" hidden></p>
       </div>
       <nav aria-label="工作流">
+        <p class="nav-group" data-i18n="projectFlow">项目验证</p>
         <button class="nav-step" type="button" data-stage-nav="library"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span><span data-i18n="stageLibrary">工艺库</span></button>
         <button class="nav-step active" type="button" data-stage-nav="routing" aria-current="step"><span>1</span><span data-i18n="stageRouting">工艺路线与工站</span></button>
-        <button class="nav-step" type="button" data-stage-nav="baseline"><span>2</span><span data-i18n="stageBaseline">标准 SA 设定</span></button>
-        <button class="nav-step" type="button" data-stage-nav="reality"><span>3</span><span data-i18n="stageReality">现场 R&R 跟踪</span></button>
-        <button class="nav-step" type="button" data-stage-nav="calibration"><span>4</span><span data-i18n="stageCalibration">校准与产能分析</span></button>
+        <button class="nav-step" type="button" data-stage-nav="baseline"><span>2</span><span><strong data-i18n="stageBaseline">标准 SA 设定</strong><small data-i18n="stageBaselineScope">逐工站录入</small></span></button>
+        <button class="nav-step" type="button" data-stage-nav="reality"><span>3</span><span><strong data-i18n="stageReality">现场 R&R 跟踪</strong><small data-i18n="stageRealityScope">逐工站跟踪</small></span></button>
+        <button class="nav-step" type="button" data-stage-nav="calibration"><span>4</span><span data-i18n="stageCalibration">参数校准与验证</span></button>
+        <button class="nav-step" type="button" data-stage-nav="overview"><span>5</span><span data-i18n="stageOverview">路线产能总览</span></button>
+        <p class="nav-group" data-i18n="batchFlow">批量运行</p>
+        <button class="nav-step" type="button" data-stage-nav="demand"><span>1</span><span data-i18n="stageDemand">需求录入</span></button>
+        <button class="nav-step" type="button" data-stage-nav="schedule"><span>2</span><span data-i18n="stageSchedule">未来排产</span></button>
+        <button class="nav-step" type="button" data-stage-nav="batchOverview"><span>3</span><span data-i18n="stageBatchOverview">批量运行总览</span></button>
       </nav>
       <div class="control-card">
         <label for="languageSelect" data-i18n="languageLabel">界面语言</label>
@@ -393,17 +518,19 @@
       </div>
     </aside>
     <main>
-      <header class="page-head">
-        <div>
-          <h2 data-i18n="pageTitle">产品路线设置</h2>
-          <p data-i18n="pageSubtitle">先确认产品、工艺路线、工站绑定和参数 gate，再进入产能分析。</p>
+      <div id="pageContext" class="page-context">
+        <header class="page-head">
+          <div>
+            <h2 data-i18n="pageTitle">产品路线设置</h2>
+            <p data-i18n="pageSubtitle">先确认产品、工艺路线、工站绑定和参数 gate，再进入产能分析。</p>
+          </div>
+          <div class="badge" data-i18n="engineBadge">正式版界面 · 已连接编译后的计算引擎</div>
+        </header>
+        <div id="scopeStrip" class="scope-strip" hidden>
+          <span><small>产品</small>-</span>
+          <span><small>工序</small>-</span>
+          <span><small>工站</small>-</span>
         </div>
-        <div class="badge" data-i18n="engineBadge">正式版界面 · 已连接编译后的计算引擎</div>
-      </header>
-      <div id="scopeStrip" class="scope-strip" hidden>
-        <span><small>产品</small>-</span>
-        <span><small>工序</small>-</span>
-        <span><small>工站</small>-</span>
       </div>
       <div id="appLoadWarning" class="load-warning">
         <span data-i18n="loadWarning">正在加载正式版脚本。如果这里持续显示，说明 dist/ui/formal-app.js 没有成功加载，请先运行 npm run build，并确认通过 npm run serve 从当前项目目录访问页面。</span>
@@ -414,6 +541,9 @@
       <div class="workflow-stage" data-stage="routing">
         <section id="visualRoutePanel" class="panel"><p class="empty">正在加载路线编排...</p></section>
         <section id="productPanel" class="panel"><p class="empty">正在加载产品路线设置...</p></section>
+        <section id="partIdentityPanel" class="panel"><p class="empty">正在加载零件身份登记...</p></section>
+        <section id="operationMaterialPanel" class="panel"><p class="empty">正在加载工序物料关系...</p></section>
+        <section id="stageMaterialReviewPanel" class="panel"><p class="empty">正在加载阶段物料审核...</p></section>
         <section class="setup-grid" style="margin-top:14px;">
         <section class="panel">
           <div class="panel-head">
@@ -436,16 +566,29 @@
       </div>
       <div class="workflow-stage" data-stage="reality" hidden>
         <section id="rnrPanel" class="panel"></section>
-        <div class="stage-footer"><button class="button" type="button" data-stage-next="calibration" data-i18n="nextCalibration">查看参数校准与产能预检</button></div>
+        <div class="stage-footer"><button class="button" type="button" data-stage-next="calibration" data-i18n="nextCalibration">继续：参数校准与验证</button></div>
       </div>
       <div class="workflow-stage" data-stage="calibration" hidden>
         <section id="calibrationPanel" class="panel"></section>
         <section id="summaryCards" class="metrics" aria-label="参数检查摘要" style="margin-top:14px;"></section>
         <section id="preflightPanel" class="panel" style="margin-top:14px;"></section>
+        <div class="stage-footer"><button class="button" type="button" data-stage-next="overview" data-i18n="nextOverview">查看路线产能总览</button></div>
+      </div>
+      <div class="workflow-stage" data-stage="overview" hidden>
+        <section id="routeCapacityOverview"></section>
+      </div>
+      <div class="workflow-stage" data-stage="demand" hidden>
+        <section id="dailyDemandPanel" class="panel"></section>
+      </div>
+      <div class="workflow-stage" data-stage="schedule" hidden>
+        <section id="futureSchedulePanel"></section>
+      </div>
+      <div class="workflow-stage" data-stage="batchOverview" hidden>
+        <section id="batchOverviewPanel" class="panel"></section>
       </div>
     </main>
   </div>
   <div id="routeWeekPrintRoot" hidden></div>
-  <script type="module" src="./dist/ui/formal-app.js?v=20261020-local-db"></script>
+  <script type="module" src="./dist/ui/formal-app.js?v=20261025-stage-material-review"></script>
 </body>
 </html>

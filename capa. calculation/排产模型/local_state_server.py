@@ -69,6 +69,11 @@ class Handler(SimpleHTTPRequestHandler):
     store: StateStore
     port: int
 
+    def end_headers(self):
+        if not urlsplit(self.path).path.startswith("/api/"):
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def json_response(self, status: int, payload):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)

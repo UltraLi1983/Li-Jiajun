@@ -1,25 +1,44 @@
 import { sampleScenario } from "../domain/sample-data.js";
+import { emptyPartIdentityRegister, findPartIdentityEntry, invalidOperationInputLinks, missingPredecessorInputs, parsePartIdentityRegister, recordExternalInputMaterial, recordOperationInputLink, recordPartIdentity, removeExternalInputMaterial, removeOperationInputLink, removePartIdentityEntry } from "../engine/part-identity-register.js";
+import { emptyStageMaterialReviewStore, isStageMaterialSubmissionCurrent, latestStageMaterialSubmission, parseStageMaterialReviewStore, stageMaterialReviewIssues, submitStageMaterialReview } from "../engine/stage-material-review.js";
+import { appendRnrSampleRevision, parseRnrSampleArchive, referencedRnrSampleRevision, sampleRevisionsForScope } from "../engine/rnr-sample-archive.js";
+import { assessRnrSampleTechnical } from "../engine/rnr-sample-qualification.js";
+import { buildRnrShiftBreakdown } from "../engine/rnr-shift-breakdown.js";
 import { bootstrapLocalState, listRouteHistory, readRouteHistory, removeLocalState, saveLocalState, setLocalStateErrorHandler } from "./local-state-client.js";
+import { emptyStandardSaLocalState, parseStandardSaLocalState, weekMatchesStandardSaSource } from "./standard-sa-local-state.js";
 import { calculateProductionSegment } from "../engine/run-rate-segment.js";
 import { buildParameterSuggestions, confirmParameterSuggestion } from "../engine/parameter-calibration.js";
-import { buildRouteWindowCapacityView, collectRouteWindowCandidates, listRouteOperations, nextStationId, resolveRouteObservationWindow, routeWindowKey, stationActualKey, stationPlanKey, } from "./route-navigation.js";
+import { buildRouteWindowCapacityView, collectRouteWindowCandidates, listRouteOperations, nextStationId, resolveRouteObservationWindow, routeWindowKey, } from "./route-navigation.js";
 import { addCycleSample, diagnosePlannedCycle, emptyCycleSampleDraft, formatStopwatch, migrateLegacyCycleDraft, removeCycleSample, replaceCycleSample, setCycleSampleMark, setCycleSampleReason, stopwatchCode, summarizeCycleSamples, } from "../engine/cycle-samples.js";
 import { correctPlannedCycleFromCheck, createLocalBaselineParameter, establishInitialLocalPreset, performanceAgainstCycle, publishParameterVersion, selectEffectiveParameter } from "../engine/parameter-versioning.js";
 import { resolveOperationOutputRequirement } from "../engine/operation-output-requirement.js";
 import { createRnrValidationFixture, placeFixtureActualsOnWindow, RNR_VALIDATION_WINDOW_MINUTES } from "../engine/rnr-validation-fixture.js";
 import { buildRnrBestActualPreview } from "../engine/rnr-best-actual-preview.js";
-import { freezeStandardWindow, isFrozenStandardWindowCurrent } from "../engine/standard-window.js";
+import { freezeStandardWindow, isFrozenStandardWindowCurrent, standardWindowFingerprint } from "../engine/standard-window.js";
+import { diffFrozenStandardSa } from "../engine/standard-sa-diff.js";
 import { copyStandardWindowToWeek } from "../engine/standard-window-projection.js";
-import { ledgerShiftCount, mostLikelyMonthProduction, observeShiftAllowance, summarizeMostLikely } from "../engine/most-likely-allowance.js";
+import { ledgerShiftCount, lossPlanSignature, mostLikelyMonthProduction, observeShiftAllowance, plannedActionShortfalls, plannedTimingShifts, projectedMostLikelyMinutes, summarizeMostLikely, PLANNED_LOSS_KINDS } from "../engine/most-likely-allowance.js";
 import { buildPeriodCapacity } from "../engine/week-month-capacity.js";
 import { buildRouteWeekPlan } from "../engine/route-week-plan.js";
+import { appendRouteReportSnapshot, parseRouteReportArchive, replayRouteReportSnapshot, ROUTE_REPORT_CALCULATION_VERSION } from "../engine/route-report-archive.js";
+import { buildRouteReportRnrEvidence } from "../engine/route-report-evidence.js";
+import { resolveDailyDemandWeek } from "../engine/daily-demand-ledger.js";
+import { renderFutureSchedulePanel } from "./future-schedule-panel.js";
 import { describeCurrentRouteBottleneck, listRouteReportGaps, presentCurrentRouteBottleneck, routeReportGapBadge, selectCompleteRouteWeek } from "../engine/current-route-bottleneck.js";
+import { completeWeekAvailableMinutes, isFormalReleaseCause, presentBatchRows, presentPreflightSummary, presentReadinessIssues, presentShareRows, presentTrialSeparation, resolveShareMinuteSupply, } from "../engine/preflight-display.js";
 import { applyLocalValidation, assessLocalTrial, assignLocalStation, clearLocalValidation, createLocalProcess, createLocalProcessType, createLocalRouteCopy, createLocalStation, extractLocalValidation, groupProductRoutes, insertLocalOperationAt, renameLocalOperation, reorderLocalOperations, setLocalStationFlowPolicy, isLocalDraftProcess, isLocalDraftProcessType, isLocalDraftRoute, listProcessRouteReferences, parseLocalValidationStore, processTypeFamilyOf, stationCompatibleWithOperation, } from "../engine/local-validation-route.js";
-import { renderRouteWeekSheets } from "./route-week-report.js";
+import { localRouteReviewState, submitLocalRouteForReview } from "../engine/route-review.js";
+import { renderRouteRnrEvidenceAppendix, renderRouteWeekSheets, renderScopedWeekReport } from "./route-week-report.js";
+import { renderRouteCapacityChart } from "./route-capacity-chart.js";
 import { buildWeekMinuteLedger, maxShiftsForLength, repeatWeekForMonth, validateManualMinutes } from "../engine/week-minute-ledger.js";
 import { buildStandardSaSampleSlots, findStandardSaDayGaps, intervalCoveredByShifts, reconcileAutoFilledGaps, standardSaOffShiftIntervals, standardSaShiftIntervals, summarizeStandardSaDay, validateStandardSaDay } from "../engine/standard-sa-day.js";
 import { formatNumber, formatOutputUnits } from "./number-format.js";
+import { formatSystemTerm } from "./display-label.js";
+import { actualScopeKeyForRoute, parseActualScopeKey, planScopeKeyForRoute } from "./actual-scope.js";
+import { summarizeOperationRequiredShare } from "./operation-calibration-summary.js";
+import { summarizeOperationOutput } from "./operation-output-summary.js";
 import { calculateRnrPaceSummary, reconcileRnrSpeedLoss } from "../engine/rnr-reconciliation.js";
+import { formatCoverageSummary, mergeStatusIntervals } from "../engine/rnr-timeline-reconciliation.js";
 import { buildProductRoutingConfiguration, buildRnrEvidence, reconcileRnrTimeline, runCapacityAnalysisPreflight, validateTimelineEvents, } from "../index.js";
 const languageSelect = requireElement("#languageSelect");
 const languageLabelRoot = requireElement("label[for=\"languageSelect\"]");
@@ -31,6 +50,9 @@ const scopeStrip = requireElement("#scopeStrip");
 const summaryRoot = requireElement("#summaryCards");
 const productRoot = requireElement("#productPanel");
 const routingRoot = requireElement("#routingPanel");
+const partIdentityRoot = requireElement("#partIdentityPanel");
+const operationMaterialRoot = requireElement("#operationMaterialPanel");
+const stageMaterialReviewRoot = requireElement("#stageMaterialReviewPanel");
 const visualRouteRoot = requireElement("#visualRoutePanel");
 const routeStatusRoot = requireElement("#routeStatus");
 const operationDetailRoot = requireElement("#operationDetailPanel");
@@ -40,8 +62,25 @@ const rnrRoot = requireElement("#rnrPanel");
 const preflightRoot = requireElement("#preflightPanel");
 const calibrationRoot = requireElement("#calibrationPanel");
 const processLibraryRoot = requireElement("#processLibraryPanel");
+const capacityOverviewRoot = requireElement("#routeCapacityOverview");
+const dailyDemandRoot = requireElement("#dailyDemandPanel");
+const futureScheduleRoot = requireElement("#futureSchedulePanel");
+const batchOverviewRoot = requireElement("#batchOverviewPanel");
 const loadWarningRoot = document.querySelector("#appLoadWarning");
-const workflowStages = ["library", "routing", "baseline", "reality", "calibration"];
+const workflowStages = ["library", "routing", "baseline", "reality", "calibration", "overview", "demand", "schedule", "batchOverview"];
+const partIdentityStorageKey = "capa-part-identity-register-v1";
+const stageMaterialReviewStorageKey = "capa-stage-material-review-v1";
+let partIdentityRegister = emptyPartIdentityRegister();
+let stageMaterialReviewStore = emptyStageMaterialReviewStore();
+let partIdentityStoreError = "";
+let stageMaterialReviewStoreError = "";
+let partIdentityNotice = "";
+let partIdentityActionError = "";
+let materialLinkNotice = "";
+let materialLinkActionError = "";
+let stageMaterialReviewNotice = "";
+let stageMaterialReviewActionError = "";
+const materialLinkDraft = { operationId: "", sourceKey: "", quantity: "", unit: "" };
 const PLANNED_SA_BASE_DATE = todayDateValue();
 const PLANNED_SA_HORIZON_MINUTES = 48 * 60;
 const MINUTE_PER_DAY = 24 * 60;
@@ -52,22 +91,40 @@ function todayDateValue() {
     const day = String(today.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
 }
+function mondayDateValue() {
+    const date = new Date(`${todayDateValue()}T12:00:00`);
+    date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function mondayForDate(dateValue) {
+    const date = new Date(`${dateValue}T12:00:00`);
+    if (!Number.isFinite(date.getTime()))
+        return mondayDateValue();
+    date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 const workflowCopy = {
     zh: {
-        stageRouting: "工艺路线与工站", stageBaseline: "标准 SA 设定", stageReality: "现场 R&R 跟踪", stageCalibration: "校准与产能分析",
-        stageLibrary: "工艺库",
+        stageRouting: "工艺路线与工站", stageBaseline: "标准 SA 设定", stageReality: "现场 R&R 跟踪", stageCalibration: "参数校准与验证",
+        projectFlow: "项目验证", batchFlow: "批量运行",
+        stageLibrary: "工艺库", stageOverview: "路线产能总览", stageDemand: "需求录入", stageSchedule: "未来排产", stageBatchOverview: "批量运行总览",
+        stageDemandHint: "按交付日期录入客户需求；同周逐日账汇总为周需求。",
+        stageScheduleHint: "按工站安排班次、任务和计划事件；能力准入以匹配的参数依据为准。",
+        stageBatchOverviewHint: "对照逐日需求、排程与已确认能力；连续生产实绩尚未接入时不推算实际达成。",
+        stageBaselineScope: "逐工站录入", stageRealityScope: "逐工站跟踪",
+        stageOverviewHint: "汇总工序与工站的周能力、需求和瓶颈，并查看路线周计划报告；缺条件时仍显示路线结构。",
         stageRoutingHint: "定义产品工序及对应工站，确认工站分配与参数。",
         stageBaselineHint: "在最多 48 小时的标准窗口内记录生产、休息、换型和计划停机。",
         stageLibraryHint: "维护可复用的本地工艺。不改当前产品路线，也不登记物理设备。",
         stageRealityHint: "以当前工站的标准 SA 为参照，记录现场产出与节拍。",
-        stageCalibrationHint: "复核观察草稿与标准基准，并检查进入产能分析的条件。",
-        nextBaseline: "继续：标准 SA 设定", nextReality: "继续：现场 R&R 跟踪", nextCalibration: "查看参数校准与产能预检",
+        stageCalibrationHint: "按当前工序查看各工站的节拍、SA、P、Q 和损失，并对照计划与实跑产出。本阶段不切换工站。",
+        nextBaseline: "继续：标准 SA 设定", nextReality: "继续：现场 R&R 跟踪", nextCalibration: "继续：参数校准与验证", nextOverview: "查看路线产能总览",
         stationSelectLabel: "当前工站",
         operationSelectLabel: "当前工序",
         operationRequired: "当前路线没有工序",
         currentStationScope: "当前工站",
         wholeRouteScope: "整条路线",
-        scopeProduct: "产品",
+        scopeProduct: "产品", scopeRoute: "当前路线", scopeRange: "查看范围",
         scopeOperation: "工序",
         scopeStation: "工站",
         stationRequired: "请先在第一阶段为当前工序分配可用工站。",
@@ -85,20 +142,26 @@ const workflowCopy = {
         canEnterCapacityAnalysis: "工艺参数预检通过",
     },
     en: {
-        stageRouting: "Routing and stations", stageBaseline: "Standard SA setup", stageReality: "On-site R&R tracking", stageCalibration: "Calibration and capacity",
-        stageLibrary: "Process Library",
+        stageRouting: "Routing and stations", stageBaseline: "Standard SA setup", stageReality: "On-site R&R tracking", stageCalibration: "Parameter calibration and validation",
+        projectFlow: "Project validation", batchFlow: "Batch operations",
+        stageLibrary: "Process Library", stageOverview: "Route capacity overview", stageDemand: "Demand entry", stageSchedule: "Future scheduling", stageBatchOverview: "Batch operations overview",
+        stageDemandHint: "Record customer demand by due date; complete daily entries roll up to weekly demand.",
+        stageScheduleHint: "Plan shifts, tasks and scheduled events by station; capacity decisions require matching parameter evidence.",
+        stageBatchOverviewHint: "Compare demand, scheduling and confirmed capacity; do not infer actual performance without continuous production records.",
+        stageBaselineScope: "Enter per station", stageRealityScope: "Track per station",
+        stageOverviewHint: "Review route-wide weekly capacity, demand and bottlenecks, and open the weekly plan report; incomplete inputs remain visible.",
         stageRoutingHint: "Define product operations, assign stations and check their parameters.",
         stageBaselineHint: "Record production, breaks, changeovers and planned stops in a standard window of up to 48 hours.",
         stageLibraryHint: "Maintain reusable local processes. This does not change the current route or register physical equipment.",
         stageRealityHint: "Use the selected station standard SA as the reference for actual output and cycle observations.",
-        stageCalibrationHint: "Review draft observations against the standard baseline and check capacity readiness.",
-        nextBaseline: "Continue: Standard SA setup", nextReality: "Continue: On-site R&R", nextCalibration: "Review calibration and capacity preflight",
+        stageCalibrationHint: "Review each station's cycle, SA, P, Q and losses in the current operation, alongside planned and trial output. The station picker stays locked.",
+        nextBaseline: "Continue: Standard SA setup", nextReality: "Continue: On-site R&R", nextCalibration: "Continue: Parameter calibration and validation", nextOverview: "View route capacity overview",
         stationSelectLabel: "Current station",
         operationSelectLabel: "Current operation",
         operationRequired: "This route has no operation",
         currentStationScope: "Current station",
         wholeRouteScope: "Whole route",
-        scopeProduct: "Product",
+        scopeProduct: "Product", scopeRoute: "Current route", scopeRange: "View scope",
         scopeOperation: "Operation",
         scopeStation: "Station",
         stationRequired: "Assign an available station to this operation in stage 1 first.",
@@ -187,7 +250,7 @@ const copy = {
         hour: "时",
         minute: "分",
         blockCategory: "时间段类别",
-        detailKind: "细分类型",
+        detailKind: "具体状态",
         labelNote: "标签 / 说明",
         submitCreatesEvent: "提交后会从该时间段生成一条时间线事件。",
         deleteEvent: "删除",
@@ -267,7 +330,7 @@ const copy = {
         productionMinutesDetail: "生产分钟",
         availableScheduled: "可用 / 计划",
         eventId: "事件ID",
-        kind: "类型",
+        kind: "状态",
         start: "开始",
         end: "结束",
         durationMin: "持续分钟",
@@ -287,10 +350,10 @@ const copy = {
         code: "代码",
         message: "信息",
         noReadinessIssue: "没有就绪问题。",
-        requested: "占用上限",
-        required: "需求占用",
-        actual: "实际占用",
-        riskStatus: "风险状态",
+        requested: "计划份额上限",
+        required: "预测需求占用",
+        actual: "真实生产占用",
+        riskStatus: "计划份额风险",
         riskMessages: "风险信息",
         noShareEvaluation: "暂无占用评估。",
         plannedQty: "计划数量",
@@ -408,8 +471,8 @@ const copy = {
         windowEnd: "Window end",
         addTimeBlock: "Add time block",
         intervalFirst: "interval first",
-        addTimeBlockNote: "Define start date/time and end date/time first, then define the state of the interval. Duration is calculated by the system and is not a primary input. Planned activity only allows setup / break / maintenance / plannedStop. Actual abnormal loss belongs to R&R observation and is not written into Planned SA baseline.",
-        rrAbnormalScope: "R&R abnormal loss scope: equipmentFailure / toolingIssue / logisticsWaiting / qualityHold / laborIssue.",
+        addTimeBlockNote: "Define start date/time and end date/time first, then define the state of the interval. Duration is calculated by the system and is not a primary input. Planned activity only allows setup / break / maintenance / planned stop. Actual abnormal loss belongs to R&R observation and is not written into Planned SA baseline.",
+        rrAbnormalScope: "R&R abnormal loss scope: equipment failure / tooling issue / logistics waiting / quality hold / labor issue.",
         startDate: "Start date",
         startTime: "Start time",
         endDate: "End date",
@@ -417,7 +480,7 @@ const copy = {
         hour: "Hour",
         minute: "Minute",
         blockCategory: "Block category",
-        detailKind: "Detail kind",
+        detailKind: "Situation",
         labelNote: "Label / note",
         submitCreatesEvent: "Submit creates one TimelineEvent from this interval.",
         deleteEvent: "Delete",
@@ -497,7 +560,7 @@ const copy = {
         productionMinutesDetail: "production minutes",
         availableScheduled: "available / scheduled",
         eventId: "Event ID",
-        kind: "Kind",
+        kind: "Situation",
         start: "Start",
         end: "End",
         durationMin: "Duration min",
@@ -517,10 +580,10 @@ const copy = {
         code: "Code",
         message: "Message",
         noReadinessIssue: "No readiness issue.",
-        requested: "Capacity ceiling",
-        required: "Required",
-        actual: "Actual",
-        riskStatus: "Risk status",
+        requested: "Planned share ceiling",
+        required: "Forecast required share",
+        actual: "Production actual share",
+        riskStatus: "Planning share risk",
         riskMessages: "Risk messages",
         noShareEvaluation: "No share evaluation.",
         plannedQty: "Planned qty",
@@ -581,6 +644,7 @@ const copy = {
 let scenarioState = cloneScenario();
 let locale = "zh";
 let activeWorkflowStage = "routing";
+let overviewWeekStartDate = mondayDateValue();
 let selectedProductId = "";
 let selectedOperationId = "";
 let selectedWorkflowStationId = "";
@@ -602,9 +666,16 @@ let librarySelectedProcessId = "";
 let libraryError = "";
 let libraryNotice = "";
 let libraryForm = { name: "", processTypeId: "", description: "", businessCode: "", newTypeName: "", newTypeFamily: "manufacturing" };
+let libraryProcessMode = "default";
 const localValidationStorageKey = "capa-local-validation-v1";
+const standardSaStorageKey = "capa-standard-sa-state-v1";
+let lastSavedStandardSaState = "";
 let routeHistory = [];
 let routeHistoryOpen = false;
+let reconciliationDiffOnly = true;
+let calibrationDetailOpen = false;
+let calibrationFocusedStationId = "";
+let calibrationFocusScope = "";
 let localBaselineVersionCounter = 0;
 const localBaselineErrors = new Map();
 const localBaselineStoragePrefix = "capa-local-baseline-v1:";
@@ -619,6 +690,7 @@ const copyProjectionDrafts = new Map();
 const stationWeekSnapshots = new Map();
 let plannedSaEventsAreDefault = false;
 let standardWindowFreezeError = "";
+let currentSaChanges = [];
 let plannedBlockDraft = {
     startMinute: 0,
     endMinute: 60,
@@ -628,6 +700,7 @@ let plannedBlockDraft = {
 };
 let plannedSaDraftError = "";
 let plannedDraftFollowsLatest = true;
+let plannedSelectedEventId = "";
 let rnrMode = "timeWindow";
 let rnrSegmentDraft = {
     startMinute: 510,
@@ -662,10 +735,14 @@ const rnrDrafts = new Map();
 const confirmedSuggestions = new Map();
 const publishedSuggestions = [];
 const suggestionDates = new Map();
-const windowDemandByRoute = new Map();
 const routeWindowMemory = new Map();
 let calibrationActionError = "";
 let evidenceDraftMessage = "";
+let rnrArchiveMessage = "";
+const activeRnrRevisionIdByContext = new Map();
+const RNR_ARCHIVE_STORAGE_KEY = "capa-rnr-sample-archive-v1";
+const ROUTE_REPORT_ARCHIVE_STORAGE_KEY = "capa-route-report-archive-v1";
+let pendingRouteReportSnapshot;
 const autoRestoredEvidenceContexts = new Set();
 const autoSavedEvidenceSignatures = new Map();
 function confirmationFingerprint(target, full, observation) {
@@ -677,18 +754,56 @@ function requireElement(selector) {
         throw new Error(`Formal app mount node is missing: ${selector}`);
     return element;
 }
+function scrollContentToTop() {
+    if (window.matchMedia("(min-width: 1181px)").matches) {
+        document.querySelector(".app-shell > main")?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+}
+function scrollIntervalEditorIntoView(selector) {
+    const editor = document.querySelector(selector);
+    if (!editor)
+        return;
+    editor.focus({ preventScroll: true });
+    const main = editor.closest("main");
+    if (main && window.matchMedia("(min-width: 1181px)").matches) {
+        const stickyHeight = main.querySelector(".page-context.is-sticky")?.getBoundingClientRect().height ?? 0;
+        main.scrollTo({
+            top: main.scrollTop + editor.getBoundingClientRect().top - main.getBoundingClientRect().top - stickyHeight - 12,
+            behavior: "smooth",
+        });
+    }
+    else {
+        editor.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+}
 function cloneScenario() {
     return JSON.parse(JSON.stringify(sampleScenario));
 }
 function init() {
     restoreLocalValidation();
+    try {
+        partIdentityRegister = parsePartIdentityRegister(localStorage.getItem(partIdentityStorageKey));
+    }
+    catch {
+        partIdentityStoreError = "本地零件身份数据无法读取；原数据未清除，请先备份并检查。";
+    }
+    try {
+        stageMaterialReviewStore = parseStageMaterialReviewStore(localStorage.getItem(stageMaterialReviewStorageKey));
+    }
+    catch {
+        stageMaterialReviewStoreError = "本地阶段物料审核记录无法读取；原数据未清除，请先备份并检查。";
+    }
+    restoreStandardSaState();
     restoreLocalBaselines();
     restoreLocalOperationQuantities();
     languageSelect.value = locale;
     document.querySelectorAll("[data-stage-nav], [data-stage-next]").forEach(button => {
         button.addEventListener("click", () => {
             setWorkflowStage(button.dataset.stageNav ?? button.dataset.stageNext ?? "");
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            scrollContentToTop();
         });
     });
     languageSelect.addEventListener("change", () => {
@@ -706,6 +821,8 @@ function init() {
         selectedProductId = productSelect.value;
         selectedOperationId = "";
         selectedWorkflowStationId = "";
+        calibrationFocusedStationId = "";
+        calibrationDetailOpen = false;
         visualStationId = "";
         visualInspectorMode = "station";
         syncRouteSelector(selectedProductId);
@@ -714,6 +831,8 @@ function init() {
     routeSelect.addEventListener("change", () => {
         selectedOperationId = "";
         selectedWorkflowStationId = "";
+        calibrationFocusedStationId = "";
+        calibrationDetailOpen = false;
         visualStationId = "";
         visualInspectorMode = "station";
         render(selectedProductId);
@@ -722,6 +841,8 @@ function init() {
         if (operationSelect.value === selectedOperationId)
             return;
         selectedOperationId = operationSelect.value;
+        calibrationDetailOpen = false;
+        calibrationFocusedStationId = "";
         selectedWorkflowStationId = "";
         visualStationId = "";
         visualInspectorMode = "operation";
@@ -790,13 +911,21 @@ function setWorkflowStage(value) {
         library: ["stageLibrary", "stageLibraryHint"],
         routing: ["stageRouting", "stageRoutingHint"], baseline: ["stageBaseline", "stageBaselineHint"],
         reality: ["stageReality", "stageRealityHint"], calibration: ["stageCalibration", "stageCalibrationHint"],
+        overview: ["stageOverview", "stageOverviewHint"], demand: ["stageDemand", "stageDemandHint"],
+        schedule: ["stageSchedule", "stageScheduleHint"], batchOverview: ["stageBatchOverview", "stageBatchOverviewHint"],
     };
     document.querySelector(".page-head h2").textContent = t(stageKeys[activeWorkflowStage][0]);
     document.querySelector(".page-head p").textContent = t(stageKeys[activeWorkflowStage][1]);
     scopeStrip.hidden = activeWorkflowStage === "routing" || activeWorkflowStage === "library";
+    const routeWide = activeWorkflowStage === "calibration" || activeWorkflowStage === "overview" || activeWorkflowStage === "demand" || activeWorkflowStage === "batchOverview";
+    scopeStrip.querySelectorAll("[data-scope-kind]").forEach(item => {
+        item.hidden = item.dataset.scopeKind !== (routeWide ? "route" : "station");
+    });
+    document.querySelector("#pageContext").classList.toggle("is-sticky", (activeWorkflowStage === "baseline" || activeWorkflowStage === "reality") && Boolean(selectedWorkflowStationId));
     const libraryButton = visualRouteRoot.querySelector("#visualOpenLibrary");
     if (libraryButton)
         libraryButton.textContent = routeLibraryButtonText();
+    applyStationSelectLock();
 }
 function routeLibraryButtonText() {
     if (locale === "zh")
@@ -827,10 +956,13 @@ function renderProductSelector() {
 }
 function render(productId) {
     const routingConfig = buildProductRoutingConfiguration(scenarioState, productId, selectedRouteId());
+    const shareSupply = currentRouteShareSupply(routingConfig);
     const preflight = runCapacityAnalysisPreflight(scenarioState, {
         productId,
+        asOfDate: overviewWeekStartDate,
+        throughDate: addDays(overviewWeekStartDate, 6),
         ...(routingConfig.route?.routeId ? { routeId: routingConfig.route.routeId } : {}),
-        availableMinutesByStation: { OP10: 2880, OP10B: 2880, OP20: 2880 },
+        ...(shareSupply.basis === "weekLedger" ? { availableMinutesByStation: shareSupply.minutes, availableMinutesBasis: "weekLedger" } : {}),
         plannedQuantityByOperation: buildPlannedQuantityByOperation(routingConfig),
     });
     const selectedOperation = resolveSelectedOperation(routingConfig.operations);
@@ -853,15 +985,22 @@ function render(productId) {
     renderProduct(routingConfig);
     renderRouteStatus(routingConfig);
     renderRouting(routingConfig.operations);
+    renderPartIdentityRegister(routingConfig);
+    renderOperationMaterialLinks(routingConfig);
     renderVisualRoute(routingConfig, selectedOperation);
     renderOperationDetail(selectedOperation, routingConfig);
     renderStationAssignmentPage(routingConfig.operations);
     renderPlannedSaInput(routingConfig, selectedOperation);
     renderRnrTracking(selectedOperation);
     renderCalibration(selectedOperation, routingConfig);
-    renderPreflight(preflight);
+    renderPreflight(preflight, routingConfig, selectedOperation);
+    renderCapacityOverview(routingConfig);
+    renderDailyDemandStage(routingConfig);
+    renderFutureSchedule(routingConfig);
+    renderBatchOverview(routingConfig);
     paintRouteReportGaps(currentRouteReportGaps(routingConfig));
     setWorkflowStage(activeWorkflowStage);
+    persistStandardSaState();
 }
 function syncOperationSelector(operations) {
     const options = listRouteOperations(operations.map(item => ({
@@ -875,17 +1014,31 @@ function syncOperationSelector(operations) {
     operationSelect.disabled = options.length <= 1;
     operationSelect.value = selectedOperationId;
 }
+function stationIdentity(name, stationId) {
+    const label = name ? formatKnownText(name) : "";
+    if (!label || label === stationId)
+        return locale === "zh" ? `工站 ${stationId}` : `Station ${stationId}`;
+    return locale === "zh" ? `${label} · 工站 ${stationId}` : `${label} · station ${stationId}`;
+}
 function syncStationSelector(selectedOperation) {
     const assignments = workflowStationViews(selectedOperation);
     selectedWorkflowStationId = nextStationId(selectedWorkflowStationId, assignments.map(item => item.assignment.stationId));
     stationSelect.innerHTML = assignments.length
         ? assignments.map(item => {
             const gap = item.planningStatus === "missingParameter" ? (locale === "zh" ? " · 无计划 CT" : " · no planned CT") : "";
-            return `<option value="${escapeHtml(item.assignment.stationId)}">${escapeHtml(formatKnownText(item.station?.name ?? item.assignment.stationId))} / ${escapeHtml(item.assignment.stationId)}${gap}</option>`;
+            return `<option value="${escapeHtml(item.assignment.stationId)}">${escapeHtml(stationIdentity(item.station?.name, item.assignment.stationId))}${gap}</option>`;
         }).join("")
         : `<option value="">${escapeHtml(t("stationRequired"))}</option>`;
-    stationSelect.disabled = assignments.length <= 1;
     stationSelect.value = selectedWorkflowStationId;
+    applyStationSelectLock();
+}
+function applyStationSelectLock() {
+    const locked = activeWorkflowStage === "calibration";
+    const noChoice = stationSelect.options.length <= 1;
+    stationSelect.disabled = locked || noChoice;
+    stationSelect.title = locked
+        ? (locale === "zh" ? "阶段 4 在当前工序下列出全部工站，此处不再切换。" : "Stage 4 lists every station of the current operation. This picker stays locked.")
+        : "";
 }
 function updateScopeStrip(routingConfig, selectedOperation) {
     const product = routingConfig.product;
@@ -897,9 +1050,12 @@ function updateScopeStrip(routingConfig, selectedOperation) {
         ? `${formatKnownText(assignment?.station?.name ?? selectedWorkflowStationId)} / ${selectedWorkflowStationId}`
         : "-";
     scopeStrip.innerHTML = `
-    <span><small>${escapeHtml(t("scopeProduct"))}</small>${escapeHtml(productText)}</span>
-    <span><small>${escapeHtml(t("scopeOperation"))}</small>${escapeHtml(operationText)}</span>
-    <span><small>${escapeHtml(t("scopeStation"))}</small>${escapeHtml(stationText)}</span>
+    <span data-scope-kind="station"><small>${escapeHtml(t("scopeProduct"))}</small>${escapeHtml(productText)}</span>
+    <span data-scope-kind="station"><small>${escapeHtml(t("scopeOperation"))}</small>${escapeHtml(operationText)}</span>
+    <span data-scope-kind="station"><small>${escapeHtml(t("scopeStation"))}</small>${escapeHtml(stationText)}</span>
+    <span data-scope-kind="route"><small>${escapeHtml(t("scopeProduct"))}</small>${escapeHtml(productText)}</span>
+    <span data-scope-kind="route"><small>${escapeHtml(t("scopeRoute"))}</small>${escapeHtml(routingConfig.route?.routeId ?? "-")}</span>
+    <span data-scope-kind="route"><small>${escapeHtml(t("scopeRange"))}</small>${escapeHtml(t("wholeRouteScope"))}</span>
   `;
 }
 function renderSummary(routingConfig, preflight) {
@@ -907,12 +1063,27 @@ function renderSummary(routingConfig, preflight) {
     const assignments = routingConfig.operations.reduce((sum, operation) => sum + operation.assignments.length, 0);
     const blocked = routingConfig.operations.flatMap(operation => operation.assignments).filter(item => item.planningStatus !== "available").length;
     const bottleneck = currentRouteBottleneckCard(routingConfig);
+    const localDraft = routingConfig.route ? isLocalDraftRoute(routingConfig.route) : false;
     summaryRoot.innerHTML = [
-        metricCard(t("readiness"), preflight.ready ? t("ready") : t("blocked"), preflight.ready ? t("canEnterCapacityAnalysis") : `${formatNumber(preflight.blockers.length)}${t("blockerCount")}`, preflight.ready ? "good" : "bad"),
+        metricCard(t("readiness"), localDraft ? (locale === "zh" ? "试算可看" : "Trial visible") : (preflight.ready ? t("ready") : t("blocked")), localDraft ? (locale === "zh" ? "正式发布未通过" : "Formal release is not passed") : (preflight.ready ? t("canEnterCapacityAnalysis") : `${formatNumber(preflight.blockers.length)}${t("blockerCount")}`), localDraft ? "warn" : (preflight.ready ? "good" : "bad")),
         metricCard(t("routingMetric"), `${formatNumber(operations)}${t("operationUnit")} / ${formatNumber(assignments)}${t("stationUnit")}`, `${formatNumber(blocked)}${t("unavailableStationAssignment")}`, blocked ? "warn" : "good"),
-        metricCard(t("demandMetric"), `${formatNumber(routingConfig.product?.weeklyDemand ?? 0)} / ${t("perWeek")}`, routingConfig.product?.demandScenario ? formatDemandScenario(routingConfig.product.demandScenario) : t("noScenario"), "neutral"),
+        renderCurrentWeekDemandCard(routingConfig.product),
         bottleneckCard(t("bottleneck"), bottleneck),
     ].join("");
+}
+function renderCurrentWeekDemandCard(product) {
+    const demand = product ? currentDemandWeek(product.productId, product.version ?? "", overviewWeekStartDate, product.weeklyDemand) : undefined;
+    const quantity = demand?.status === "complete" || demand?.status === "legacy" ? `${formatNumber(demand.quantity ?? 0)} / ${t("perWeek")}` : "-";
+    const detail = demand?.status === "complete" ? (locale === "zh" ? `${overviewWeekStartDate} · 逐日需求汇总` : `${overviewWeekStartDate} · daily demand total`)
+        : demand?.status === "legacy" ? (locale === "zh" ? `${overviewWeekStartDate} · 旧周需求兜底` : `${overviewWeekStartDate} · legacy fallback`)
+            : demand?.status === "conflict" ? (locale === "zh" ? `${overviewWeekStartDate} · 逐日账冲突` : `${overviewWeekStartDate} · daily ledger conflict`)
+                : (locale === "zh" ? `${overviewWeekStartDate} · 逐日账待补` : `${overviewWeekStartDate} · daily entries missing`);
+    return `<article class="metric ${demand?.status === "conflict" || demand?.status === "incomplete" ? "warn" : "neutral"}" data-current-week-demand><p>${escapeHtml(t("demandMetric"))}</p><strong>${escapeHtml(quantity)}</strong><span>${escapeHtml(detail)}</span></article>`;
+}
+function refreshCurrentWeekDemandCard(routingConfig) {
+    const card = summaryRoot.querySelector("[data-current-week-demand]");
+    if (card)
+        card.outerHTML = renderCurrentWeekDemandCard(routingConfig.product);
 }
 function currentRouteBottleneckCard(routingConfig) {
     const available = routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => ({
@@ -944,7 +1115,7 @@ function currentRouteReportGaps(routingConfig) {
     const localeCode = locale === "zh" ? "zh" : "en";
     const positions = routingConfig.operations.flatMap(operation => {
         const available = operation.assignments.filter(view => view.planningStatus === "available");
-        const operationName = formatKnownText(operation.operation.name);
+        const operationName = `OP${operation.operation.sequence} ${formatKnownText(operation.operation.name)}`;
         if (!available.length) {
             return [{
                     operationId: operation.operation.operationId,
@@ -1034,8 +1205,8 @@ function renderProduct(routingConfig) {
           ${editableProductField(t("project"), "projectId", product.projectId ?? "")}
           ${editableProductField(t("version"), "version", product.version ?? "")}
           ${field(t("family"), product.family ?? "-")}
-          ${editableProductField(t("weeklyDemand"), "weeklyDemand", String(product.weeklyDemand), "number")}
-          ${field(t("annualizedDemand"), formatNumber(product.weeklyDemand * 52))}
+          ${editableProductField(locale === "zh" ? "旧周需求（逐日账缺失时兜底）" : "Legacy weekly demand (fallback)", "weeklyDemand", String(product.weeklyDemand), "number")}
+          ${field(locale === "zh" ? "旧周需求年化参考" : "Legacy annualized reference", formatNumber(product.weeklyDemand * 52))}
           ${editableProductScenarioField(product.demandScenario)}
         </div>
       </section>
@@ -1082,6 +1253,7 @@ function bindProductEditing(currentProductId) {
         plannedSaContexts.clear();
         standardSaDayConfigs.clear();
         frozenStandardWindows.clear();
+        stationWeekSnapshots.clear();
         copyProjectionDrafts.clear();
         standardWindowFreezeError = "";
         plannedSaContextKey = "";
@@ -1093,7 +1265,6 @@ function bindProductEditing(currentProductId) {
         confirmedSuggestions.clear();
         publishedSuggestions.length = 0;
         suggestionDates.clear();
-        windowDemandByRoute.clear();
         routeWindowMemory.clear();
         calibrationActionError = "";
         cycleCheckDraft = emptyCycleSampleDraft();
@@ -1143,6 +1314,7 @@ function applyVisualRouteChange(result, options = {}) {
     }
     else {
         visualRouteError = "";
+        localValidationNotice = "";
         scenarioState = result.scenario;
         persistLocalValidation();
         if (options.routeId)
@@ -1171,18 +1343,30 @@ function moveVisualOperation(routeId, operationId, targetIndex) {
 }
 function bindVisualRouteToolbar(routingConfig, selectedOperation) {
     const route = routingConfig.route;
+    const startDraftFromReleased = () => {
+        if (!route?.routeId)
+            return;
+        const approved = window.confirm(locale === "zh"
+            ? "当前路线是已发布样例，不能直接提交审核。将创建本地草稿副本；原路线和历史记录不变。继续吗？"
+            : "This is a released sample route and cannot be submitted directly. Create a local draft copy? The source and history stay unchanged.");
+        if (!approved)
+            return;
+        isRouteEditorOpen = true;
+        const result = createLocalRouteCopy(scenarioState, route.routeId);
+        applyVisualRouteChange(result, "route" in result && result.route.routeId ? { routeId: result.route.routeId } : {});
+        if ("route" in result) {
+            localValidationNotice = locale === "zh"
+                ? "已创建本地草稿。核对工序和工站后，点击「提交审核」。"
+                : "Local draft created. Check its operations and stations, then submit it for review.";
+            render(selectedProductId);
+        }
+        visualRouteRoot.scrollIntoView({ block: "start", behavior: "smooth" });
+    };
     visualRouteRoot.querySelector("#visualStartArrange")?.addEventListener("click", () => {
         if (!route)
             return;
         if (!isLocalDraftRoute(route)) {
-            const approved = window.confirm(locale === "zh"
-                ? "当前路线已发布、不可直接修改。继续编排将建立本地草稿副本；原路线和历史记录不变。继续吗？"
-                : "This route is released and read-only. Continue by creating a local draft copy? The original route and history remain unchanged.");
-            if (!approved)
-                return;
-            isRouteEditorOpen = true;
-            const result = createLocalRouteCopy(scenarioState, route.routeId ?? "");
-            applyVisualRouteChange(result, "route" in result && result.route.routeId ? { routeId: result.route.routeId } : {});
+            startDraftFromReleased();
         }
         else if (!isRouteEditorOpen) {
             isRouteEditorOpen = true;
@@ -1196,11 +1380,39 @@ function bindVisualRouteToolbar(routingConfig, selectedOperation) {
         productRoot.scrollIntoView({ block: "start", behavior: "smooth" });
     });
     visualRouteRoot.querySelector("#visualOpenLibrary")?.addEventListener("click", () => setWorkflowStage("library"));
+    visualRouteRoot.querySelector("#visualSubmitReview")?.addEventListener("click", () => {
+        if (route && !isLocalDraftRoute(route)) {
+            startDraftFromReleased();
+            return;
+        }
+        if (!route?.routeId)
+            return;
+        const result = submitLocalRouteForReview(scenarioState, route.routeId, new Date().toISOString());
+        if ("issues" in result) {
+            visualRouteError = result.issues.map(localIssueText).join("；");
+        }
+        else {
+            visualRouteError = "";
+            localValidationNotice = locale === "zh"
+                ? "本机草稿已提交待审核；正式发布门禁仍未解除。"
+                : "Local draft submitted for review; the formal release gate remains closed.";
+            persistLocalValidation();
+        }
+        render(selectedProductId);
+    });
 }
 function renderVisualRoute(routingConfig, selectedOperation) {
     const zh = locale === "zh";
     const route = routingConfig.route;
     const local = !!route && isLocalDraftRoute(route);
+    const reviewState = local && route?.routeId ? localRouteReviewState(scenarioState, route.routeId) : "none";
+    const reviewNote = route ? `<p class="note" role="status">${!local
+        ? (zh ? "当前是已发布样例路线；先创建本地草稿，才能提交审核。" : "This is a released sample route; create a local draft before submitting it for review.")
+        : reviewState === "pending"
+            ? (zh ? "待审核 · 仅保存在本机；尚未正式发布。" : "Pending review · stored locally; not formally released.")
+            : reviewState === "stale"
+                ? (zh ? "送审后内容已变更，原申请失效；请重新提交。" : "Draft changed after submission; submit it again.")
+                : (zh ? "路线草稿尚未提交审核。" : "Route draft has not been submitted for review.")}</p>` : "";
     const ordered = [...routingConfig.operations].sort((a, b) => a.operation.sequence - b.operation.sequence);
     const invalidFlowPolicies = (route?.stationFlowPolicies ?? []).filter(policy => {
         const index = ordered.findIndex(item => item.operation.operationId === policy.fromOperationId);
@@ -1220,6 +1432,7 @@ function renderVisualRoute(routingConfig, selectedOperation) {
     const toolbarActions = `<div class="panel-actions">
     <button class="button" type="button" id="visualStartArrange" ${route ? "" : "disabled"}>${zh ? "编排工艺路线" : "Arrange process route"}</button>
     <button class="button secondary" type="button" id="visualExitEditor" ${isRouteEditorOpen ? "" : "disabled"}>${zh ? "退出编排" : "Exit editor"}</button>
+    ${route ? `<button class="button secondary" type="button" id="visualSubmitReview" ${reviewState === "pending" ? "disabled" : ""}>${!local ? (zh ? "创建草稿后提交审核" : "Create draft to submit") : reviewState === "stale" ? (zh ? "重新提交审核" : "Resubmit for review") : (zh ? "提交审核" : "Submit for review")}</button>` : ""}
     <button class="button secondary" type="button" id="visualOpenLibrary">${routeLibraryButtonText()}</button>
   </div>`;
     if (!isRouteEditorOpen) {
@@ -1233,6 +1446,8 @@ function renderVisualRoute(routingConfig, selectedOperation) {
       ${toolbarActions}</div>
       ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
       ${localValidationNotice ? `<p class="form-ok" role="status">${escapeHtml(localValidationNotice)}</p>` : ""}
+      ${visualRouteError ? `<p class="form-error" role="alert">${escapeHtml(visualRouteError)}</p>` : ""}
+      ${reviewNote}
       ${invalidFlowNotice}
       ${summary ? `<div class="route-summary-scroll"><ol class="route-summary" aria-label="${zh ? "当前工艺路线" : "Current process route"}">${summary}</ol></div>` : ""}`;
         bindVisualRouteToolbar(routingConfig, selectedOperation);
@@ -1267,7 +1482,7 @@ function renderVisualRoute(routingConfig, selectedOperation) {
     let inspector = `<p class="route-editor-empty">${zh ? "选择工序查看配置。" : "Select an operation."}</p>`;
     if (operation && visualInspectorMode === "station" && stationView) {
         const assignment = stationView.assignment;
-        inspector = `<h3>${escapeHtml(formatKnownText(stationView.station?.name ?? assignment.stationId))} / ${escapeHtml(assignment.stationId)}</h3>
+        inspector = `<h3>${escapeHtml(stationIdentity(stationView.station?.name, assignment.stationId))}</h3>
       <div class="panel-actions"><button class="button secondary" type="button" id="visualBackToOperation">${zh ? "返回工序 / 添加工站" : "Back / add station"}</button>
       ${local && assignment.planningAllowed ? `<button class="button secondary" type="button" id="visualEditParameter">${visualEditingStationKey === stationKey ? (zh ? "收起参数" : "Close parameter") : (zh ? "编辑参数" : "Edit parameter")}</button>` : ""}</div>
       ${renderAssignment(stationView, local && assignment.planningAllowed && visualEditingStationKey === stationKey, local)}`;
@@ -1275,7 +1490,7 @@ function renderVisualRoute(routingConfig, selectedOperation) {
     else if (operation) {
         inspector = `<div class="panel-head"><h3>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</h3>
       ${local ? `<div class="panel-actions"><button class="button secondary" type="button" data-visual-move="-1" ${ordered[0]?.operation.operationId === operation.operationId ? "disabled" : ""} title="${zh ? "前移" : "Move earlier"}">←</button><button class="button secondary" type="button" data-visual-move="1" ${ordered.at(-1)?.operation.operationId === operation.operationId ? "disabled" : ""} title="${zh ? "后移" : "Move later"}">→</button></div>` : ""}</div>
-      <div class="mini-grid">${field(zh ? "工艺编号" : "Process ID", operation.processId ?? "-")}${field(zh ? "工序编号" : "Operation ID", operation.operationId)}</div>
+      <div class="mini-grid">${field(zh ? "工序序号" : "Operation sequence", `OP${operation.sequence}`)}${field(zh ? "工艺编号" : "Process ID", operation.processId ?? "-")}${field(zh ? "内部编号" : "Internal ID", operation.operationId)}</div>
       ${local ? `<form id="visualOperationNameForm" class="form-section"><label class="field">${zh ? "本产品工序名称" : "Operation name for this product"}<input name="name" type="text" maxlength="80" required value="${escapeHtml(operation.name)}" placeholder="${zh ? "例如：外尺寸粗车削" : "e.g. Rough turning"}"></label><div class="panel-actions"><button class="button secondary" type="submit">${zh ? "确认名称" : "Confirm name"}</button></div></form>` : ""}
       ${local ? `<form id="visualAssignForm" class="form-section"><h3>${zh ? "添加工站" : "Add station"}</h3><div class="mini-grid"><label class="field">${zh ? "已入库兼容工站" : "Registered compatible station"}<select name="stationId" required>${stationOptions || `<option value="">${zh ? "暂无兼容工站；请先到工艺库登记资源" : "No compatible station; register a resource in the library"}</option>`}</select></label><label class="field">${zh ? "角色" : "Role"}<select name="role"><option value="primary">${zh ? "主用" : "Primary"}</option><option value="parallel">${zh ? "并行" : "Parallel"}</option><option value="backup">${zh ? "备用" : "Backup"}</option></select></label></div><div class="panel-actions"><button class="button secondary" type="submit" ${stationOptions ? "" : "disabled"}>${zh ? "添加工站" : "Add station"}</button></div></form>` : ""}`;
         inspector += flowEditor;
@@ -1292,7 +1507,7 @@ function renderVisualRoute(routingConfig, selectedOperation) {
         return `<span class="route-editor-join"><button type="button" data-visual-insert="${index}" ${local ? "" : "disabled"} title="${zh ? "在此插入工序" : "Insert operation"}" aria-label="${zh ? "在此插入工序" : "Insert operation"}">+</button></span>
       <article class="route-editor-node ${selectedOperationId === op.operationId ? "active" : ""}" data-visual-node="${escapeHtml(op.operationId)}" role="button" tabindex="0" draggable="${local}" aria-label="${zh ? "选择工序" : "Select operation"} ${escapeHtml(formatKnownText(op.name))}">
         <div class="route-editor-node-head"><span>OP${op.sequence}</span><span>${escapeHtml(processTypeLabel(process?.processType ?? op.processType))}</span></div>
-        <strong>${escapeHtml(formatKnownText(op.name))}</strong><small>${escapeHtml(op.operationId)}</small>
+        <strong>${escapeHtml(formatKnownText(op.name))}</strong><small title="${escapeHtml(op.operationId)}">${zh ? "工序" : "Operation"} OP${op.sequence}</small>
         ${stations || `<p class="note">${zh ? "待分配工站" : "No station assigned"}</p>`}
         ${flowLabel(op.operationId) ? `<small class="route-flow-tag">${escapeHtml(flowLabel(op.operationId))}</small>` : ""}
         <span data-report-gap-operation="${escapeHtml(op.operationId)}"></span>
@@ -1306,6 +1521,7 @@ function renderVisualRoute(routingConfig, selectedOperation) {
     ${localStoreError ? `<p class="form-error" role="alert">${escapeHtml(localStoreError)}</p>` : ""}
     ${localValidationNotice ? `<p class="form-ok" role="status">${escapeHtml(localValidationNotice)}</p>` : ""}
     ${visualRouteError ? `<p class="form-error" role="alert">${escapeHtml(visualRouteError)}</p>` : ""}
+    ${reviewNote}
     <details class="form-section route-history" ${routeHistoryOpen ? "open" : ""}><summary>${zh ? "本机路线历史" : "Local route history"}</summary><div class="panel-actions"><select id="routeHistorySelect" aria-label="${zh ? "选择历史路线" : "Select route history"}">${historyOptions || `<option value="">${zh ? "暂无历史记录" : "No history yet"}</option>`}</select><button class="button secondary" type="button" id="refreshRouteHistory">${zh ? "刷新" : "Refresh"}</button><button class="button secondary" type="button" id="restoreRouteHistory" ${historyOptions ? "" : "disabled"}>${zh ? "恢复所选记录" : "Restore selected record"}</button></div></details>
     ${invalidFlowNotice}
     <div class="route-editor-layout"><div class="route-editor-flow"><div class="route-editor-track">${nodes}<span class="route-editor-join"><button type="button" data-visual-insert="${ordered.length}" ${local ? "" : "disabled"} title="${zh ? "在末尾添加工序" : "Append operation"}" aria-label="${zh ? "在末尾添加工序" : "Append operation"}">+</button></span></div></div><div class="route-editor-inspector">${inspector}</div></div>
@@ -1489,18 +1705,368 @@ function renderRouting(operations) {
         ? renderOperationTable(operations)
         : emptyState(t("noRoutingOperations"));
 }
+function renderPartIdentityRegister(routingConfig) {
+    const zh = locale === "zh";
+    const route = routingConfig.route;
+    const routeId = route?.routeId ?? "";
+    const productId = route?.productId ?? selectedProductId;
+    const routeVersion = route?.version ?? "";
+    const operations = [...routingConfig.operations].sort((a, b) => a.operation.sequence - b.operation.sequence);
+    const error = partIdentityStoreError;
+    const rows = operations.map((view, index) => {
+        const operation = view.operation;
+        const entry = findPartIdentityEntry(partIdentityRegister, { productId, routeId, routeVersion, operationId: operation.operationId });
+        const earlier = operations.slice(0, index).map(item => item.operation);
+        const sources = earlier.filter(item => findPartIdentityEntry(partIdentityRegister, { productId, routeId, routeVersion, operationId: item.operationId }));
+        const label = `OP${operation.sequence} ${formatKnownText(operation.name)}`;
+        if (entry)
+            return `<tr><th scope="row">${escapeHtml(label)}</th><td>${escapeHtml(entry.identityMode === "new" ? (zh ? "新零件身份" : "New part identity") : (zh ? "沿用已有身份" : "Reuse existing identity"))}</td><td>${escapeHtml(entry.englishName)}</td><td>${escapeHtml(entry.sourceOperationId ? earlier.find(item => item.operationId === entry.sourceOperationId)?.name ?? entry.sourceOperationId : "-")}</td><td><strong>${escapeHtml(entry.temporaryPartNo)}</strong></td><td><button class="button secondary" type="button" data-part-remove="${escapeHtml(operation.operationId)}" ${error ? "disabled" : ""}>${zh ? "撤销登记" : "Remove draft"}</button></td></tr>`;
+        return `<tr data-part-operation="${escapeHtml(operation.operationId)}"><th scope="row">${escapeHtml(label)}</th>
+      <td><select data-part-mode aria-label="${escapeHtml(label)} ${zh ? "身份判定" : "Identity decision"}" ${error ? "disabled" : ""}><option value="new">${zh ? "新零件身份" : "New part identity"}</option>${sources.length ? `<option value="existing">${zh ? "沿用已有身份" : "Reuse existing identity"}</option>` : ""}</select></td>
+      <td><input data-part-name type="text" autocomplete="off" aria-label="${escapeHtml(label)} ${zh ? "英文零件名" : "English part name"}" placeholder="${zh ? "英文零件名" : "English part name"}" ${error ? "disabled" : ""}></td>
+      <td><select data-part-source aria-label="${escapeHtml(label)} ${zh ? "已有身份来源" : "Existing identity source"}" disabled><option value="">${zh ? "选择前序工序" : "Choose earlier operation"}</option>${sources.map(source => `<option value="${escapeHtml(source.operationId)}">OP${source.sequence} ${escapeHtml(formatKnownText(source.name))}</option>`).join("")}</select></td>
+      <td>${zh ? "保存后生成" : "Generated on save"}</td>
+      <td><button class="button" type="button" data-part-save="${escapeHtml(operation.operationId)}" ${error ? "disabled" : ""}>${zh ? "登记" : "Register"}</button></td></tr>`;
+    }).join("");
+    partIdentityRoot.innerHTML = `<div class="panel-head"><div><p class="eyebrow">${zh ? "本地草案 · 不解除发布门禁" : "Local draft · does not clear release gates"}</p><h2>${zh ? "零件身份登记" : "Part identity register"}</h2></div><span class="pill">${escapeHtml(routeId || "-")}</span></div>
+    ${error ? `<p class="form-error" role="alert">${escapeHtml(error)}</p>` : ""}
+    ${partIdentityNotice ? `<p class="form-ok" role="status">${escapeHtml(partIdentityNotice)}</p>` : ""}
+    ${partIdentityActionError ? `<p class="form-error" role="alert">${escapeHtml(partIdentityActionError)}</p>` : ""}
+    ${routeId && operations.length ? `<div class="table-wrap"><table class="part-identity-table"><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "产出身份判定" : "Output identity"}</th><th>${zh ? "英文零件名" : "English part name"}</th><th>${zh ? "沿用来源" : "Reused from"}</th><th>${zh ? "临时零件号" : "Temporary part no."}</th><th>${zh ? "操作" : "Action"}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="empty">${zh ? "请先选择有工序的路线。" : "Select a route with operations first."}</p>`}`;
+    partIdentityRoot.querySelectorAll("[data-part-operation]").forEach(row => {
+        const mode = row.querySelector("[data-part-mode]");
+        const name = row.querySelector("[data-part-name]");
+        const source = row.querySelector("[data-part-source]");
+        mode.addEventListener("change", () => {
+            name.disabled = mode.value === "existing";
+            source.disabled = mode.value !== "existing";
+        });
+        row.querySelector("[data-part-save]")?.addEventListener("click", () => {
+            try {
+                partIdentityRegister = recordPartIdentity(partIdentityRegister, {
+                    productId, routeId, routeVersion, operationId: row.dataset.partOperation ?? "",
+                    englishName: name.value, identityMode: mode.value === "existing" ? "existing" : "new",
+                    sourceOperationId: source.value,
+                }, operations.filter(item => item.operation.sequence < (operations.find(item => item.operation.operationId === row.dataset.partOperation)?.operation.sequence ?? 0))
+                    .map(item => item.operation.operationId), new Date().toISOString(), () => crypto.randomUUID());
+                saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+                partIdentityNotice = zh ? "零件身份已登记为本地草案。" : "Part identity saved as a local draft.";
+                partIdentityActionError = "";
+            }
+            catch (cause) {
+                partIdentityNotice = "";
+                partIdentityActionError = partIdentityErrorText(cause);
+            }
+            renderPartIdentityRegister(routingConfig);
+            renderOperationMaterialLinks(routingConfig);
+        });
+    });
+    partIdentityRoot.querySelectorAll("[data-part-remove]").forEach(button => button.addEventListener("click", () => {
+        const entry = findPartIdentityEntry(partIdentityRegister, { productId, routeId, routeVersion, operationId: button.dataset.partRemove ?? "" });
+        if (!entry)
+            return;
+        try {
+            partIdentityRegister = removePartIdentityEntry(partIdentityRegister, entry);
+            saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+            partIdentityNotice = zh ? "本地登记已撤销，号码不再复用。" : "Local draft removed; its number will not be reused.";
+            partIdentityActionError = "";
+        }
+        catch (cause) {
+            partIdentityNotice = "";
+            partIdentityActionError = partIdentityErrorText(cause);
+        }
+        renderPartIdentityRegister(routingConfig);
+        renderOperationMaterialLinks(routingConfig);
+    }));
+}
+function partIdentityErrorText(cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+    if (locale !== "zh")
+        return message;
+    const labels = {
+        "Missing scope or operation already recorded": "当前工序已登记，或产品与路线信息不完整。",
+        "Choose an earlier recorded operation": "请选择已登记的前序工序。",
+        "Source part identity was not recorded": "来源工序尚未登记零件身份。",
+        "Enter an English part name": "请填写英文零件名。",
+        "Part ID is not unique": "系统身份号重复，请重试。",
+        "Temporary part number is not unique": "临时零件号重复，请检查本地登记账。",
+        "Part identity entry not found": "未找到这条本地登记。",
+        "This operation is still referenced by another output": "后续工序仍引用该身份，请先撤销后续登记。",
+        "This part identity is still used by another operation": "其他工序仍沿用该身份，请先撤销后续登记。",
+        "This output is still used by an input link": "该产出仍被下游投入引用，请先撤销对应关联。",
+        "Enter an English material name": "请填写其他投入物料的英文名。",
+        "Invalid material type": "请选择投入物料类型。",
+        "External material not found": "未找到该外部投入物料。",
+        "This material is still used by an input link": "该物料仍被工序投入引用，请先撤销对应关联。",
+        "Enter a positive input quantity and unit": "请填写大于零的投入用量并选择单位。",
+        "Source operation is not a route predecessor": "来源工序不是当前工序的路线前序。",
+        "Source output identity does not match": "前序工序的产出身份已变化，请重新选择。",
+        "External input material was not registered": "请先登记该投入物料。",
+        "Input link already recorded": "同一投入来源已经关联到该工序。",
+        "Input link ID is not unique": "关联记录号重复，请重试。",
+        "Input link not found": "未找到该投入关联。",
+    };
+    return labels[message] ?? message;
+}
+function routePredecessorIds(operations, operationId) {
+    const target = operations.find(view => view.operation.operationId === operationId)?.operation;
+    if (!target)
+        return [];
+    return [...new Set([
+            ...(target.predecessorOperationIds ?? []),
+            ...operations.filter(view => view.operation.successorOperationIds?.includes(operationId)).map(view => view.operation.operationId),
+        ])];
+}
+function renderOperationMaterialLinks(routingConfig) {
+    const zh = locale === "zh";
+    const route = routingConfig.route;
+    const routeId = route?.routeId ?? "";
+    const scope = { productId: route?.productId ?? selectedProductId, routeId, routeVersion: route?.version ?? "" };
+    const operations = [...routingConfig.operations].sort((a, b) => a.operation.sequence - b.operation.sequence);
+    if (!operations.some(view => view.operation.operationId === materialLinkDraft.operationId)) {
+        materialLinkDraft.operationId = operations[0]?.operation.operationId ?? "";
+        materialLinkDraft.sourceKey = "";
+    }
+    const materialOptions = partIdentityRegister.externalMaterials.filter(material => material.productId === scope.productId
+        && material.routeId === scope.routeId && material.routeVersion === scope.routeVersion);
+    const predecessors = routePredecessorIds(operations, materialLinkDraft.operationId);
+    const outputOptions = predecessors.flatMap(operationId => {
+        const entry = findPartIdentityEntry(partIdentityRegister, { ...scope, operationId });
+        const source = operations.find(view => view.operation.operationId === operationId)?.operation;
+        return entry && source ? [{ entry, source }] : [];
+    });
+    const sourceOptions = [
+        ...outputOptions.map(({ entry, source }) => ({ value: `output:${source.operationId}`, label: `OP${source.sequence} · ${entry.temporaryPartNo} · ${entry.englishName}` })),
+        ...materialOptions.map(material => ({ value: `external:${material.partId}`, label: `${material.temporaryPartNo} · ${material.englishName}` })),
+    ];
+    if (!sourceOptions.some(item => item.value === materialLinkDraft.sourceKey))
+        materialLinkDraft.sourceKey = "";
+    const routeLinks = partIdentityRegister.inputLinks.filter(link => link.productId === scope.productId
+        && link.routeId === scope.routeId && link.routeVersion === scope.routeVersion);
+    const gaps = missingPredecessorInputs(partIdentityRegister, scope, operations.map(view => ({
+        operationId: view.operation.operationId,
+        predecessorOperationIds: routePredecessorIds(operations, view.operation.operationId),
+    })));
+    const invalidLinks = invalidOperationInputLinks(partIdentityRegister, scope, operations.map(view => ({
+        operationId: view.operation.operationId,
+        predecessorOperationIds: routePredecessorIds(operations, view.operation.operationId),
+    })));
+    const linkIssueLabels = zh ? {
+        target_missing: "目标工序已不存在", source_not_predecessor: "不再是路线前序", source_missing: "来源产出已不存在",
+        part_mismatch: "来源零件号已变化", material_missing: "外部物料已不存在",
+    } : {
+        target_missing: "Target operation missing", source_not_predecessor: "No longer a predecessor", source_missing: "Source output missing",
+        part_mismatch: "Source part changed", material_missing: "External material missing",
+    };
+    const edgeCount = operations.reduce((total, view) => total + routePredecessorIds(operations, view.operation.operationId).length, 0);
+    const rows = operations.flatMap(view => {
+        const operation = view.operation;
+        const output = findPartIdentityEntry(partIdentityRegister, { ...scope, operationId: operation.operationId });
+        const linked = routeLinks.filter(link => link.operationId === operation.operationId);
+        const operationLabel = `OP${operation.sequence} ${formatKnownText(operation.name)}`;
+        if (!linked.length)
+            return [`<tr><th scope="row">${escapeHtml(operationLabel)}</th><td>-</td><td>-</td><td>-</td><td>-</td><td>${escapeHtml(output?.temporaryPartNo ?? "-")}</td><td>-</td><td>-</td></tr>`];
+        return linked.map(link => {
+            const source = link.sourceOperationId
+                ? findPartIdentityEntry(partIdentityRegister, { ...scope, operationId: link.sourceOperationId })
+                : materialOptions.find(item => item.partId === link.partId);
+            const sourceOperation = operations.find(item => item.operation.operationId === link.sourceOperationId)?.operation;
+            const issue = invalidLinks.find(item => item.linkId === link.linkId);
+            return `<tr><th scope="row">${escapeHtml(operationLabel)}</th><td>${escapeHtml(source?.temporaryPartNo ?? "-")}</td><td>${escapeHtml(source?.englishName ?? "-")}</td><td>${escapeHtml(sourceOperation ? `OP${sourceOperation.sequence}` : (zh ? "其他投入" : "Other input"))}</td><td>${escapeHtml(String(link.quantityPerOutput))} ${escapeHtml(link.unit)}</td><td>${escapeHtml(output?.temporaryPartNo ?? "-")}</td><td>${issue ? `<span class="form-error">${escapeHtml(linkIssueLabels[issue.reason])}</span>` : (zh ? "匹配" : "Matched")}</td><td><button class="button secondary" type="button" data-material-link-remove="${escapeHtml(link.linkId)}" ${partIdentityStoreError ? "disabled" : ""}>${zh ? "撤销" : "Remove"}</button></td></tr>`;
+        });
+    }).join("");
+    const orphanRows = routeLinks.filter(link => !operations.some(view => view.operation.operationId === link.operationId))
+        .map(link => `<tr><th scope="row">${escapeHtml(link.operationId)}</th><td>${escapeHtml(link.partId)}</td><td>-</td><td>${escapeHtml(link.sourceOperationId ?? (zh ? "其他投入" : "Other input"))}</td><td>${escapeHtml(String(link.quantityPerOutput))} ${escapeHtml(link.unit)}</td><td>-</td><td><span class="form-error">${escapeHtml(linkIssueLabels.target_missing)}</span></td><td><button class="button secondary" type="button" data-material-link-remove="${escapeHtml(link.linkId)}" ${partIdentityStoreError ? "disabled" : ""}>${zh ? "撤销" : "Remove"}</button></td></tr>`).join("");
+    const externalRows = materialOptions.map(material => `<tr><td>${escapeHtml(material.temporaryPartNo)}</td><td>${escapeHtml(material.englishName)}</td><td>${escapeHtml(({ raw: zh ? "原材料" : "Raw material", purchased: zh ? "外购件" : "Purchased part", other: zh ? "其他" : "Other" })[material.kind])}</td><td><button class="button secondary" type="button" data-external-material-remove="${escapeHtml(material.partId)}" ${partIdentityStoreError ? "disabled" : ""}>${zh ? "撤销" : "Remove"}</button></td></tr>`).join("");
+    operationMaterialRoot.innerHTML = `<div class="panel-head"><div><p class="eyebrow">${zh ? "本地草案 · 不解除发布门禁" : "Local draft · does not clear release gates"}</p><h2>${zh ? "工序投入／产出物料" : "Operation inputs and outputs"}</h2></div><span class="pill">${zh ? `前后序关联 ${edgeCount - gaps.length}/${edgeCount}` : `Route links ${edgeCount - gaps.length}/${edgeCount}`}${invalidLinks.length ? (zh ? ` · 异常 ${invalidLinks.length}` : ` · Invalid ${invalidLinks.length}`) : ""}</span></div>
+    ${materialLinkNotice ? `<p class="form-ok" role="status">${escapeHtml(materialLinkNotice)}</p>` : ""}
+    ${materialLinkActionError ? `<p class="form-error" role="alert">${escapeHtml(materialLinkActionError)}</p>` : ""}
+    ${partIdentityStoreError ? `<p class="form-error" role="alert">${escapeHtml(partIdentityStoreError)}</p>` : ""}
+    ${routeId && operations.length ? `<div class="table-wrap"><table class="material-link-table"><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "投入零件号" : "Input part no."}</th><th>${zh ? "英文零件名" : "English part name"}</th><th>${zh ? "投入来源" : "Input source"}</th><th title="${zh ? "投入量，不是产出零件重量或整批投料量" : "Input quantity, not output weight or a batch total"}">${zh ? "每件产出投入量" : "Input per output"}</th><th>${zh ? "产出零件号" : "Output part no."}</th><th>${zh ? "校验" : "Check"}</th><th>${zh ? "操作" : "Action"}</th></tr></thead><tbody>${rows}${orphanRows}</tbody></table></div>` : `<p class="empty">${zh ? "请先选择有工序的路线。" : "Select a route with operations first."}</p>`}
+    ${gaps.length ? `<p class="form-error">${escapeHtml(zh ? "待关联前后序：" : "Unlinked route edges: ")}${gaps.map(gap => escapeHtml(`${operations.find(view => view.operation.operationId === gap.predecessorOperationId)?.operation.sequence ?? "?"} → ${operations.find(view => view.operation.operationId === gap.operationId)?.operation.sequence ?? "?"}`)).join("、")}</p>` : ""}
+    ${routeId ? `<form id="operationInputLinkForm" class="form-section"><h3>${zh ? "登记投入关联" : "Register input link"}</h3><div class="field-grid">
+      <label class="field">${zh ? "目标工序" : "Target operation"}<select name="operationId">${operations.map(view => `<option value="${escapeHtml(view.operation.operationId)}" ${view.operation.operationId === materialLinkDraft.operationId ? "selected" : ""}>OP${view.operation.sequence} ${escapeHtml(formatKnownText(view.operation.name))}</option>`).join("")}</select></label>
+      <label class="field">${zh ? "投入零件" : "Input part"}<select name="sourceKey" required><option value="">${zh ? "选择已登记的零件" : "Choose a registered part"}</option>${sourceOptions.map(option => `<option value="${escapeHtml(option.value)}" ${option.value === materialLinkDraft.sourceKey ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}</select></label>
+      <label class="field" title="${zh ? "投入量，不是产出零件重量或整批投料量" : "Input quantity, not output weight or a batch total"}">${zh ? "每件产出投入量" : "Input per output"}<input name="quantity" type="number" min="0" step="any" value="${escapeHtml(materialLinkDraft.quantity)}" required></label>
+      <label class="field">${zh ? "单位" : "Unit"}<select name="unit" required><option value="">${zh ? "选择单位" : "Choose unit"}</option>${["pcs", "kg", "g", "m", "l"].map(unit => `<option value="${unit}" ${materialLinkDraft.unit === unit ? "selected" : ""}>${unit}</option>`).join("")}</select></label>
+    </div><div class="panel-actions"><button class="button" type="submit" ${partIdentityStoreError ? "disabled" : ""}>${zh ? "保存投入关联" : "Save input link"}</button></div></form>
+    <form id="externalInputMaterialForm" class="form-section"><h3>${zh ? "登记其他投入物料" : "Register other input material"}</h3><div class="mini-grid">
+      <label class="field">${zh ? "英文零件名" : "English part name"}<input name="englishName" type="text" required></label>
+      <label class="field">${zh ? "物料类型" : "Material type"}<select name="kind" required><option value="">${zh ? "选择类型" : "Choose type"}</option><option value="raw">${zh ? "原材料" : "Raw material"}</option><option value="purchased">${zh ? "外购件" : "Purchased part"}</option><option value="other">${zh ? "其他" : "Other"}</option></select></label>
+    </div><div class="panel-actions"><button class="button secondary" type="submit" ${partIdentityStoreError ? "disabled" : ""}>${zh ? "登记投入物料" : "Register material"}</button></div></form>
+    ${externalRows ? `<div class="table-wrap"><table class="material-link-table"><thead><tr><th>${zh ? "临时零件号" : "Temporary part no."}</th><th>${zh ? "英文零件名" : "English part name"}</th><th>${zh ? "类型" : "Type"}</th><th>${zh ? "操作" : "Action"}</th></tr></thead><tbody>${externalRows}</tbody></table></div>` : ""}` : ""}`;
+    const inputForm = operationMaterialRoot.querySelector("#operationInputLinkForm");
+    inputForm?.querySelector("[name=operationId]")?.addEventListener("change", event => {
+        materialLinkDraft.operationId = event.target.value;
+        materialLinkDraft.sourceKey = "";
+        renderOperationMaterialLinks(routingConfig);
+    });
+    inputForm?.querySelector("[name=sourceKey]")?.addEventListener("change", event => { materialLinkDraft.sourceKey = event.target.value; });
+    inputForm?.querySelector("[name=quantity]")?.addEventListener("input", event => { materialLinkDraft.quantity = event.target.value; });
+    inputForm?.querySelector("[name=unit]")?.addEventListener("change", event => { materialLinkDraft.unit = event.target.value; });
+    inputForm?.addEventListener("submit", event => {
+        event.preventDefault();
+        try {
+            const targetId = materialLinkDraft.operationId;
+            const sourceKey = materialLinkDraft.sourceKey;
+            const sourceOperationId = sourceKey.startsWith("output:") ? sourceKey.slice("output:".length) : undefined;
+            const partId = sourceOperationId
+                ? findPartIdentityEntry(partIdentityRegister, { ...scope, operationId: sourceOperationId })?.partId
+                : materialOptions.find(item => `external:${item.partId}` === sourceKey)?.partId;
+            if (!partId)
+                throw new Error("Choose a registered input part");
+            partIdentityRegister = recordOperationInputLink(partIdentityRegister, {
+                ...scope, operationId: targetId, partId, ...(sourceOperationId ? { sourceOperationId } : {}),
+                quantityPerOutput: Number(materialLinkDraft.quantity), unit: materialLinkDraft.unit,
+            }, routePredecessorIds(operations, targetId), new Date().toISOString(), () => crypto.randomUUID());
+            saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+            materialLinkDraft.sourceKey = "";
+            materialLinkDraft.quantity = "";
+            materialLinkNotice = zh ? "投入关联已保存为本地草案。" : "Input link saved as a local draft.";
+            materialLinkActionError = "";
+        }
+        catch (cause) {
+            materialLinkNotice = "";
+            materialLinkActionError = partIdentityErrorText(cause);
+        }
+        renderOperationMaterialLinks(routingConfig);
+    });
+    operationMaterialRoot.querySelector("#externalInputMaterialForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const data = new FormData(form);
+        try {
+            partIdentityRegister = recordExternalInputMaterial(partIdentityRegister, {
+                ...scope, englishName: String(data.get("englishName") ?? ""),
+                kind: String(data.get("kind") ?? ""),
+            }, new Date().toISOString(), () => crypto.randomUUID());
+            saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+            materialLinkNotice = zh ? "其他投入物料已登记为本地草案。" : "Other input material saved as a local draft.";
+            materialLinkActionError = "";
+        }
+        catch (cause) {
+            materialLinkNotice = "";
+            materialLinkActionError = partIdentityErrorText(cause);
+        }
+        renderOperationMaterialLinks(routingConfig);
+    });
+    operationMaterialRoot.querySelectorAll("[data-material-link-remove]").forEach(button => button.addEventListener("click", () => {
+        const link = routeLinks.find(item => item.linkId === button.dataset.materialLinkRemove);
+        if (!link)
+            return;
+        partIdentityRegister = removeOperationInputLink(partIdentityRegister, link);
+        saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+        materialLinkNotice = zh ? "投入关联已撤销。" : "Input link removed.";
+        materialLinkActionError = "";
+        renderOperationMaterialLinks(routingConfig);
+    }));
+    operationMaterialRoot.querySelectorAll("[data-external-material-remove]").forEach(button => button.addEventListener("click", () => {
+        const material = materialOptions.find(item => item.partId === button.dataset.externalMaterialRemove);
+        if (!material)
+            return;
+        try {
+            partIdentityRegister = removeExternalInputMaterial(partIdentityRegister, material);
+            saveLocalState(partIdentityStorageKey, JSON.stringify(partIdentityRegister));
+            materialLinkNotice = zh ? "投入物料已撤销，号码不再复用。" : "Material removed; its number will not be reused.";
+            materialLinkActionError = "";
+        }
+        catch (cause) {
+            materialLinkNotice = "";
+            materialLinkActionError = partIdentityErrorText(cause);
+        }
+        renderOperationMaterialLinks(routingConfig);
+    }));
+    renderStageMaterialReview(routingConfig);
+}
+function stageMaterialIssueText(issue, operations) {
+    const zh = locale === "zh";
+    const name = (operationId) => {
+        const operation = operations.find(view => view.operation.operationId === operationId)?.operation;
+        return operation ? `OP${operation.sequence}` : operationId ?? "-";
+    };
+    switch (issue.code) {
+        case "scope_missing": return zh ? "产品或路线未确定" : "Product or route is missing";
+        case "operation_missing": return zh ? "路线还没有工序" : "Route has no operations";
+        case "output_missing": return zh ? `${name(issue.operationId)} 尚未登记产出身份` : `${name(issue.operationId)} has no output identity`;
+        case "predecessor_input_missing": return zh ? `${name(issue.sourceOperationId)} → ${name(issue.operationId)} 投入关联缺失` : `${name(issue.sourceOperationId)} → ${name(issue.operationId)} input link missing`;
+        case "input_link_invalid": return zh ? `${name(issue.operationId)} 存在失效投入关联` : `${name(issue.operationId)} has an invalid input link`;
+        case "date_invalid": return zh ? "生效日期无效，或失效日期早于生效日期" : "Invalid effective date range";
+        case "declaration_missing": return zh ? "请确认该路线投入物料已录全" : "Confirm all route input materials are recorded";
+        case "no_changes": return zh ? "当前内容及日期与上次提交相同" : "Content and dates match the previous submission";
+    }
+}
+function renderStageMaterialReview(routingConfig) {
+    const zh = locale === "zh";
+    const route = routingConfig.route;
+    const scope = { productId: route?.productId ?? selectedProductId, routeId: route?.routeId ?? "", routeVersion: route?.version ?? "" };
+    const operations = routingConfig.operations.map(view => ({
+        operationId: view.operation.operationId,
+        sequence: view.operation.sequence,
+        name: view.operation.name,
+        ...(view.operation.processId ? { processId: view.operation.processId } : {}),
+        predecessorOperationIds: routePredecessorIds(routingConfig.operations, view.operation.operationId),
+    }));
+    const issues = stageMaterialReviewIssues(partIdentityRegister, scope, operations, todayDateValue(), undefined, true);
+    const latest = latestStageMaterialSubmission(stageMaterialReviewStore, scope);
+    const current = latest && isStageMaterialSubmissionCurrent(latest, partIdentityRegister, scope, operations);
+    const status = latest ? current ? (zh ? "待审核" : "Pending review") : (zh ? "内容已变更 · 需重送" : "Changed · resubmit") : (zh ? "未提交" : "Not submitted");
+    const submissions = stageMaterialReviewStore.submissions.filter(item => item.productId === scope.productId
+        && item.routeId === scope.routeId && item.routeVersion === scope.routeVersion);
+    stageMaterialReviewRoot.innerHTML = `<div class="panel-head"><div><p class="eyebrow">${zh ? "系统内建档 · 暂无授权审核" : "Internal filing · no authorized review yet"}</p><h2>${zh ? "阶段物料资料待审核" : "Stage material review queue"}</h2></div><span class="pill">${escapeHtml(status)}</span></div>
+    ${stageMaterialReviewStoreError ? `<p class="form-error" role="alert">${escapeHtml(stageMaterialReviewStoreError)}</p>` : ""}
+    ${stageMaterialReviewNotice ? `<p class="form-ok" role="status">${escapeHtml(stageMaterialReviewNotice)}</p>` : ""}
+    ${stageMaterialReviewActionError ? `<p class="form-error" role="alert">${escapeHtml(stageMaterialReviewActionError)}</p>` : ""}
+    ${issues.length ? `<ul class="message-list">${issues.map(issue => `<li>${escapeHtml(stageMaterialIssueText(issue, routingConfig.operations))}</li>`).join("")}</ul>` : ""}
+    ${scope.routeId ? `<form id="stageMaterialReviewForm" class="form-section"><div class="mini-grid">
+      <label class="field">${zh ? "计划生效日期" : "Planned effective date"}<input name="effectiveFrom" type="date" required></label>
+      <label class="field">${zh ? "计划失效日期 · 可选" : "Planned end date · optional"}<input name="effectiveTo" type="date"></label>
+    </div><label class="checkbox-field"><input name="declaredComplete" type="checkbox" required> ${zh ? "我确认当前路线的产出身份和全部投入物料已录全" : "I confirm all route outputs and inputs are recorded"}</label>
+    <div class="panel-actions"><button class="button" type="submit" ${issues.length || partIdentityStoreError || stageMaterialReviewStoreError ? "disabled" : ""}>${zh ? "提交物料资料待审核" : "Submit material draft for review"}</button></div></form>` : ""}
+    ${submissions.length ? `<div class="table-wrap"><table><thead><tr><th>${zh ? "本地版本" : "Local revision"}</th><th>${zh ? "提交时间" : "Submitted"}</th><th>${zh ? "计划生效" : "Planned effective"}</th><th>${zh ? "计划失效" : "Planned end"}</th><th>${zh ? "状态" : "Status"}</th></tr></thead><tbody>${[...submissions].reverse().map((item, index) => `<tr><td title="${escapeHtml(item.submissionId)}">v${item.revision}</td><td>${escapeHtml(item.submittedAt)}</td><td>${escapeHtml(item.effectiveFrom)}</td><td>${escapeHtml(item.effectiveTo ?? "-")}</td><td>${index === 0 ? escapeHtml(status) : (zh ? "历史申请 · 未授权" : "Prior submission · not authorized")}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+    stageMaterialReviewRoot.querySelector("#stageMaterialReviewForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        try {
+            const effectiveTo = String(data.get("effectiveTo") ?? "");
+            const result = submitStageMaterialReview(stageMaterialReviewStore, partIdentityRegister, scope, operations, {
+                effectiveFrom: String(data.get("effectiveFrom") ?? ""),
+                ...(effectiveTo ? { effectiveTo } : {}),
+                declaredComplete: data.get("declaredComplete") === "on",
+                submittedAt: new Date().toISOString(), submissionId: crypto.randomUUID(),
+            });
+            if (!result.ok) {
+                stageMaterialReviewActionError = result.issues.map(issue => stageMaterialIssueText(issue, routingConfig.operations)).join("；");
+                stageMaterialReviewNotice = "";
+            }
+            else {
+                stageMaterialReviewStore = result.store;
+                saveLocalState(stageMaterialReviewStorageKey, JSON.stringify(stageMaterialReviewStore));
+                stageMaterialReviewNotice = zh ? `物料资料 v${result.submission.revision} 已提交待审核。` : `Material draft v${result.submission.revision} submitted for review.`;
+                stageMaterialReviewActionError = "";
+            }
+        }
+        catch (cause) {
+            stageMaterialReviewNotice = "";
+            stageMaterialReviewActionError = cause instanceof Error ? cause.message : String(cause);
+        }
+        renderStageMaterialReview(routingConfig);
+    });
+}
 function renderOperationTable(operations) {
+    const labels = new Map(operations.map(view => [
+        view.operation.operationId, `OP${view.operation.sequence} ${formatKnownText(view.operation.name)}`,
+    ]));
+    const linked = (ids) => ids?.map(id => labels.get(id) ?? id).join(", ") || "-";
     const rows = operations.map(operationView => {
         const operation = operationView.operation;
         return `
       <tr>
-        <td>${formatNumber(operation.sequence)}</td>
-        <td>${escapeHtml(operation.operationId)}</td>
+        <td>OP${operation.sequence}</td>
         <td>${escapeHtml(formatKnownText(operation.name))}</td>
         <td>${escapeHtml(formatKnownText(operation.processType))}</td>
-        <td>${escapeHtml(operation.digitalTwinNodeId ?? "-")}</td>
-        <td>${escapeHtml(operation.predecessorOperationIds?.join(", ") || "-")}</td>
-        <td>${escapeHtml(operation.successorOperationIds?.join(", ") || "-")}</td>
+        <td>${escapeHtml(linked(operation.predecessorOperationIds))}</td>
+        <td>${escapeHtml(linked(operation.successorOperationIds))}</td>
+        <td>${escapeHtml(operation.operationId)}</td>
       </tr>
     `;
     }).join("");
@@ -1509,13 +2075,12 @@ function renderOperationTable(operations) {
       <table>
         <thead>
           <tr>
-            <th>${t("sequence")}</th>
-            <th>${t("operationId")}</th>
+            <th>${locale === "zh" ? "工序序号" : "Operation sequence"}</th>
             <th>${t("operationName")}</th>
             <th>${t("processType")}</th>
-            <th>${t("digitalTwinNodeShort")}</th>
             <th>${t("predecessor")}</th>
             <th>${t("successor")}</th>
+            <th>${locale === "zh" ? "内部编号" : "Internal ID"}</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -1976,9 +2541,12 @@ function renderPlannedSaInput(routingConfig, selectedOperation) {
     }
     const productId = routingConfig.product?.productId ?? selectedProductId;
     const events = getPlannedSaEvents(stationId, productId);
+    if (plannedSelectedEventId && !events.some(event => event.id === plannedSelectedEventId))
+        plannedSelectedEventId = "";
     const dayConfig = getStandardSaDayConfig(productId, stationId);
     const frozenWindow = frozenStandardWindows.get(`${planScopeKey(productId, stationId)}`);
     const frozenCurrent = frozenWindow ? isFrozenStandardWindowCurrent(frozenWindow, events, dayConfig) : false;
+    currentSaChanges = frozenWindow && !frozenCurrent ? diffFrozenStandardSa(frozenWindow, events, dayConfig) : [];
     document.querySelector('[data-stage-next="reality"]').disabled = events.length === 0;
     alignPlannedBlockDraftAfterExistingEvents(events, stationId, horizonMinutes);
     const plannedWindow = derivePlannedSaWindow(events);
@@ -1989,6 +2557,8 @@ function renderPlannedSaInput(routingConfig, selectedOperation) {
     const dayEndMinute = dayConfig.startMinute + dayConfig.dayCount * MINUTE_PER_DAY;
     plannedSaRoot.innerHTML = `
     ${currentStationHead(t("plannedSaEyebrow"), t("plannedSaTitle"), `<span class="section-label">${t("bestCaseSaInput")}</span><button class="button secondary" type="button" id="generatePlannedSample">${locale === "zh" ? "重置为测试样例" : "Reset to test sample"}</button><button class="button" type="button" id="fillPlannedGaps">${t("fillGaps")}</button>`)}
+    ${standardWindowFreezeError ? `<p class="form-error" role="alert">${escapeHtml(standardWindowFreezeError)}</p>` : ""}
+    ${frozenWindow && !frozenCurrent ? renderSaChangePanel(currentSaChanges, dayIssues) : ""}
     <div class="field-grid shift-config-grid">
       <div class="field"><label for="standardDayStartDate">${locale === "zh" ? "生产日日期" : "Production-day date"}</label><input id="standardDayStartDate" type="date" value="${escapeHtml(minuteToDateValue(dayConfig.startMinute))}" /></div>
       <div class="field"><label>${locale === "zh" ? "白班开班时间" : "First-shift start"}</label><div class="time-pair"><select id="standardDayStartHour" aria-label="${locale === "zh" ? "白班开班时" : "First-shift hour"}">${numberOptions(0, 23, Math.floor(minuteOfDay(dayConfig.startMinute) / 60))}</select><select id="standardDayStartMinute" aria-label="${locale === "zh" ? "白班开班分" : "First-shift minute"}">${numberOptions(0, 59, minuteOfDay(dayConfig.startMinute) % 60)}</select></div></div>
@@ -2021,7 +2591,7 @@ function renderPlannedSaInput(routingConfig, selectedOperation) {
     </section>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>${t("eventId")}</th><th>${t("station")}</th><th>${t("kind")}</th><th>${t("startDate")}</th><th>${t("startTime")}</th><th>${t("endDate")}</th><th>${t("endTime")}</th><th>${t("durationMin")}</th><th>${t("labelNote")}</th><th>${t("deleteEvent")}</th></tr></thead>
+        <thead><tr><th>${t("eventId")}</th><th>${t("station")}</th><th>${t("kind")}</th><th>${t("startDate")}</th><th>${t("startTime")}</th><th>${t("endDate")}</th><th>${t("endTime")}</th><th>${t("durationMin")}</th><th>${t("labelNote")}</th></tr></thead>
         <tbody>${events.map(renderPlannedActivityRow).join("")}</tbody>
       </table>
     </div>
@@ -2041,12 +2611,117 @@ function renderPlannedSaInput(routingConfig, selectedOperation) {
             ? (locale === "zh" ? `本地源窗口 v${frozenWindow.version} · 已冻结` : `Local source window v${frozenWindow.version} · frozen`)
             : (locale === "zh" ? `本地源窗口 v${frozenWindow.version} · 已过期，请重新冻结` : `Local source window v${frozenWindow.version} · stale; freeze again`)
         : (locale === "zh" ? "尚未冻结投影源窗口" : "No frozen projection source window")}</span>
-      <button class="button secondary" type="button" id="freezeStandardWindow">${locale === "zh" ? "冻结源窗口" : "Freeze source window"}</button>
+      <button class="button ${frozenCurrent ? "freeze-current" : frozenWindow ? "freeze-stale" : ""}" type="button" data-freeze-standard-window ${frozenCurrent ? "disabled" : ""}>${frozenCurrent
+        ? (locale === "zh" ? `已冻结 v${frozenWindow?.version}` : `Frozen v${frozenWindow?.version}`)
+        : frozenWindow ? (locale === "zh" ? "重新冻结源窗口" : "Refreeze source window")
+            : (locale === "zh" ? "冻结源窗口" : "Freeze source window")}</button>
     </div>
     ${standardWindowFreezeError ? `<p class="form-error">${escapeHtml(standardWindowFreezeError)}</p>` : ""}
     ${renderCopyProjectionPanel(productId, stationId, selectedOperation?.operation.operationId ?? "", frozenWindow, frozenCurrent)}
   `;
     bindPlannedSaEditing(stationId, productId, horizonMinutes);
+    if (frozenWindow && !frozenCurrent)
+        markSaChangeTargets(currentSaChanges);
+}
+function saChangeText(change) {
+    const zh = locale === "zh";
+    const minute = (value) => typeof value === "number" ? formatOptionalMinutePoint(value) : String(value ?? "-");
+    if (change.kind === "config") {
+        const label = {
+            startMinute: zh ? "生产日日期 / 开班时间" : "Production date / shift start",
+            shiftMinutes: zh ? "班次时长" : "Shift length",
+            shiftsPerDay: zh ? "每日班数" : "Shifts per day",
+            dayCount: zh ? "生产日数" : "Production days",
+        }[change.field];
+        const format = change.field === "startMinute" ? minute : (value) => String(value);
+        return `${label}：${format(change.before)} → ${format(change.after)}${change.field === "shiftMinutes" ? (zh ? " 分钟" : " min") : ""}`;
+    }
+    const prefix = `${zh ? "计划时间段" : "Plan event"} ${change.eventId}`;
+    if (change.field === "added")
+        return `${prefix}：${zh ? "新增" : "Added"}`;
+    if (change.field === "removed")
+        return `${prefix}：${zh ? "已删除；如属有意修改，直接重新冻结" : "Removed; refreeze if intentional"}`;
+    const label = {
+        kind: zh ? "状态类型" : "Activity type",
+        startMinute: zh ? "开始时间" : "Start time",
+        endMinute: zh ? "结束时间" : "End time",
+        other: zh ? "记录来源或关联信息" : "Source or linked identity",
+    }[change.field];
+    if (change.field === "other")
+        return `${prefix} · ${label}${zh ? "已变更" : " changed"}`;
+    const value = (item) => change.field === "kind" && typeof item === "string"
+        ? formatTimelineKind(item) : minute(item);
+    return `${prefix} · ${label}：${value(change.before)} → ${value(change.after)}`;
+}
+function renderSaChangePanel(changes, issues) {
+    const zh = locale === "zh";
+    const instruction = issues.length
+        ? (zh ? "先修复下列差异或计划空档，再重新冻结。" : "Resolve the differences or plan gaps, then refreeze.")
+        : (zh ? "若这些修改符合预期，无需重输；点击“重新冻结源窗口”即可确认当前版本。" : "If these changes are intended, refreeze the current source without re-entering it.");
+    return `<section class="sa-change-panel" data-sa-change-panel aria-label="${zh ? "标准 SA 变更定位" : "Standard SA changes"}">
+    <strong>${zh ? "冻结后发生的变更" : "Changes since last freeze"}</strong>
+    <p>${instruction}</p>
+    ${changes.length ? `<ol>${changes.map((change, index) => `<li><button class="sa-change-link" type="button" data-sa-change-index="${index}">${escapeHtml(saChangeText(change))}</button></li>`).join("")}</ol>`
+        : `<p>${zh ? "未定位到具体字段差异；请核对下方计划后重新冻结。" : "No specific field difference found; review the plan and refreeze."}</p>`}
+  </section>`;
+}
+function saChangeTarget(change) {
+    if (change.kind === "config") {
+        const id = change.field === "startMinute"
+            ? minuteToDateValue(change.before) !== minuteToDateValue(change.after) ? "standardDayStartDate"
+                : Math.floor(minuteOfDay(change.before) / 60) !== Math.floor(minuteOfDay(change.after) / 60) ? "standardDayStartHour" : "standardDayStartMinute"
+            : { shiftMinutes: "standardShiftMinutes", shiftsPerDay: "standardShiftsPerDay", dayCount: "standardDayCount" }[change.field];
+        return plannedSaRoot.querySelector(`#${id}`);
+    }
+    if (change.field === "removed")
+        return plannedSaRoot.querySelector("[data-freeze-standard-window]");
+    const row = Array.from(plannedSaRoot.querySelectorAll("[data-sa-event-row]"))
+        .find(item => item.dataset.saEventRow === change.eventId);
+    if (!row)
+        return null;
+    const cellIndex = { kind: 2, startMinute: 3, endMinute: 5, added: 0, other: 0 }[change.field];
+    return row.querySelector(`td:nth-child(${cellIndex + 1})`) ?? row;
+}
+function markSaChangeTargets(changes) {
+    plannedSaRoot.querySelectorAll("[data-freeze-standard-window]").forEach(button => button.classList.add("sa-refreeze-target"));
+    changes.forEach(change => {
+        const target = saChangeTarget(change);
+        target?.classList.add("sa-change-target");
+        target?.closest(".field, [data-sa-event-row]")?.classList.add("sa-change-context");
+        const cell = change.kind === "config" ? target?.closest(".field")
+            : target?.closest("td") ?? target?.querySelector("td");
+        if (cell) {
+            const badge = document.createElement("small");
+            badge.className = "sa-change-badge";
+            badge.textContent = saChangeText(change);
+            cell.append(badge);
+        }
+    });
+    plannedSaRoot.querySelectorAll("[data-sa-change-index]").forEach(button => button.addEventListener("click", () => {
+        focusSaChange(Number(button.dataset.saChangeIndex));
+    }));
+}
+function focusSaChange(index) {
+    const change = currentSaChanges[index];
+    if (change?.kind === "event" && change.field !== "removed") {
+        selectPlannedActivityEvent(change.eventId, false);
+        let field = change.field === "kind" ? "kind" : "";
+        if ((change.field === "startMinute" || change.field === "endMinute")
+            && typeof change.before === "number" && typeof change.after === "number") {
+            const prefix = change.field === "startMinute" ? "start" : "end";
+            field = minuteToDateValue(change.before) !== minuteToDateValue(change.after) ? `${prefix}Date`
+                : Math.floor(minuteOfDay(change.before) / 60) !== Math.floor(minuteOfDay(change.after) / 60) ? `${prefix}Hour`
+                    : `${prefix}MinuteOfHour`;
+        }
+        const input = field ? plannedSaRoot.querySelector(`[data-planned-draft-field="${field}"]`) : null;
+        input?.classList.add("sa-change-target");
+        input?.focus({ preventScroll: true });
+        return;
+    }
+    const target = change ? saChangeTarget(change)
+        : plannedSaRoot.querySelector("[data-freeze-standard-window]");
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    target?.focus({ preventScroll: true });
 }
 function getPlannedSaEvents(stationId, productId) {
     const contextKey = `${planScopeKey(productId, stationId)}`;
@@ -2057,6 +2732,7 @@ function getPlannedSaEvents(stationId, productId) {
         plannedSaContextKey = contextKey;
         plannedSaEvents = saved?.events ?? buildDefaultPlannedActivityEvents(stationId, productId, getStandardSaDayConfig(productId, stationId));
         plannedSaEventsAreDefault = saved?.areDefault ?? true;
+        plannedSelectedEventId = "";
         standardWindowFreezeError = "";
         resetPlannedBlockDraft(stationId, PLANNED_SA_HORIZON_MINUTES);
     }
@@ -2079,10 +2755,10 @@ function formatStandardSaDayIssues(issues) {
 }
 function renderPlannedBlockForm() {
     return `
-    <section class="sub-card" style="margin-top:14px;">
+    <section class="sub-card" id="plannedIntervalEditor" tabindex="-1" style="margin-top:14px;">
       <div class="panel-head">
-        <h3>${t("addTimeBlock")}</h3>
-        <span class="section-label">${t("intervalFirst")}</span>
+        <h3>${plannedSelectedEventId ? (locale === "zh" ? "编辑时间段" : "Edit interval") : t("addTimeBlock")}</h3>
+        <span class="section-label">${plannedSelectedEventId ? (locale === "zh" ? "当前时间段" : "Selected interval") : t("intervalFirst")}</span>
       </div>
       <p class="note">${t("addTimeBlockNote")}</p>
       <p class="note">${t("rrAbnormalScope")}</p>
@@ -2094,13 +2770,15 @@ function renderPlannedBlockForm() {
         ${draftCategoryField()}
         ${draftKindField()}
         ${draftInputField(t("labelNote"), "note", plannedBlockDraft.note)}
-        ${field(t("durationMin"), formatNumber(Math.max(plannedBlockDraft.endMinute - plannedBlockDraft.startMinute, 0)))}
+        <div class="field"><span>${escapeHtml(t("durationMin"))}</span><strong data-planned-draft-duration>${formatNumber(Math.max(plannedBlockDraft.endMinute - plannedBlockDraft.startMinute, 0))}</strong></div>
       </div>
       ${plannedSaDraftError ? `<p class="form-error">${escapeHtml(plannedSaDraftError)}</p>` : ""}
       <div class="action-bar">
-        <span>${t("submitCreatesEvent")}</span>
+        <span>${plannedSelectedEventId ? (locale === "zh" ? "更新当前时间段" : "Update selected interval") : t("submitCreatesEvent")}</span>
         <div class="panel-actions">
-          <button class="button" type="button" id="addPlannedTimeBlock">${t("addTimeBlock")}</button>
+          ${plannedSelectedEventId ? `<button class="button secondary" type="button" id="cancelPlannedTimeBlockEdit">${locale === "zh" ? "取消编辑" : "Cancel edit"}</button>` : ""}
+          ${plannedSelectedEventId ? `<button class="button secondary" type="button" id="deletePlannedTimeBlock">${t("deleteEvent")}</button>` : ""}
+          <button class="button" type="button" id="addPlannedTimeBlock">${plannedSelectedEventId ? (locale === "zh" ? "更新时间段" : "Update interval") : t("addTimeBlock")}</button>
         </div>
       </div>
     </section>
@@ -2190,6 +2868,7 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
         const delta = next.startMinute - dayConfig.startMinute;
         if (plannedSaEventsAreDefault) {
             plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, next);
+            plannedSelectedEventId = "";
             resetPlannedBlockDraft(stationId, horizonMinutes);
         }
         else {
@@ -2203,7 +2882,6 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
             plannedSaEvents = reconcileAutoFilledGaps(plannedSaEvents, next);
         }
         standardSaDayConfigs.set(`${planScopeKey(productId, stationId)}`, next);
-        frozenStandardWindows.delete(`${planScopeKey(productId, stationId)}`);
         getCopyProjectionDraft(productId, stationId).generated = false;
         render(selectedProductId);
     };
@@ -2221,7 +2899,7 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
         standardSaDayConfigs.set(`${planScopeKey(productId, stationId)}`, next);
         plannedSaEvents = buildDefaultPlannedActivityEvents(stationId, productId, next);
         plannedSaEventsAreDefault = true;
-        frozenStandardWindows.delete(`${planScopeKey(productId, stationId)}`);
+        plannedSelectedEventId = "";
         getCopyProjectionDraft(productId, stationId).generated = false;
         standardWindowFreezeError = "";
         plannedSaDraftError = "";
@@ -2247,7 +2925,7 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
     plannedSaRoot.querySelector("#standardDayCount")?.addEventListener("change", event => {
         updateDayConfig({ ...dayConfig, dayCount: Number(event.currentTarget.value) });
     });
-    plannedSaRoot.querySelector("#freezeStandardWindow")?.addEventListener("click", () => {
+    plannedSaRoot.querySelectorAll("[data-freeze-standard-window]").forEach(button => button.addEventListener("click", () => {
         const issues = validateStandardSaDay(plannedSaEvents, dayConfig);
         if (issues.length) {
             standardWindowFreezeError = formatStandardSaDayIssues(issues);
@@ -2272,7 +2950,7 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
             standardWindowFreezeError = formatStandardWindowIssues(result.issues);
         }
         render(selectedProductId);
-    });
+    }));
     const projectionDraft = getCopyProjectionDraft(productId, stationId);
     plannedSaRoot.querySelector("#copyWeekStartDate")?.addEventListener("change", event => {
         projectionDraft.weekStartDate = event.currentTarget.value;
@@ -2385,7 +3063,28 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
         render(selectedProductId);
     });
     plannedSaRoot.querySelector("#addPlannedTimeBlock")?.addEventListener("click", () => {
-        addPlannedTimeBlock(stationId, productId, horizonMinutes);
+        if (plannedSelectedEventId)
+            updatePlannedTimeBlock(stationId, horizonMinutes);
+        else
+            addPlannedTimeBlock(stationId, productId, horizonMinutes);
+    });
+    plannedSaRoot.querySelector("#cancelPlannedTimeBlockEdit")?.addEventListener("click", () => {
+        plannedSelectedEventId = "";
+        resetPlannedBlockDraft(stationId, horizonMinutes);
+        plannedSaDraftError = "";
+        render(selectedProductId);
+    });
+    plannedSaRoot.querySelector("#deletePlannedTimeBlock")?.addEventListener("click", () => {
+        if (plannedSelectedEventId)
+            deletePlannedActivityEvent(plannedSelectedEventId, stationId);
+    });
+    plannedSaRoot.querySelectorAll('[data-timeline-edit="planned"]').forEach(button => {
+        button.addEventListener("click", () => selectPlannedActivityEvent(button.dataset.eventId ?? ""));
+    });
+    plannedSaRoot.querySelectorAll("[data-sa-event-row]").forEach(row => {
+        row.addEventListener("click", event => {
+            selectPlannedActivityEvent(row.dataset.saEventRow ?? "");
+        });
     });
     plannedSaRoot.querySelector("#fillPlannedGaps")?.addEventListener("click", () => {
         plannedSaEvents = [...plannedSaEvents, ...findStandardSaDayGaps(plannedSaEvents, dayConfig).map((gap, index) => ({ ...buildTimelineEvent(`planned-unscheduled-${Date.now()}-${index}`, stationId, productId, "unscheduled", gap.startMinute, gap.endMinute, "未排产"), autoFilled: true }))]
@@ -2396,16 +3095,6 @@ function bindPlannedSaEditing(stationId, productId, horizonMinutes) {
     plannedSaRoot.querySelectorAll("[data-planned-draft-field]").forEach(input => {
         input.addEventListener("change", () => {
             updatePlannedBlockDraft(input.dataset.plannedDraftField ?? "", input.value);
-        });
-    });
-    plannedSaRoot.querySelectorAll("[data-planned-event-field]").forEach(input => {
-        input.addEventListener("change", () => {
-            updatePlannedActivityEvent(input.dataset.plannedEventId ?? "", input.dataset.plannedEventField ?? "", input.value);
-        });
-    });
-    plannedSaRoot.querySelectorAll("[data-planned-delete-event]").forEach(button => {
-        button.addEventListener("click", () => {
-            deletePlannedActivityEvent(button.dataset.plannedDeleteEvent ?? "", stationId);
         });
     });
 }
@@ -2473,10 +3162,11 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
         stationId,
         shifts: standardSaShiftIntervals(dayConfig),
         actual: rnrActualEventsByContext.get(`${actualScopeKey(productId, operationId, stationId)}`) ?? [],
+        planned: getPlannedSaEvents(stationId, productId),
     });
     const allowanceIsSample = validationFixtureContexts.has(`${actualScopeKey(productId, operationId, stationId)}`);
     const shiftCounts = ledger ? ledger.days.map(day => ledgerShiftCount(day, draft.stableSaved?.shiftsPerDay ?? 0, dayConfig.shiftsPerDay)) : [];
-    const mostLikelyWeek = ledger?.summary ? summarizeMostLikely(ledger.days, shiftCounts, allowance?.perShiftMinutes ?? 0) : undefined;
+    const mostLikelyWeek = ledger?.summary ? summarizeMostLikely(ledger.days, shiftCounts, allowance ?? 0) : undefined;
     const mostLikelyMonth = mostLikelyWeek && month?.summary && !month.issues.length
         ? mostLikelySummaryFromProduction(month.summary, mostLikelyMonthProduction(mostLikelyWeek.productionMinutes, month.weeks.length, month.setupAllowanceMinutes))
         : undefined;
@@ -2485,7 +3175,7 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
     const capacityDay = (day, shiftCount) => ({
         date: day.date, workingDay: day.workingDay, stale: day.stale,
         bestCaseProductionMinutes: day.productionMinutes,
-        mostLikelyProductionMinutes: day.workingDay && !day.stale ? Math.max(0, day.productionMinutes - perShiftUnplanned * shiftCount) : 0,
+        mostLikelyProductionMinutes: projectedMostLikelyMinutes(day, shiftCount, allowance),
     });
     const weekCapacity = ledger?.summary ? buildPeriodCapacity({
         operationId, stationId, parameters, days: ledger.days.map((day, index) => capacityDay(day, shiftCounts[index] ?? 0)),
@@ -2495,6 +3185,8 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
             days: ledger.days.map(day => ({ ...day })),
             shiftCounts: [...shiftCounts],
             perShiftUnplanned,
+            sourceSignature: standardSaSourceSignature(planScopeKey(productId, stationId)) ?? "",
+            ...(frozen ? { sourceVersion: frozen.version } : {}),
             ...(ledger.summary.withBreaksSa === undefined ? {} : { withBreaksSa: ledger.summary.withBreaksSa }),
             ...(mostLikelyWeek?.withBreaksSa === undefined ? {} : { mostLikelySa: mostLikelyWeek.withBreaksSa }),
         });
@@ -2529,7 +3221,7 @@ function renderCopyProjectionPanel(productId, stationId, operationId, frozen, so
       <div class="field-grid">
         <label class="field">${zh ? "班次时长" : "Shift length"}<select data-manual-field="shiftMinutes"><option value="480" ${draft.form.shiftMinutes === 480 ? "selected" : ""}>8H</option><option value="720" ${draft.form.shiftMinutes === 720 ? "selected" : ""}>12H</option></select></label>
         <label class="field">${zh ? "每日班数" : "Shifts per day"}<select data-manual-field="shiftsPerDay">${shiftOptions.map(count => `<option value="${count}" ${draft.form.shiftsPerDay === count ? "selected" : ""}>${count}</option>`).join("")}</select></label>
-        ${["productionMinutes", "breakMinutes", "setupMinutes", "maintenanceMinutes", "plannedStopMinutes"].map(field => `<label class="field">${zh ? ({ productionMinutes: "生产", breakMinutes: "休息", setupMinutes: "换型", maintenanceMinutes: "维护", plannedStopMinutes: "计划停机" }[field]) : field}<input data-manual-field="${field}" type="number" min="0" step="1" value="${draft.form[field]}" /></label>`).join("")}
+        ${["productionMinutes", "breakMinutes", "setupMinutes", "maintenanceMinutes", "plannedStopMinutes"].map(field => `<label class="field">${zh ? ({ productionMinutes: "生产", breakMinutes: "休息", setupMinutes: "换型", maintenanceMinutes: "维护", plannedStopMinutes: "计划停机" }[field]) : formatSystemTerm(field)}<input data-manual-field="${field}" type="number" min="0" step="1" value="${draft.form[field]}" /></label>`).join("")}
       </div>
       <p class="note" id="stableDayFillNote">${escapeHtml(stableDayFillNote(draft.form, zh))}</p>
       ${draft.formError ? `<p class="form-error" role="alert">${escapeHtml(draft.formError)}</p>` : ""}
@@ -2583,11 +3275,11 @@ function renderMostLikelyBlock(summary, allowance, sample, zh, fourWeek) {
     const calendarLabel = fourWeek ? (zh ? "月日历利用率" : "Month calendar utilization") : (zh ? "整周日历利用率" : "Calendar utilization");
     const observed = allowance
         ? (zh
-            ? `已记录非计划停机 ${formatNumber(allowance.observedUnplannedMinutes)} 分钟，可补救 ${formatNumber(allowance.recoverableMinutes)} 分钟，进入排产 ${formatNumber(allowance.planningUnplannedMinutes)} 分钟 / 观察到 ${formatNumber(allowance.observedShiftCount)} 班 = 每班 ${formatNumber(allowance.perShiftMinutes)} 分钟。源窗口日和平稳日按各自班数扣除，纯排版时间轴不变。`
-            : `Recorded unplanned ${formatNumber(allowance.observedUnplannedMinutes)} min, recoverable ${formatNumber(allowance.recoverableMinutes)} min, planning ${formatNumber(allowance.planningUnplannedMinutes)} min / ${formatNumber(allowance.observedShiftCount)} shifts = ${formatNumber(allowance.perShiftMinutes)} min per shift.`)
+            ? `已确认额外损失 ${formatNumber(allowance.observedUnplannedMinutes)} 分钟（其中计划动作超时 ${formatNumber(allowance.plannedOverrunMinutes)} 分钟），已确认可补救 ${formatNumber(allowance.recoverableMinutes)} 分钟。复制源窗口按原计划生产 ${formatNumber(allowance.sourceProductionMinutes)} 分钟稀释，损失率 ${percent(allowance.projectedLossRate)}；平稳日仅带入其已设动作对应的确认损失，未设动作不带入。待确认 ${formatNumber(allowance.pendingLossMinutes)} 分钟不参与计算。`
+            : `Accepted extra loss ${formatNumber(allowance.observedUnplannedMinutes)} min, including ${formatNumber(allowance.plannedOverrunMinutes)} min planned overrun; confirmed recoverable ${formatNumber(allowance.recoverableMinutes)} min. Copied source loss rate ${percent(allowance.projectedLossRate)}; stable days include accepted losses only for configured actions. Pending ${formatNumber(allowance.pendingLossMinutes)} min is excluded.`)
         : (zh ? "无样本，按 0 预留的假设。当前工站还没有落在已开班次上的跑线记录，Most likely 与 Best case 相同。" : "No sample; assuming a 0-minute allowance. Most likely matches Best case.");
     const sources = allowance?.sources.map(source => zh
-        ? `${formatTimelineKind(source.category)} 已记录 ${formatNumber(source.minutes)} 分钟，可补救 ${formatNumber(source.recoverableMinutes)} 分钟，进入排产 ${formatNumber(source.planningMinutes)} 分钟，第 ${source.shiftNumbers.join("、")} 班${source.source ? `，${source.source}` : ""}${source.estimated ? "，估算" : ""}`
+        ? `${source.category.endsWith("Overrun") ? `${formatTimelineKind(source.category.slice(0, -7))}超时` : formatTimelineKind(source.category)} 已确认 ${formatNumber(source.minutes)} 分钟，可补救 ${formatNumber(source.recoverableMinutes)} 分钟，进入排产 ${formatNumber(source.planningMinutes)} 分钟，第 ${source.shiftNumbers.join("、")} 班${source.source ? `，${source.source}` : ""}${source.estimated ? "，估算" : ""}`
         : `${source.category} ${formatNumber(source.minutes)} min`).join(zh ? "；" : "; ") ?? "";
     const sampleNote = sample ? (zh ? "当前跑线是验证样本，不是现场记录。" : "The current run is a validation sample, not a field record.") : "";
     return `<div class="field-grid" style="margin-top:14px;"><div class="field"><span>${title} With breaks SA</span><strong>${formatRatio(summary.withBreaksSa)}</strong><small>${zh ? "分母" : "Denominator"} ${formatNumber(summary.withBreaksDenominator)} · ${zh ? "生产" : "Production"} ${formatNumber(summary.productionMinutes)}</small></div><div class="field"><span>Without breaks SA</span><strong>${formatRatio(summary.withoutBreaksSa)}</strong><small>${zh ? "分母" : "Denominator"} ${formatNumber(summary.withoutBreaksDenominator)}</small></div><div class="field"><span>${calendarLabel}</span><strong>${formatRatio(summary.calendarUtilization)}</strong><small>${zh ? "分母" : "Denominator"} ${formatNumber(summary.calendarDenominator)}</small></div></div><p class="note">${escapeHtml(observed)}${sources ? ` ${escapeHtml(sources)}。` : ""}${sampleNote ? ` ${escapeHtml(sampleNote)}` : ""}</p>`;
@@ -2725,7 +3417,7 @@ function renderPlannedTimeline(stationId, events, window, dayConfig) {
         const width = (interval.endMinute - interval.startMinute) / durationMinutes * 100;
         return `<span class="timeline-offshift" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${locale === "zh" ? "非排班" : "Off shift"}">${locale === "zh" ? "非排班" : "Off shift"}</span>`;
     }).join("")}
-            ${stationEvents.map(event => renderTimelineSegment(event, startMinute, durationMinutes)).join("")}
+            ${stationEvents.map(event => renderTimelineSegment(event, startMinute, durationMinutes, "planned")).join("")}
           </div>
         </div>
       </div>
@@ -2755,7 +3447,7 @@ function timelineTicks(durationMinutes) {
     }
     return ticks;
 }
-function renderTimelineSegment(event, windowStartMinute, windowDurationMinutes) {
+function renderTimelineSegment(event, windowStartMinute, windowDurationMinutes, editTarget) {
     const left = Math.max(0, Math.min((event.startMinute - windowStartMinute) / windowDurationMinutes, 1)) * 100;
     const width = Math.max(0, Math.min((event.endMinute - event.startMinute) / windowDurationMinutes, 1)) * 100;
     const label = event.note || formatTimelineKind(event.kind);
@@ -2765,48 +3457,23 @@ function renderTimelineSegment(event, windowStartMinute, windowDurationMinutes) 
         ? `${minuteToTimeValue(event.startMinute)}-${minuteToTimeValue(event.endMinute)}`
         : `${startDate.slice(5)} ${minuteToTimeValue(event.startMinute)}-${endDate.slice(5)} ${minuteToTimeValue(event.endMinute)}`;
     const title = `${label} ${formatMinuteRange(event.startMinute, event.endMinute)}`;
-    return `<span class="timeline-segment ${escapeHtml(event.kind)}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${escapeHtml(title)}"><span class="timeline-segment-label">${escapeHtml(label)}</span><span class="timeline-segment-time">${escapeHtml(timeLabel)}</span></span>`;
+    const tag = editTarget ? "button" : "span";
+    const selected = editTarget === "planned" ? plannedSelectedEventId === event.id : editTarget === "actual" && rnrSelectedEventId === event.id;
+    return `<${tag} class="timeline-segment ${escapeHtml(event.kind)}${editTarget ? " is-editable" : ""}${selected ? " is-selected" : ""}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${escapeHtml(title)}"${editTarget ? ` type="button" data-timeline-edit="${editTarget}" data-event-id="${escapeHtml(event.id)}" aria-pressed="${selected}" aria-label="${escapeHtml(`${selected ? (locale === "zh" ? "退出编辑" : "Exit edit") : (locale === "zh" ? "编辑" : "Edit")} ${title}`)}"` : ""}><span class="timeline-segment-label">${escapeHtml(label)}</span><span class="timeline-segment-time">${escapeHtml(timeLabel)}</span></${tag}>`;
 }
 function renderPlannedActivityRow(event) {
     return `
-    <tr>
+    <tr data-sa-event-row="${escapeHtml(event.id)}" class="${plannedSelectedEventId === event.id ? "is-selected" : ""}" title="${plannedSelectedEventId === event.id ? (locale === "zh" ? "再次点击退出编辑" : "Click again to exit edit") : (locale === "zh" ? "点击行，在上方编辑" : "Select row to edit above")}">
       <td>${escapeHtml(event.id)}</td>
       <td>${escapeHtml(event.stationId)}</td>
-      <td>${plannedKindSelect(event)}</td>
-      <td><input class="table-input" type="date" data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="startDate" value="${minuteToDateValue(event.startMinute)}" /></td>
-      <td>${plannedTimeSelect(event, "start", event.startMinute)}</td>
-      <td><input class="table-input" type="date" data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="endDate" value="${minuteToDateValue(event.endMinute)}" /></td>
-      <td>${plannedTimeSelect(event, "end", event.endMinute)}</td>
+      <td>${escapeHtml(formatTimelineKind(event.kind))}</td>
+      <td>${escapeHtml(minuteToDateValue(event.startMinute))}</td>
+      <td>${escapeHtml(minuteToTimeValue(event.startMinute))}</td>
+      <td>${escapeHtml(minuteToDateValue(event.endMinute))}</td>
+      <td>${escapeHtml(minuteToTimeValue(event.endMinute))}</td>
       <td>${formatNumber(Math.max(event.endMinute - event.startMinute, 0))}</td>
-      <td><input class="table-input" type="text" data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="label" value="${escapeHtml(event.note ?? event.label ?? "")}" /></td>
-      <td><button class="button secondary" type="button" data-planned-delete-event="${escapeHtml(event.id)}">${t("deleteEvent")}</button></td>
+      <td>${escapeHtml(event.note || event.label || "-")}</td>
     </tr>
-  `;
-}
-function plannedKindSelect(event) {
-    const kinds = ["production", "setup", "break", "maintenance", "plannedStop", "unscheduled"];
-    return `
-    <div class="kind-select-wrap">
-      <span class="kind-dot ${escapeHtml(event.kind)}" aria-hidden="true"></span>
-      <select class="table-input" data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="kind">
-        ${kinds.map(kind => `<option value="${escapeHtml(kind)}" ${kind === event.kind ? "selected" : ""}>${formatTimelineKind(kind)}</option>`).join("")}
-      </select>
-    </div>
-  `;
-}
-function plannedTimeSelect(event, fieldPrefix, minute) {
-    const minuteInDay = ((minute % MINUTE_PER_DAY) + MINUTE_PER_DAY) % MINUTE_PER_DAY;
-    const hourValue = Math.floor(minuteInDay / 60);
-    const minuteValue = minuteInDay % 60;
-    return `
-    <div class="time-pair compact">
-      <select data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="${fieldPrefix}Hour" aria-label="${escapeHtml(t("hour"))}">
-        ${numberOptions(0, 23, hourValue)}
-      </select>
-      <select data-planned-event-id="${escapeHtml(event.id)}" data-planned-event-field="${fieldPrefix}MinuteOfHour" aria-label="${escapeHtml(t("minute"))}">
-        ${numberOptions(0, 59, minuteValue)}
-      </select>
-    </div>
   `;
 }
 function numberOptions(start, end, selectedValue) {
@@ -2841,7 +3508,7 @@ function addPlannedTimeBlock(stationId, productId, horizonMinutes) {
         return;
     }
     const eventId = nextPlannedEventId(kind);
-    const label = plannedBlockDraft.note || `${formatTimelineKind(kind)} ${formatMinuteRange(startMinute, endMinute)}`;
+    const label = plannedBlockDraft.note;
     const finalEvent = buildTimelineEvent(eventId, stationId, productId, kind, startMinute, endMinute, label);
     plannedSaEvents = (plannedSaEventsAreDefault && derivePlannedSaWindow([...plannedSaEvents, finalEvent]).durationMinutes > horizonMinutes
         ? [finalEvent]
@@ -2850,6 +3517,79 @@ function addPlannedTimeBlock(stationId, productId, horizonMinutes) {
     plannedSaDraftError = "";
     plannedDraftFollowsLatest = true;
     setPlannedBlockDraftStart(finalEvent.endMinute, horizonMinutes);
+    render(selectedProductId);
+}
+function selectPlannedActivityEvent(id, toggle = true) {
+    const event = plannedSaEvents.find(item => item.id === id);
+    if (!event)
+        return;
+    if (toggle && plannedSelectedEventId === id) {
+        plannedSelectedEventId = "";
+        resetPlannedBlockDraft(event.stationId, PLANNED_SA_HORIZON_MINUTES);
+        plannedSaDraftError = "";
+        render(selectedProductId);
+        return;
+    }
+    plannedSelectedEventId = id;
+    plannedDraftFollowsLatest = false;
+    plannedSaDraftError = "";
+    plannedBlockDraft = {
+        startMinute: event.startMinute,
+        endMinute: event.endMinute,
+        category: event.kind === "production" ? "production" : event.kind === "unscheduled" ? "notPlanned" : "plannedActivity",
+        kind: event.kind,
+        note: event.note ?? event.label ?? "",
+    };
+    render(selectedProductId);
+    scrollIntervalEditorIntoView("#plannedIntervalEditor");
+}
+function updatePlannedTimeBlock(stationId, horizonMinutes) {
+    const event = plannedSaEvents.find(item => item.id === plannedSelectedEventId && item.stationId === stationId);
+    if (!event)
+        return;
+    const { startMinute, endMinute, kind, note } = plannedBlockDraft;
+    if (endMinute <= startMinute) {
+        plannedSaDraftError = t("draftErrorBoundary");
+        render(selectedProductId);
+        return;
+    }
+    if (event.startMinute === startMinute && event.endMinute === endMinute && event.kind === kind
+        && (event.note ?? event.label ?? "") === note) {
+        plannedSelectedEventId = "";
+        resetPlannedBlockDraft(stationId, horizonMinutes);
+        render(selectedProductId);
+        return;
+    }
+    const scheduleChanged = event.kind !== kind || event.startMinute !== startMinute || event.endMinute !== endMinute;
+    const updated = { ...event, kind, startMinute, endMinute };
+    if (note) {
+        updated.label = note;
+        updated.note = note;
+    }
+    else {
+        delete updated.label;
+        delete updated.note;
+    }
+    if (scheduleChanged)
+        updated.autoFilled = false;
+    const nextEvents = plannedSaEvents.map(item => item.id === event.id ? updated : item);
+    const nextWindow = derivePlannedSaWindow(nextEvents);
+    if (nextWindow.durationMinutes > horizonMinutes) {
+        plannedSaDraftError = t("draftErrorWindowSpan");
+        render(selectedProductId);
+        return;
+    }
+    if (validatePlannedSaEvents(nextEvents, nextWindow).some(issue => issue.code === "overlap")) {
+        plannedSaDraftError = t("draftErrorOverlap");
+        render(selectedProductId);
+        return;
+    }
+    plannedSaEvents = nextEvents.sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute || a.id.localeCompare(b.id));
+    if (scheduleChanged)
+        plannedSaEventsAreDefault = false;
+    plannedSelectedEventId = "";
+    plannedSaDraftError = "";
+    resetPlannedBlockDraft(stationId, horizonMinutes);
     render(selectedProductId);
 }
 function updatePlannedBlockDraft(fieldName, value) {
@@ -2870,6 +3610,9 @@ function updatePlannedBlockDraft(fieldName, value) {
     else if (fieldName === "category") {
         plannedBlockDraft.category = value;
         plannedBlockDraft.kind = plannedKindsForCategory(value)[0] ?? "production";
+        plannedSaDraftError = "";
+        render(selectedProductId);
+        return;
     }
     else if (fieldName === "kind") {
         plannedBlockDraft.kind = value;
@@ -2878,10 +3621,13 @@ function updatePlannedBlockDraft(fieldName, value) {
         plannedBlockDraft.note = value;
     }
     plannedSaDraftError = "";
-    render(selectedProductId);
+    const duration = plannedSaRoot.querySelector("[data-planned-draft-duration]");
+    if (duration)
+        duration.textContent = formatNumber(Math.max(plannedBlockDraft.endMinute - plannedBlockDraft.startMinute, 0));
+    plannedSaRoot.querySelector("#plannedIntervalEditor .form-error")?.remove();
 }
 function alignPlannedBlockDraftAfterExistingEvents(events, stationId, horizonMinutes) {
-    if (!plannedDraftFollowsLatest)
+    if (!plannedDraftFollowsLatest || plannedSelectedEventId)
         return;
     const stationEvents = events.filter(event => event.stationId === stationId);
     const lastEndMinute = stationEvents.length ? Math.max(...stationEvents.map(event => event.endMinute)) : 0;
@@ -2972,45 +3718,10 @@ function updateMinuteClockPart(currentMinute, fieldName, value) {
     const nextMinute = isMinuteField ? Number(value) : currentMinuteOfHour;
     return combineDateTimeMinute(minuteToDateValue(currentMinute), `${String(nextHour).padStart(2, "0")}:${String(nextMinute).padStart(2, "0")}`);
 }
-function updatePlannedActivityEvent(eventId, fieldName, value) {
-    const event = plannedSaEvents.find(item => item.id === eventId);
-    if (!event)
-        return;
-    if (event.autoFilled === true || /^planned-unscheduled-\d{13}-\d+$/.test(event.id))
-        event.autoFilled = false;
-    if (fieldName === "kind") {
-        event.kind = value;
-    }
-    else if (fieldName === "startDate") {
-        event.startMinute = combineDateTimeMinute(value, minuteToTimeValue(event.startMinute));
-    }
-    else if (fieldName === "startHour" || fieldName === "startMinuteOfHour") {
-        event.startMinute = updateMinuteClockPart(event.startMinute, fieldName, value);
-    }
-    else if (fieldName === "endDate") {
-        event.endMinute = combineDateTimeMinute(value, minuteToTimeValue(event.endMinute));
-    }
-    else if (fieldName === "endHour" || fieldName === "endMinuteOfHour") {
-        event.endMinute = updateMinuteClockPart(event.endMinute, fieldName, value);
-    }
-    else if (fieldName === "label") {
-        if (value) {
-            event.label = value;
-        }
-        else {
-            delete event.label;
-        }
-    }
-    plannedSaEvents = [...plannedSaEvents].sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute || a.id.localeCompare(b.id));
-    plannedSaEventsAreDefault = false;
-    if (fieldName === "startDate" || fieldName === "startHour" || fieldName === "startMinuteOfHour"
-        || fieldName === "endDate" || fieldName === "endHour" || fieldName === "endMinuteOfHour") {
-        alignPlannedBlockDraftAfterExistingEvents(plannedSaEvents, event.stationId, PLANNED_SA_HORIZON_MINUTES);
-    }
-    render(selectedProductId);
-}
 function deletePlannedActivityEvent(eventId, stationId) {
     plannedSaEvents = plannedSaEvents.filter(event => event.id !== eventId);
+    if (plannedSelectedEventId === eventId)
+        plannedSelectedEventId = "";
     plannedSaEventsAreDefault = false;
     resetPlannedBlockDraft(stationId, PLANNED_SA_HORIZON_MINUTES);
     render(selectedProductId);
@@ -3051,6 +3762,7 @@ function renderRnrTracking(selectedOperation) {
         : undefined;
     const contextKey = actualScopeKey(productId, operation?.operationId ?? "", stationId);
     if (contextKey !== rnrContextKey) {
+        rnrArchiveMessage = "";
         if (rnrContextKey)
             rnrDrafts.set(rnrContextKey, { segment: { ...rnrSegmentDraft }, cycle: { ...cycleCheckDraft } });
         const saved = rnrDrafts.get(contextKey);
@@ -3094,7 +3806,7 @@ function renderRnrTracking(selectedOperation) {
     }
     const unplannedStops = locale === "zh"
         ? "设备故障 / 工装问题 / 物流等待 / 质量隔离 / 人员问题"
-        : "equipmentFailure / toolingIssue / logisticsWaiting / qualityHold / laborIssue";
+        : [...rnrAbnormalKinds].map(formatSystemTerm).join(" / ");
     const hasActualRecord = (rnrActualEventsByContext.get(rnrContextKey)?.length ?? 0) > 0;
     const validationSample = validationFixtureContexts.has(rnrContextKey);
     const trackingStatus = validationSample
@@ -3162,8 +3874,7 @@ function speedOptionsForCycle() {
     return undefined;
 }
 function reconcileCurrentRnrSpeed() {
-    const [, operationId = "", stationId = ""] = rnrContextKey.split("::");
-    const [productId = ""] = rnrContextKey.split("::");
+    const { productId, operationId, stationId } = parseActualScopeKey(rnrContextKey);
     const production = currentRnrActualEvents().filter(event => event.kind === "production");
     return reconcileRnrSpeedLoss(production.map(event => ({
         id: event.id, productId, operationId, stationId,
@@ -3173,8 +3884,7 @@ function reconcileCurrentRnrSpeed() {
     })), speedOptionsForCycle() ?? {});
 }
 function currentRnrPaceSummary() {
-    const [, operationId = "", stationId = ""] = rnrContextKey.split("::");
-    const [productId = ""] = rnrContextKey.split("::");
+    const { productId, operationId, stationId } = parseActualScopeKey(rnrContextKey);
     const observations = currentRnrActualEvents()
         .filter(event => event.kind === "production")
         .map(event => ({
@@ -3191,15 +3901,34 @@ function formatPaceVariance(deltaSec, deltaPercent) {
     const sign = deltaSec > 0 ? "+" : "";
     return `${sign}${formatNumber(deltaSec, 1)}s (${sign}${formatNumber(deltaPercent * 100, 1)}%)`;
 }
+function stationCoverageGaps(stationId, planned, actual, dayConfig) {
+    const window = standardSaDayWindow(dayConfig);
+    try {
+        const result = reconcileRnrTimeline({
+            stationId,
+            startMinute: window.startMinute,
+            endMinute: window.endMinute,
+            planned,
+            actual,
+            offShiftIntervals: standardSaOffShiftIntervals(dayConfig),
+        });
+        return {
+            unrecorded: mergeStatusIntervals(result.rows, "unrecorded"),
+            plannedGaps: mergeStatusIntervals(result.rows, "plannedGap"),
+        };
+    }
+    catch {
+        return { unrecorded: [], plannedGaps: [] };
+    }
+}
 function renderRnrTimelineMetrics(stationId, planned, window, dayConfig) {
     const actual = currentRnrActualEvents();
     const start = window.startMinute ?? 0;
     const duration = Math.max(window.durationMinutes, 1);
-    const ticks = timelineTicks(duration);
     const plannedMinutes = sumTimelineDuration(planned.filter(event => event.kind === "production"));
     const actualMinutes = sumTimelineDuration(actual.filter(event => event.kind === "production"));
-    const unrecordedMinutes = findStandardSaDayGaps(actual, dayConfig)
-        .reduce((sum, gap) => sum + gap.endMinute - gap.startMinute, 0);
+    const coverage = stationCoverageGaps(stationId, planned, actual, dayConfig);
+    const unrecordedMinutes = coverage.unrecorded.reduce((sum, gap) => sum + gap.endMinute - gap.startMinute, 0);
     const speed = reconcileCurrentRnrSpeed();
     const pace = currentRnrPaceSummary();
     const complete = unrecordedMinutes === 0
@@ -3224,6 +3953,11 @@ function renderRnrTimelineMetrics(stationId, planned, window, dayConfig) {
         ${field(locale === "zh" ? "性能损失（分钟）" : "Performance loss (min)", round1(speed.performanceLossMinutes))}
         ${field(locale === "zh" ? "全程平均节拍" : "Full-run average cycle time", pace.averageCycleSec === undefined ? "-" : `${round1(pace.averageCycleSec)}s`)}
       </div>
+      <div data-rnr-gap-list>
+        ${coverageMarkup(coverage.unrecorded, "unrecorded")}
+        ${coverageMarkup(coverage.plannedGaps, "plannedGap")}
+        ${cycleDraftHasSamples(cycleCheckDraft) && !actual.length ? `<p class="note">${locale === "zh" ? "目前只有节拍样本，没有实际时间段。节拍样本不会补上空白时间。" : "Only cycle samples are recorded. They do not fill blank time."}</p>` : ""}
+      </div>
     </section>
   `;
 }
@@ -3235,14 +3969,20 @@ function renderRnrTimelineBars(stationId, productId) {
     const start = window.startMinute ?? 0;
     const duration = Math.max(window.durationMinutes, 1);
     const ticks = timelineTicks(duration);
+    const coverage = stationCoverageGaps(stationId, planned, actual, dayConfig);
+    const gapMark = (intervals, label) => intervals.map(interval => {
+        const left = (interval.startMinute - start) / duration * 100;
+        const width = (interval.endMinute - interval.startMinute) / duration * 100;
+        return `<span class="timeline-gap" data-rnr-gap style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;" title="${escapeHtml(label)}">${escapeHtml(label)}</span>`;
+    }).join("");
     return `
     <div class="timeline-wrap rnr-comparison" data-rnr-timeline style="--rnr-timeline-width:${Math.max(960, (ticks.length - 1) * 150)}px;">
       <div class="rnr-axis">
         <span class="timeline-station">${t("station")}</span>
         <div class="rnr-axis-track">${ticks.map((minute, index) => `<span class="${index === ticks.length - 1 ? "end" : ""}" style="left:${(minute / duration * 100).toFixed(2)}%">${formatTimelineTick(start + minute, index === 0 ? undefined : start + ticks[index - 1])}</span>`).join("")}</div>
       </div>
-      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
-      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${actual.map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "计划" : "Planned"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${gapMark(coverage.plannedGaps, locale === "zh" ? "计划空档" : "Planned gap")}${planned.filter(event => event.stationId === stationId).map(event => renderTimelineSegment(event, start, duration)).join("")}</div></div>
+      <div class="timeline-row"><div class="timeline-station">${locale === "zh" ? "实际" : "Actual"}<small>${escapeHtml(stationId)}</small></div><div class="timeline-track">${renderRnrOffShift(dayConfig, start, duration)}${gapMark(coverage.unrecorded, locale === "zh" ? "未记录" : "Not recorded")}${actual.map(event => renderTimelineSegment(event, start, duration, "actual")).join("")}</div></div>
     </div>
     <p class="note">${locale === "zh" ? "实际轨道由现场记录构成；空白表示待补录，不自动计为停机。推断时间损失只在生产段内扣除，不与显式停机重复。" : "The actual track uses on-site records. Blank time is unrecorded, not downtime. Inferred loss is deducted only within production windows, never double-counted with explicit stops."}</p>
   `;
@@ -3264,8 +4004,8 @@ function renderRnrActualEditor(stationId, productId, parameter, operation) {
         ? `<button class="button secondary" type="button" data-load-rnr-validation>${locale === "zh" ? "加载 R&R 验证样本" : "Load R&R validation sample"}</button>`
         : "";
     return `
-    <section class="sub-card" style="margin-top:14px;">
-      <div class="panel-head"><h3>${locale === "zh" ? "实际时间段" : "Actual time intervals"}</h3><div class="panel-actions">${loadSample}<span class="section-label">${formatNumber(events.length)}</span></div></div>
+    <section class="sub-card" id="rnrIntervalEditor" tabindex="-1" style="margin-top:14px;">
+      <div class="panel-head"><h3>${rnrSelectedEventId ? (locale === "zh" ? "编辑实际时间段" : "Edit actual interval") : (locale === "zh" ? "实际时间段" : "Actual time intervals")}</h3><div class="panel-actions">${loadSample}<span class="section-label">${formatNumber(events.length)}</span></div></div>
       <p class="note">${locale === "zh" ? "每段记录真实起止时钟；生产段另填 OK / NOK。点击一行编辑，下一段默认紧接上一段终点。" : "Record actual start and end times. Production intervals also need OK / NOK. Select a row to edit; new intervals start at the previous end."}</p>
       <div class="field-grid">
         ${rnrInputField(t("startDate"), "segmentStartDate", minuteToDateValue(rnrSegmentDraft.startMinute), "date")}
@@ -3287,21 +4027,20 @@ function renderRnrActualEditor(stationId, productId, parameter, operation) {
       ${issues.length ? `<p class="form-error" role="alert">${issues.map(issue => escapeHtml(formatKnownText(issue.message))).join("<br>")}</p>` : ""}
       <div class="action-bar"><span>${rnrSelectedEventId ? (locale === "zh" ? "正在编辑已记录时间段" : "Editing a recorded interval") : (locale === "zh" ? "填完这一段后加入记录" : "Add this interval to the record")}</span>
         <div>${rnrSelectedEventId ? `<button type="button" class="button secondary" data-rnr-new>${locale === "zh" ? "取消编辑" : "Cancel edit"}</button>` : ""}
-        <button type="button" class="button" data-rnr-save>${rnrSelectedEventId ? (locale === "zh" ? "保存修改" : "Save changes") : (locale === "zh" ? "添加时间段" : "Add interval")}</button></div>
+        ${rnrSelectedEventId ? `<button type="button" class="button secondary" data-rnr-delete-selected>${t("deleteEvent")}</button>` : ""}
+        <button type="button" class="button" data-rnr-save>${rnrSelectedEventId ? (locale === "zh" ? "更新时间段" : "Update interval") : (locale === "zh" ? "添加时间段" : "Add interval")}</button></div>
       </div>
       ${renderRnrTimelineBars(stationId, productId)}
       <div class="table-wrap"><table><thead><tr>
-        <th>${locale === "zh" ? "类型" : "Type"}</th><th>${t("startTime")}</th><th>${t("endTime")}</th><th>${t("elapsedMin")}</th><th>OK / NOK</th><th>${locale === "zh" ? "本段平均节拍" : "Segment average CT"}</th><th>${locale === "zh" ? "相对全程差异" : "Vs full-run"}</th><th>${locale === "zh" ? "原因 / 证据" : "Reason / evidence"}</th><th>${locale === "zh" ? "操作" : "Actions"}</th>
-      </tr></thead><tbody>${events.length ? events.map(event => `<tr>
+        <th>${locale === "zh" ? "类型" : "Type"}</th><th>${t("startTime")}</th><th>${t("endTime")}</th><th>${t("elapsedMin")}</th><th>OK / NOK</th><th>${locale === "zh" ? "本段平均节拍" : "Segment average CT"}</th><th>${locale === "zh" ? "相对全程差异" : "Vs full-run"}</th><th>${locale === "zh" ? "原因 / 证据" : "Reason / evidence"}</th>
+      </tr></thead><tbody>${events.length ? events.map(event => `<tr data-rnr-row="${escapeHtml(event.id)}" class="${rnrSelectedEventId === event.id ? "is-selected" : ""}" title="${rnrSelectedEventId === event.id ? (locale === "zh" ? "再次点击退出编辑" : "Click again to exit edit") : (locale === "zh" ? "点击行，在上方编辑" : "Select row to edit above")}">
         <td><span class="actual-kind"><span class="kind-dot ${escapeHtml(event.kind)}" aria-hidden="true"></span>${formatTimelineKind(event.kind)}</span></td>
         <td>${escapeHtml(formatOptionalMinutePoint(event.startMinute))}</td><td>${escapeHtml(formatOptionalMinutePoint(event.endMinute))}</td>
         <td>${formatNumber(event.endMinute - event.startMinute)}</td><td>${event.kind === "production" ? `${formatOutputUnits(event.okQty ?? 0)} / ${formatOutputUnits(event.nokQty ?? 0)}` : "-"}</td>
         <td>${(() => { const segment = pace.segments.find(item => item.id === event.id); return segment?.averageCycleSec === undefined ? "-" : `${round1(segment.averageCycleSec)}s`; })()}</td>
         <td>${(() => { const segment = pace.segments.find(item => item.id === event.id); return escapeHtml(formatPaceVariance(segment?.deltaSec, segment?.deltaPercent)); })()}</td>
         <td>${escapeHtml([event.note, event.evidenceSource, event.isEstimated ? (locale === "zh" ? "估算" : "Estimated") : ""].filter(Boolean).join(" / ") || "-")}</td>
-        <td><button type="button" class="button secondary" data-rnr-edit="${escapeHtml(event.id)}">${locale === "zh" ? "编辑" : "Edit"}</button>
-        <button type="button" class="button secondary" data-rnr-delete="${escapeHtml(event.id)}">${t("deleteEvent")}</button></td>
-      </tr>`).join("") : `<tr><td colspan="9">${locale === "zh" ? "尚无实际记录" : "No actual records yet"}</td></tr>`}</tbody></table></div>
+      </tr>`).join("") : `<tr><td colspan="8">${locale === "zh" ? "尚无实际记录" : "No actual records yet"}</td></tr>`}</tbody></table></div>
     </section>
   `;
 }
@@ -3312,8 +4051,7 @@ function boundedRecoverableMinutes(value, duration) {
 }
 function resetRnrActualDraft() {
     const events = currentRnrActualEvents();
-    const [, , stationId = ""] = rnrContextKey.split("::");
-    const [productId = ""] = rnrContextKey.split("::");
+    const { productId, stationId } = parseActualScopeKey(rnrContextKey);
     const planned = getPlannedSaEvents(stationId, productId);
     const start = events.length ? Math.max(...events.map(event => event.endMinute)) : (derivePlannedSaWindow(planned).startMinute ?? 0);
     rnrSelectedEventId = "";
@@ -3372,6 +4110,11 @@ function selectRnrActualEvent(id) {
     const event = currentRnrActualEvents().find(item => item.id === id);
     if (!event)
         return;
+    if (rnrSelectedEventId === id) {
+        resetRnrActualDraft();
+        render(selectedProductId);
+        return;
+    }
     rnrSelectedEventId = id;
     rnrActualKind = event.kind;
     rnrEventNote = event.note ?? "";
@@ -3385,6 +4128,7 @@ function selectRnrActualEvent(id) {
     rnrSegmentDraft.isEstimated = event.isEstimated ?? false;
     rnrSegmentDraft.recoverableMinutes = event.recoverableMinutes ?? 0;
     render(selectedProductId);
+    scrollIntervalEditorIntoView("#rnrIntervalEditor");
 }
 function rnrModeSelect() {
     return `
@@ -3638,23 +4382,29 @@ function bindRnrTracking() {
     });
     rnrRoot.querySelector("[data-rnr-note]")?.addEventListener("change", event => {
         rnrEventNote = event.currentTarget.value;
-        render(selectedProductId);
     });
     rnrRoot.querySelector("[data-rnr-new]")?.addEventListener("click", () => {
         resetRnrActualDraft();
         render(selectedProductId);
     });
     rnrRoot.querySelector("[data-rnr-save]")?.addEventListener("click", () => {
-        const [productId = "", , stationId = ""] = rnrContextKey.split("::");
-        if (stationId)
+        const { productId, stationId } = parseActualScopeKey(rnrContextKey);
+        if (productId && stationId)
             saveRnrActualEvent(stationId, productId);
     });
-    rnrRoot.querySelectorAll("[data-rnr-edit]").forEach(button => button.addEventListener("click", () => selectRnrActualEvent(button.dataset.rnrEdit ?? "")));
-    rnrRoot.querySelectorAll("[data-rnr-delete]").forEach(button => button.addEventListener("click", () => {
-        rnrActualEventsByContext.set(rnrContextKey, currentRnrActualEvents().filter(event => event.id !== button.dataset.rnrDelete));
+    rnrRoot.querySelectorAll('[data-timeline-edit="actual"]').forEach(button => {
+        button.addEventListener("click", () => selectRnrActualEvent(button.dataset.eventId ?? ""));
+    });
+    rnrRoot.querySelectorAll("[data-rnr-row]").forEach(row => {
+        row.addEventListener("click", event => {
+            selectRnrActualEvent(row.dataset.rnrRow ?? "");
+        });
+    });
+    rnrRoot.querySelector("[data-rnr-delete-selected]")?.addEventListener("click", () => {
+        rnrActualEventsByContext.set(rnrContextKey, currentRnrActualEvents().filter(event => event.id !== rnrSelectedEventId));
         resetRnrActualDraft();
         render(selectedProductId);
-    }));
+    });
     rnrRoot.querySelector("[data-rnr-mode]")?.addEventListener("change", event => {
         rnrMode = event.currentTarget.value === "cycleCheck" ? "cycleCheck" : "timeWindow";
         render(selectedProductId);
@@ -3919,41 +4669,491 @@ function updateRnrDraft(fieldName, value) {
     else if (fieldName === "isEstimated") {
         rnrSegmentDraft.isEstimated = value === "true";
     }
-    render(selectedProductId);
+    rnrDraftError = "";
+    rnrRoot.querySelector("#rnrIntervalEditor .form-error")?.remove();
 }
 function round1(value) {
     return formatNumber(value, 1);
 }
-function renderRouteWeekReportPanel(routingConfig) {
+function dailyDemandStorageKey(productId, productVersion, weekStart) {
+    return `capa-daily-demand-v1:${encodeURIComponent(productId)}:${encodeURIComponent(productVersion)}:${weekStart}`;
+}
+function readDailyDemandEntries(productId, productVersion, weekStart) {
+    const raw = localStorage.getItem(dailyDemandStorageKey(productId, productVersion, weekStart));
+    if (!raw)
+        return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed))
+        throw new Error("Invalid daily demand ledger");
+    return parsed;
+}
+function currentDemandWeek(productId, productVersion, weekStart, legacyWeeklyDemand) {
+    try {
+        return resolveDailyDemandWeek({ productId, productVersion, weekStartDate: weekStart,
+            entries: readDailyDemandEntries(productId, productVersion, weekStart),
+            ...(legacyWeeklyDemand === undefined ? {} : { legacyWeeklyDemand }) });
+    }
+    catch {
+        return { status: "conflict", source: "daily", missingDates: [], issues: ["Stored daily demand ledger is invalid"], recordIds: [] };
+    }
+}
+function renderDailyDemandEditor(productId, productVersion, weekStart, legacyWeeklyDemand, zh) {
+    const demand = currentDemandWeek(productId, productVersion, weekStart, legacyWeeklyDemand);
+    let entries = [];
+    try {
+        entries = readDailyDemandEntries(productId, productVersion, weekStart);
+    }
+    catch { /* The conflict state remains visible. */ }
+    const rows = Array.from({ length: 7 }, (_, index) => {
+        const date = addDays(weekStart, index);
+        const latest = entries.filter(entry => entry.dueDate === date && entry.productId === productId && entry.productVersion === productVersion)
+            .sort((left, right) => right.revision - left.revision)[0];
+        return `<div class="field"><label for="daily-demand-${index}">${escapeHtml(date)}</label><input id="daily-demand-${index}" type="number" min="0" step="1" data-daily-demand-date="${escapeHtml(date)}" value="${latest ? escapeHtml(String(latest.quantity)) : ""}" placeholder="${zh ? "未录" : "Missing"}" /></div>`;
+    }).join("");
+    const status = demand.status === "complete" ? (zh ? `逐日账完整 · ${formatNumber(demand.quantity ?? 0)} 件` : `Daily ledger complete · ${formatNumber(demand.quantity ?? 0)} pcs`)
+        : demand.status === "legacy" ? (zh ? `尚无逐日账 · 旧周需求 ${formatNumber(demand.quantity ?? 0)} 件（独立兜底）` : `No daily ledger · legacy weekly demand ${formatNumber(demand.quantity ?? 0)} pcs`)
+            : demand.status === "conflict" ? (zh ? `逐日账冲突：${demand.issues.join("；")}` : `Daily ledger conflict: ${demand.issues.join("; ")}`)
+                : (zh ? `逐日账待补：${demand.missingDates.join("、")}` : `Missing daily entries: ${demand.missingDates.join(", ")}`);
+    return `<section class="overview-section" data-daily-demand-editor><h3>${zh ? "逐日客户需求" : "Daily customer demand"}</h3>
+    <p class="note">${zh ? "空白为未录；0 为确认无需求。逐日账未齐时不使用旧周需求补缺日。" : "Blank means missing; zero confirms no demand. A partial daily week never falls back to legacy weekly demand."}</p>
+    <div class="field-grid"><div class="field"><label for="daily-demand-source">${zh ? "需求来源 / 编号" : "Demand source / reference"}</label><input id="daily-demand-source" type="text" data-daily-demand-source value="${escapeHtml(entries.at(-1)?.sourceId ?? "")}" /></div>${rows}</div>
+    <p class="note" data-daily-demand-status>${escapeHtml(status)}</p><p class="form-error" data-daily-demand-error hidden></p>
+    <div class="action-bar"><button class="button" type="button" data-daily-demand-save>${zh ? "保存逐日需求" : "Save daily demand"}</button></div></section>`;
+}
+function renderDailyDemandStage(routingConfig) {
+    const product = routingConfig.product;
+    const zh = locale === "zh";
+    if (!product) {
+        dailyDemandRoot.innerHTML = `<p class="note">${zh ? "请先选择产品。" : "Select a product first."}</p>`;
+        return;
+    }
+    dailyDemandRoot.innerHTML = `<div class="panel-head"><h2>${zh ? "逐日客户需求" : "Daily customer demand"}</h2></div>
+    <div class="overview-toolbar"><label>${zh ? "需求周起始日期" : "Demand week start"}<input type="date" data-demand-week value="${escapeHtml(overviewWeekStartDate)}"></label></div>
+    ${renderDailyDemandEditor(product.productId, product.version ?? "", overviewWeekStartDate, product.weeklyDemand, zh)}
+    <div class="stage-footer"><button class="button secondary" type="button" data-demand-next>${zh ? "进入未来排产" : "Open future scheduling"}</button></div>`;
+    dailyDemandRoot.querySelector("[data-demand-week]")?.addEventListener("change", event => {
+        overviewWeekStartDate = event.currentTarget.value || mondayDateValue();
+        renderDailyDemandStage(routingConfig);
+        renderCapacityOverview(routingConfig);
+        renderBatchOverview(routingConfig);
+        refreshCurrentWeekDemandCard(routingConfig);
+    });
+    dailyDemandRoot.querySelector("[data-demand-next]")?.addEventListener("click", () => {
+        setWorkflowStage("schedule");
+        scrollContentToTop();
+    });
+    dailyDemandRoot.querySelector("[data-daily-demand-save]")?.addEventListener("click", () => {
+        const error = dailyDemandRoot.querySelector("[data-daily-demand-error]");
+        const fail = (message) => { if (error) {
+            error.hidden = false;
+            error.textContent = message;
+        } };
+        const sourceId = dailyDemandRoot.querySelector("[data-daily-demand-source]")?.value.trim() ?? "";
+        if (!sourceId) {
+            fail(zh ? "请填写需求来源或编号。" : "Enter a demand source or reference.");
+            return;
+        }
+        let entries;
+        try {
+            entries = readDailyDemandEntries(product.productId, product.version ?? "", overviewWeekStartDate);
+        }
+        catch {
+            fail(zh ? "已保存的需求账无法读取；请先处理数据冲突。" : "Saved demand ledger cannot be read; resolve the conflict first.");
+            return;
+        }
+        const next = [...entries];
+        for (const input of dailyDemandRoot.querySelectorAll("[data-daily-demand-date]")) {
+            const date = input.dataset.dailyDemandDate ?? "";
+            const previous = entries.filter(entry => entry.dueDate === date && entry.productId === product.productId && entry.productVersion === (product.version ?? ""))
+                .sort((left, right) => right.revision - left.revision)[0];
+            const raw = input.value.trim();
+            if (!raw && previous) {
+                fail(zh ? `${date} 已有记录；更正请填写数量，不能清空。` : `${date} is recorded; enter a corrected quantity rather than clearing it.`);
+                return;
+            }
+            if (!raw)
+                continue;
+            const quantity = Number(raw);
+            if (!Number.isSafeInteger(quantity) || quantity < 0) {
+                fail(zh ? `${date} 必须填写非负整数。` : `${date} must be a nonnegative integer.`);
+                return;
+            }
+            if (previous?.quantity === quantity && previous.sourceId === sourceId)
+                continue;
+            next.push({ recordId: previous?.recordId ?? `${product.productId}:${product.version ?? ""}:${date}`,
+                productId: product.productId, productVersion: product.version ?? "", dueDate: date, quantity, sourceId,
+                revision: (previous?.revision ?? 0) + 1 });
+        }
+        if (next.length === entries.length) {
+            fail(zh ? "没有需要保存的变更。" : "No changes to save.");
+            return;
+        }
+        saveLocalState(dailyDemandStorageKey(product.productId, product.version ?? "", overviewWeekStartDate), JSON.stringify(next));
+        renderDailyDemandStage(routingConfig);
+        renderCapacityOverview(routingConfig);
+        renderBatchOverview(routingConfig);
+        refreshCurrentWeekDemandCard(routingConfig);
+    });
+}
+function renderCapacityOverview(routingConfig) {
+    const zh = locale === "zh";
+    const route = routingConfig.route;
+    const product = routingConfig.product;
+    const demand = product ? currentDemandWeek(product.productId, product.version ?? "", overviewWeekStartDate, product.weeklyDemand) : undefined;
+    const demandQty = demand?.status === "complete" || demand?.status === "legacy" ? demand.quantity : undefined;
+    const plan = route ? routeWeekPlanFor(routingConfig, overviewWeekStartDate, "outlook", demandQty) : undefined;
+    const pieces = (value) => value === undefined ? "-" : formatOutputUnits(value);
+    const operationName = (operationId) => {
+        const operation = routingConfig.operations.find(item => item.operation.operationId === operationId)?.operation;
+        return operation ? `OP${operation.sequence} ${formatKnownText(operation.name)}` : operationId;
+    };
+    const bottleneck = plan?.flowLimited ? (zh ? "工站流转约束" : "Station links")
+        : plan?.planBottleneckOperationId ? operationName(plan.planBottleneckOperationId) : "-";
+    const operationRows = routingConfig.operations.map(view => {
+        const operation = view.operation;
+        const quantity = route ? resolveOperationOutputRequirement(scenarioState, route, operation, overviewWeekStartDate, addDays(overviewWeekStartDate, 6)) : undefined;
+        const result = plan?.operations.find(item => item.operationId === operation.operationId);
+        const issue = quantity?.issue ? (zh ? "工序用量待确认" : "Operation quantity needed")
+            : !view.assignments.some(item => item.planningStatus === "available") ? (zh ? "无可排产工站" : "No schedulable station")
+                : result?.mostLikelyFinishedPieces === undefined ? (zh ? "周能力待补齐" : "Weekly capacity incomplete")
+                    : (zh ? "本工序已计算" : "Operation calculated");
+        return `<tr><td>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</td>
+      <td>${quantity?.unitsPerFinishedProduct === undefined ? "-" : formatNumber(quantity.unitsPerFinishedProduct)}</td>
+      <td>${pieces(result?.mostLikelyFinishedPieces)}</td><td>${pieces(result?.bestFinishedPieces)}</td>
+      <td>${result?.isPlanBottleneck ? (zh ? "计划瓶颈" : "Plan bottleneck") : "-"}</td><td>${issue}</td></tr>`;
+    }).join("");
+    const stationRows = routingConfig.operations.flatMap(view => view.assignments.map(assignment => {
+        const operation = view.operation;
+        const stationId = assignment.assignment.stationId;
+        const planKey = planScopeKey(routingConfig.productId, stationId);
+        const frozen = frozenStandardWindows.get(planKey);
+        const frozenCurrent = frozen ? isFrozenStandardWindowCurrent(frozen, peekPlannedSaEvents(stationId, routingConfig.productId), getStandardSaDayConfig(routingConfig.productId, stationId)) : false;
+        const saved = plannedSaContexts.get(planKey);
+        const hasEditedPlan = planKey === plannedSaContextKey ? !plannedSaEventsAreDefault : Boolean(saved && !saved.areDefault);
+        const saState = frozenCurrent ? (zh ? "已冻结" : "Frozen")
+            : frozen ? (zh ? "已更改 · 待重冻" : "Changed · refreeze")
+                : hasEditedPlan ? (zh ? "已配置 · 未冻结" : "Configured · not frozen")
+                    : (zh ? "样例待确认" : "Sample to review");
+        const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operation.operationId, stationId, overviewWeekStartDate);
+        const stationResult = plan?.stations.find(item => item.operationId === operation.operationId && item.stationId === stationId);
+        const units = plan?.operations.find(item => item.operationId === operation.operationId)?.unitsPerFinishedProduct;
+        const contributedMl = stationResult?.included && stationResult.nativeMostLikelyRaw !== undefined
+            && stationResult.shareApplied !== undefined && units
+            ? formatNumber(stationResult.nativeMostLikelyRaw * stationResult.shareApplied / units, 1) : "-";
+        const snapshot = Boolean(currentStationWeekSnapshot(planKey, overviewWeekStartDate));
+        const share = assignment.assignment.allocationMode === "fixedShare" && assignment.assignment.plannedShare !== undefined
+            ? percent(assignment.assignment.plannedShare) : assignment.assignment.allocationMode === "forecastCalculated"
+            ? (zh ? "按需求" : "By demand") : "-";
+        const status = assignment.planningStatus === "available" ? (zh ? "可排产" : "Schedulable")
+            : assignment.assignment.role === "backup" ? (zh ? "备用门禁" : "Backup gate")
+                : assignment.planningStatus === "missingParameter" ? (zh ? "缺参数" : "Parameter missing")
+                    : (zh ? "不可排产" : "Not schedulable");
+        const target = !parameter || assignment.planningStatus !== "available" ? "routing" : "baseline";
+        return `<tr><td>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</td>
+      <td>${escapeHtml(stationIdentity(assignment.station?.name, stationId))}</td>
+      <td>${status}</td><td>${saState}</td>
+      <td>${parameter ? `${formatNumber(parameter.standardCycleSec, 1)} s` : "-"}</td>
+      <td>${parameter ? formatNumber(parameter.piecesPerCycle) : "-"}</td>
+      <td>${parameter ? percent(parameter.performanceRate) : "-"}</td><td>${parameter ? percent(parameter.qualityRate) : "-"}</td>
+      <td>${escapeHtml(share)}</td><td>${snapshot ? (zh ? "已生成" : "Generated") : (zh ? "未生成" : "Not generated")}</td>
+      <td>${contributedMl}</td>
+      <td><button class="button secondary" type="button" data-overview-operation="${escapeHtml(operation.operationId)}" data-overview-station="${escapeHtml(stationId)}" data-overview-target="${target}">${zh ? "查看" : "Open"}</button></td></tr>`;
+    })).join("");
+    capacityOverviewRoot.innerHTML = `<div class="panel-head"><div><p class="eyebrow">${zh ? "产品路线 · 只读总览" : "Product route · read-only overview"}</p>
+    <h2>${escapeHtml(product ? formatKnownText(product.name) : routingConfig.productId)}</h2>
+    <p class="note">${escapeHtml(route?.routeId ?? (zh ? "未选择路线" : "No route selected"))} · ${route ? (isLocalDraftRoute(route) ? (zh ? "本地验证草稿" : "Local validation draft") : (zh ? "已发布路线" : "Released route")) : "-"}</p></div>
+    <span class="pill">${zh ? `${routingConfig.operations.length} 道工序 / ${routingConfig.operations.reduce((sum, item) => sum + item.assignments.length, 0)} 个工站分配` : `${routingConfig.operations.length} operations / ${routingConfig.operations.reduce((sum, item) => sum + item.assignments.length, 0)} station assignments`}</span></div>
+    <div class="overview-toolbar"><label>${zh ? "观察周起始日期" : "Week start date"}<input type="date" data-overview-week value="${escapeHtml(overviewWeekStartDate)}"></label></div>
+    <div class="metrics">
+      ${metricCard(zh ? "周需求" : "Weekly demand", pieces(demandQty), demand?.status === "complete" ? (zh ? "逐日客户需求汇总" : "Daily customer demand") : demand?.status === "legacy" ? (zh ? "旧周需求 · 独立兜底" : "Legacy weekly fallback") : (zh ? "逐日账待补或冲突" : "Daily ledger incomplete or conflicted"), "neutral")}
+      ${metricCard("Most likely", pieces(plan?.mostLikelyPieces), plan?.calculable ? (zh ? "本周计划 · 当前参数回算" : "This week's plan · recalculated") : (zh ? "周账或工序条件未齐" : "Week ledgers or operation inputs incomplete"), plan?.calculable ? "good" : "warn")}
+      ${metricCard("Best case", pieces(plan?.bestCasePieces), zh ? "挑战线，不是默认排产目标" : "Challenge case, not the default plan", "neutral")}
+      ${metricCard("Actual", "-", zh ? "需完整同周实绩；48 小时 R&R 不替代" : "Requires complete same-week actuals; 48h R&R is not a substitute", "neutral")}
+    </div>
+    <p class="note">${zh ? "计划瓶颈" : "Plan bottleneck"}：${escapeHtml(bottleneck)}${plan?.planMargin === undefined ? "" : ` · ${zh ? "ML 对需求余量" : "ML demand margin"} ${formatOutputUnits(plan.planMargin)}`}</p>
+    <p class="note">${zh ? "逐日需求在“批量运行 → 需求录入”维护；此处只读取同周汇总。" : "Maintain daily demand under Batch operations → Demand entry; this view reads the weekly total."}</p>
+    ${renderRouteCapacityChart(plan, new Map(routingConfig.operations.map(view => [view.operation.operationId, `OP${view.operation.sequence} ${formatKnownText(view.operation.name)}`])), zh)}
+    <section class="overview-section"><h3>${zh ? "工序能力对照" : "Operation capacity comparison"}</h3>
+      <p class="note">${zh ? "工序件数按每件成品所需产出件数折算；未齐的结果保持空白。" : "Operation pieces are converted by units per finished product; incomplete results stay blank."}</p>
+      <div class="table-wrap"><table class="overview-table"><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "工序用量" : "Units"}</th><th>Most likely</th><th>Best case</th><th>${zh ? "瓶颈" : "Bottleneck"}</th><th>${zh ? "状态" : "Status"}</th></tr></thead>
+      <tbody>${operationRows || `<tr><td colspan="6">${zh ? "当前路线没有工序。" : "No operations on this route."}</td></tr>`}</tbody></table></div></section>
+    <section class="overview-section"><h3>${zh ? "工站与计算依据" : "Stations and calculation inputs"}</h3>
+      <p class="note">${zh ? "CT/P/Q 显示观察周首日生效版本；周件数引擎按各生产日版本计算。“计入工序 ML”按份额和工序用量折算，工序总量按未取整贡献合计后向下取整。" : "CT/P/Q show the version effective at week start; weekly pieces use each production day's version. Operation ML shares apply station allocation and operation units; the operation total floors the sum of unrounded contributions."}</p>
+      <div class="table-wrap"><table class="overview-table"><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "工站" : "Station"}</th><th>${zh ? "排产状态" : "Planning"}</th><th>${zh ? "标准 SA" : "Standard SA"}</th><th>CT</th><th>${zh ? "每循环件数" : "Pieces/cycle"}</th><th>P</th><th>Q</th><th>${zh ? "份额" : "Share"}</th><th>${zh ? "本周周账" : "Week ledger"}</th><th>${zh ? "计入工序 ML" : "Operation ML share"}</th><th>${zh ? "定位" : "Open"}</th></tr></thead>
+      <tbody>${stationRows || `<tr><td colspan="12">${zh ? "尚未分配工站。" : "No stations assigned."}</td></tr>`}</tbody></table></div></section>
+    ${renderRouteWeekReportPanel(routingConfig)}
+    <p class="note">${zh ? "本页是本机当前数据视图。周结果复用已有计算引擎；未生成周账、缺少有效参数或工序用量时不推算数字。刷新后未归档的周账快照可能消失。" : "This view uses current local data and the existing weekly engine. Missing ledgers, effective parameters or operation quantities do not produce guessed results. Unsaved week snapshots may disappear on refresh."}</p>`;
+    capacityOverviewRoot.querySelector("[data-overview-week]")?.addEventListener("change", event => {
+        overviewWeekStartDate = event.currentTarget.value || mondayDateValue();
+        render(selectedProductId);
+    });
+    capacityOverviewRoot.querySelectorAll("[data-overview-operation]").forEach(button => button.addEventListener("click", () => {
+        selectedOperationId = button.dataset.overviewOperation ?? "";
+        selectedWorkflowStationId = button.dataset.overviewStation ?? "";
+        visualStationId = selectedWorkflowStationId;
+        visualInspectorMode = "station";
+        activeWorkflowStage = button.dataset.overviewTarget === "baseline" ? "baseline" : "routing";
+        render(selectedProductId);
+        scrollContentToTop();
+    }));
+    bindRouteWeekReport(routingConfig);
+}
+function renderBatchOverview(routingConfig) {
     const zh = locale === "zh";
     const product = routingConfig.product;
-    const stationId = routingConfig.operations.flatMap(operation => operation.assignments).find(view => view.planningStatus === "available")?.assignment.stationId ?? selectedWorkflowStationId;
-    const draftWeek = stationId && stationId !== "-" ? getCopyProjectionDraft(routingConfig.productId, stationId).weekStartDate : "";
-    const demandDefault = product?.weeklyDemand === undefined ? "" : String(product.weeklyDemand);
+    const demand = product ? currentDemandWeek(product.productId, product.version ?? "", overviewWeekStartDate, product.weeklyDemand) : undefined;
+    const demandQty = demand?.status === "complete" || demand?.status === "legacy" ? demand.quantity : undefined;
+    const plan = routingConfig.route ? routeWeekPlanFor(routingConfig, overviewWeekStartDate, "outlook", demandQty) : undefined;
+    const number = (value) => value === undefined ? "-" : formatOutputUnits(value);
+    batchOverviewRoot.innerHTML = `<div class="panel-head"><div><h2>${zh ? "批量运行总览" : "Batch operations overview"}</h2>
+    <p class="note">${escapeHtml(routingConfig.route?.routeId ?? "-")} · ${zh ? "需求与能力按同一观察周查看" : "Demand and capacity use the same observed week"}</p></div></div>
+    <div class="overview-toolbar"><label>${zh ? "观察周起始日期" : "Week start date"}<input type="date" data-batch-week value="${escapeHtml(overviewWeekStartDate)}"></label></div>
+    <div class="metrics">
+      ${metricCard(zh ? "客户周需求" : "Weekly customer demand", number(demandQty), demand?.status === "complete" ? (zh ? "七天逐日账完整" : "Seven daily entries complete") : demand?.status === "legacy" ? (zh ? "旧周需求兜底；未齐逐日交期" : "Legacy weekly fallback; daily due dates missing") : (zh ? "逐日账待补或冲突" : "Daily ledger incomplete or conflicted"), demand?.status === "complete" ? "good" : "warn")}
+      ${metricCard(zh ? "路线 ML 能力参考" : "Route ML capacity reference", number(plan?.mostLikelyPieces), zh ? "项目阶段周能力，不是已发布排程" : "Project-stage weekly capacity, not a published schedule", "neutral")}
+      ${metricCard(zh ? "排程状态" : "Schedule status", zh ? "未发布" : "Unpublished", zh ? "工站单日草稿尚未通过能力准入" : "Station-day drafts have not passed capacity admission", "warn")}
+      ${metricCard(zh ? "连续生产实绩" : "Continuous production actuals", "-", zh ? "尚未接入；R&R 验证样本不替代" : "Not connected; R&R validation samples do not substitute", "neutral")}
+    </div>
+    <p class="note">${zh ? "当前只能核对需求与项目能力参考，不能据此给出正式排产通过或交付结论。" : "This view compares demand with a project capacity reference; it cannot approve a production schedule or delivery commitment."}</p>
+    <div class="panel-actions"><button class="button secondary" type="button" data-batch-open="demand">${zh ? "查看需求" : "Open demand"}</button>
+      <button class="button secondary" type="button" data-batch-open="schedule">${zh ? "查看排产" : "Open scheduling"}</button>
+      <button class="button secondary" type="button" data-batch-open="overview">${zh ? "查看能力依据" : "Open capacity basis"}</button></div>`;
+    batchOverviewRoot.querySelector("[data-batch-week]")?.addEventListener("change", event => {
+        overviewWeekStartDate = event.currentTarget.value || mondayDateValue();
+        renderBatchOverview(routingConfig);
+        renderCapacityOverview(routingConfig);
+        renderDailyDemandStage(routingConfig);
+        refreshCurrentWeekDemandCard(routingConfig);
+    });
+    batchOverviewRoot.querySelectorAll("[data-batch-open]").forEach(button => button.addEventListener("click", () => {
+        setWorkflowStage(button.dataset.batchOpen ?? "");
+        scrollContentToTop();
+    }));
+}
+function renderFutureSchedule(routingConfig) {
+    const operation = routingConfig.operations.find(item => item.assignments.some(assignment => assignment.assignment.stationId === selectedWorkflowStationId));
+    const station = operation?.assignments.find(item => item.assignment.stationId === selectedWorkflowStationId);
+    if (!routingConfig.route?.routeId || !station || !operation) {
+        futureScheduleRoot.innerHTML = `<p class="note">${locale === "zh" ? "请先选择路线与工站。" : "Select a route and station first."}</p>`;
+        return;
+    }
+    const operationId = operation.operation.operationId;
+    renderFutureSchedulePanel(futureScheduleRoot, {
+        productId: routingConfig.productId, routeId: routingConfig.route.routeId,
+        stationId: station.assignment.stationId, standardDay: getStandardSaDayConfig(routingConfig.productId, station.assignment.stationId),
+        capacityInputsForDate: date => {
+            if (station.planningStatus !== "available")
+                return undefined;
+            const stationId = station.assignment.stationId;
+            const snapshot = currentStationWeekSnapshot(planScopeKey(routingConfig.productId, stationId), mondayForDate(date));
+            const allowance = observeShiftAllowance({ stationId,
+                shifts: standardSaShiftIntervals(getStandardSaDayConfig(routingConfig.productId, stationId)),
+                actual: rnrActualEventsByContext.get(actualScopeKey(routingConfig.productId, operationId, stationId)) ?? [],
+                planned: getPlannedSaEvents(stationId, routingConfig.productId),
+            });
+            if (!snapshot || !allowance || Math.abs(snapshot.perShiftUnplanned - allowance.perShiftMinutes) > 1e-9)
+                return undefined;
+            return { weekStartDate: mondayForDate(date), operationId, parameters: scenarioState.operationStationParameters ?? [],
+                unplannedMinutesPerShift: snapshot.perShiftUnplanned };
+        },
+        zh: locale === "zh",
+    });
+}
+function renderRouteWeekReportPanel(routingConfig) {
+    const zh = locale === "zh";
     return `<section class="sub-card" style="margin-top:14px;" data-route-week-report>
     <div class="panel-head"><h3>${zh ? "路线周计划报告" : "Route week plan report"}</h3><span class="pill warn">${zh ? "内部草稿 · 当前参数回算" : "Internal draft · current-parameter recalculation"}</span></div>
-    <p class="note">${zh ? "两页分别读取各工站已生成的那一周周账，不共用一套动作损失。48 小时 R&R 不会被扩成整周 Actual。没有历史计划快照，件数按当前已发布参数回算。刷新后周账快照不保留。静态 report-preview.html 的示例数字不会进入这里。" : "Each page reads the week ledger generated for that week. A 48-hour R&R is not expanded into a week actual. Pieces are recalculated with current published parameters. Refresh drops the week snapshots. Demo numbers in report-preview.html are not used."}</p>
+    <p class="note">${zh ? "当前报告读取已生成周账和现行参数；48 小时 R&R 不扩成整周 Actual。点击报告内的保存按钮后，可按当时的计算输入重开本地快照。未保存的周账在刷新后仍需重新生成。" : "The current report uses generated week ledgers and current parameters. A 48-hour R&R is not a full-week Actual. Save the report to reopen its calculation inputs later. Unsaved ledgers must be regenerated after a refresh."}</p>
     <div data-report-gap-host="report"></div>
     <div class="field-grid">
-      <div class="field"><label>${zh ? "下周起始日期" : "Next week start"}</label><input type="date" data-report-week value="${escapeHtml(draftWeek)}" /></div>
-      <div class="field"><label>${zh ? "周需求（件）" : "Weekly demand (pcs)"}</label><input type="number" min="0" step="1" data-report-demand value="${escapeHtml(demandDefault)}" /></div>
+      <label class="field"><span>${zh ? "报告范围" : "Report scope"}</span><select data-report-scope>
+        <option value="route">${zh ? "完整工艺路径" : "Full route"}</option>
+        <option value="operation">${zh ? "独立工序" : "Single operation"}</option>
+      </select></label>
+      <label class="field" data-report-operation-field hidden><span>${zh ? "选择工序" : "Select operation"}</span><select data-report-operation>
+        ${routingConfig.operations.map(view => `<option value="${escapeHtml(view.operation.operationId)}">OP${view.operation.sequence} ${escapeHtml(formatKnownText(view.operation.name))}</option>`).join("")}
+      </select></label>
+      <label class="field"><span>${zh ? "报告对照依据" : "Report evidence source"}</span><select data-report-source>
+        <option value="rnr">${zh ? "项目验证 · R&R 跑线样本" : "Project validation · R&R samples"}</option>
+        <option value="batch">${zh ? "批量运行 · 连续生产实绩" : "Batch production · continuous actuals"}</option>
+      </select></label>
+      <div class="field"><label>${zh ? "计划周起始日期" : "Plan week start"}</label><input type="date" data-report-week value="${escapeHtml(overviewWeekStartDate)}" /></div>
+      <div class="field"><label>${zh ? "临时周需求（情景覆盖，可留空）" : "Scenario weekly demand (optional override)"}</label><input type="number" min="0" step="1" data-report-demand value="" /></div>
     </div>
-    <p class="note">${zh ? "回顾页用这个日期的前一周。需求默认取产品主数据的周需求，可以改；留空则不计算余量。" : "The review page uses the previous week. Demand defaults to the product master weekly demand and can be changed. Leave it blank to skip the margin."}</p>
-    <div class="action-bar"><button class="button" type="button" data-route-week-open>${zh ? "查看 / 打印 PDF" : "View / print PDF"}</button></div>
+    <div data-report-rnr-selectors>${renderRouteReportRnrSelectors(routingConfig)}</div>
+    <p class="note" data-report-batch-note hidden>${zh ? "连续批量实绩账尚未接入；当前不能以批量数据生成历史 Actual 或未来预测。" : "The continuous production ledger is not connected, so batch Actuals and forecasts cannot be generated yet."}</p>
+    <p class="note">${zh ? "对照周固定为目标周前 7 天，表示日期关系，不代表真实历史实绩；两周分别读取需求账。临时需求仅作为独立情景。" : "The comparison week is the seven days before the selected week; this date relation does not imply historical actuals. Demand is read for each week separately. An override is a separate scenario."}</p>
+    <div class="action-bar"><button class="button" type="button" data-route-week-open>${zh ? "查看当前数据报告" : "View current-data report"}</button><a class="button secondary" href="./route-report-complete-demo.html" target="_blank" rel="noopener">${zh ? "查看参数齐备示意" : "View complete-input example"}</a></div>
+    <div data-route-report-snapshots>${renderRouteReportSnapshotList(routingConfig)}</div>
     <p class="form-error" data-route-week-error hidden></p>
     <dialog class="route-week-report" data-route-week-dialog>
       <div class="report-toolbar"><strong>${zh ? "内部产能决策报告" : "Internal capacity report"}</strong><div class="action-bar">
+        <button class="button secondary" type="button" data-route-week-save disabled>${zh ? "保存本地报告快照" : "Save local report snapshot"}</button>
         <button class="button" type="button" data-route-week-print>${zh ? "打印 / PDF" : "Print / PDF"}</button>
         <button class="button secondary" type="button" data-route-week-close>${zh ? "关闭" : "Close"}</button>
-      </div></div>
+      </div></div><p class="note" data-route-report-save-status></p>
       <div data-route-week-body></div>
     </dialog>
   </section>`;
 }
+function routeReportStations(routingConfig, operationId) {
+    return routingConfig.operations.filter(view => !operationId || view.operation.operationId === operationId).flatMap(view => view.assignments.filter(item => item.assignment.planningAllowed)
+        .map(item => ({ operationId: view.operation.operationId, stationId: item.assignment.stationId,
+        label: `OP${view.operation.sequence} ${formatKnownText(view.operation.name)} / ${stationIdentity(item.station?.name, item.assignment.stationId)}` })));
+}
+function renderRouteReportRnrSelectors(routingConfig, operationId) {
+    const zh = locale === "zh";
+    const stations = routeReportStations(routingConfig, operationId);
+    try {
+        const archive = parseRnrSampleArchive(localStorage.getItem(RNR_ARCHIVE_STORAGE_KEY));
+        return `<p class="note">${zh ? "逐站指定 R&R 样本修订；未选择的工站列为缺项。样本进入同窗证据章，不替代整周 Actual；计划 Best case / Most likely 仍按当前有效参数计算，样本选择本身不改写参数。" : "Select an R&R revision per station. Missing selections appear as gaps. Samples enter the observation section, not full-week Actuals. Planned Best case / Most likely still use effective parameters; selection alone does not change them."}</p>
+      <div class="field-grid">${stations.map(station => {
+            const records = sampleRevisionsForScope(archive, { productId: routingConfig.productId,
+                routeId: routingConfig.route?.routeId ?? "", routeVersion: routingConfig.route?.version ?? "",
+                operationId: station.operationId, stationId: station.stationId });
+            return `<label class="field"><span>${escapeHtml(station.label)}</span><select data-report-rnr-station="${escapeHtml(station.stationId)}" data-report-rnr-operation="${escapeHtml(station.operationId)}">
+          <option value="">${zh ? "未选择样本" : "No sample selected"}</option>
+          ${records.slice(-30).reverse().map(item => `<option value="${escapeHtml(item.revisionId)}">${escapeHtml(item.sampleId.slice(0, 8))} · v${item.revision} · ${escapeHtml(item.scope.equipmentId)}${item.source === "validationFixture" ? (zh ? " · 验证样例" : " · fixture") : ""}</option>`).join("")}
+        </select></label>`;
+        }).join("")}</div>`;
+    }
+    catch (error) {
+        return `<p class="form-error">${zh ? "R&R 归档无法读取" : "Cannot read R&R archive"}：${escapeHtml(error instanceof Error ? error.message : String(error))}</p>`;
+    }
+}
+function renderRouteReportSnapshotList(routingConfig) {
+    const zh = locale === "zh";
+    try {
+        const archive = parseRouteReportArchive(localStorage.getItem(ROUTE_REPORT_ARCHIVE_STORAGE_KEY));
+        const rows = archive.snapshots.filter(item => item.reviewInput.productId === routingConfig.productId
+            && item.reviewInput.routeId === routingConfig.route?.routeId).slice(-20).reverse();
+        if (!rows.length)
+            return `<p class="note">${zh ? "尚无本地报告快照。" : "No local report snapshots yet."}</p>`;
+        return `<div class="table-wrap"><table><thead><tr><th>${zh ? "保存时间" : "Saved"}</th><th>${zh ? "路线版本" : "Route version"}</th><th>${zh ? "范围" : "Scope"}</th><th>${zh ? "报告依据" : "Evidence source"}</th><th>${zh ? "计划周" : "Plan week"}</th><th>${zh ? "操作" : "Action"}</th></tr></thead><tbody>
+      ${rows.map(item => `<tr><td>${escapeHtml(item.createdAt)}</td><td>${escapeHtml(item.routeVersion)}</td><td>${escapeHtml(item.reportScope === "operation" ? (item.operationLabels[item.operationId ?? ""] ?? item.operationId ?? "-") : item.reportScope === "route" ? (zh ? "完整工艺路径" : "Full route") : (zh ? "旧版路线报告" : "Legacy route report"))}</td><td>${item.reportSource === "rnr" ? "R&R" : item.reportSource === "batch" ? (zh ? "批量实绩" : "Batch actuals") : (zh ? "旧版周计划" : "Legacy week plan")}</td><td>${escapeHtml(item.outlookInput.weekStartDate)}</td><td><button class="button secondary" type="button" data-route-report-reopen="${escapeHtml(item.id)}">${zh ? "重开快照" : "Reopen snapshot"}</button></td></tr>`).join("")}
+    </tbody></table></div>`;
+    }
+    catch (error) {
+        return `<p class="form-error">${zh ? "报告快照无法读取" : "Cannot read report snapshots"}：${escapeHtml(error instanceof Error ? error.message : String(error))}</p>`;
+    }
+}
 function bindRouteWeekReport(routingConfig) {
-    const dialog = calibrationRoot.querySelector("[data-route-week-dialog]");
-    calibrationRoot.querySelector("[data-route-week-open]")?.addEventListener("click", () => {
+    pendingRouteReportSnapshot = undefined;
+    const dialog = capacityOverviewRoot.querySelector("[data-route-week-dialog]");
+    const savedList = capacityOverviewRoot.querySelector("[data-route-report-snapshots]");
+    const sourceSelect = capacityOverviewRoot.querySelector("[data-report-source]");
+    const scopeSelect = capacityOverviewRoot.querySelector("[data-report-scope]");
+    const operationSelect = capacityOverviewRoot.querySelector("[data-report-operation]");
+    const selectedRevisions = new Map();
+    const selectorsHost = capacityOverviewRoot.querySelector("[data-report-rnr-selectors]");
+    const rememberSelections = () => selectorsHost?.querySelectorAll("[data-report-rnr-station]").forEach(item => {
+        selectedRevisions.set(`${item.dataset.reportRnrOperation}/${item.dataset.reportRnrStation}`, item.value);
+    });
+    const refreshScope = () => {
+        rememberSelections();
+        const operation = scopeSelect?.value === "operation";
+        const field = capacityOverviewRoot.querySelector("[data-report-operation-field]");
+        if (field)
+            field.hidden = !operation;
+        if (selectorsHost) {
+            selectorsHost.innerHTML = renderRouteReportRnrSelectors(routingConfig, operation ? operationSelect?.value : undefined);
+            selectorsHost.querySelectorAll("[data-report-rnr-station]").forEach(item => {
+                const revisionId = selectedRevisions.get(`${item.dataset.reportRnrOperation}/${item.dataset.reportRnrStation}`);
+                if (revisionId && [...item.options].some(option => option.value === revisionId))
+                    item.value = revisionId;
+            });
+        }
+    };
+    scopeSelect?.addEventListener("change", refreshScope);
+    operationSelect?.addEventListener("change", refreshScope);
+    sourceSelect?.addEventListener("change", () => {
+        const batch = sourceSelect.value === "batch";
+        const selectors = capacityOverviewRoot.querySelector("[data-report-rnr-selectors]");
+        const note = capacityOverviewRoot.querySelector("[data-report-batch-note]");
+        const openButton = capacityOverviewRoot.querySelector("[data-route-week-open]");
+        if (selectors)
+            selectors.hidden = batch;
+        if (note)
+            note.hidden = !batch;
+        if (openButton)
+            openButton.disabled = batch;
+    });
+    savedList?.addEventListener("click", event => {
+        const button = event.target.closest("[data-route-report-reopen]");
+        if (!button || !dialog)
+            return;
+        try {
+            const archive = parseRouteReportArchive(localStorage.getItem(ROUTE_REPORT_ARCHIVE_STORAGE_KEY));
+            const snapshot = archive.snapshots.find(item => item.id === button.dataset.routeReportReopen);
+            if (!snapshot || snapshot.reviewInput.productId !== routingConfig.productId
+                || snapshot.reviewInput.routeId !== routingConfig.route?.routeId)
+                throw new Error("Report snapshot not found in this route");
+            const { review, outlook } = replayRouteReportSnapshot(snapshot);
+            const body = dialog.querySelector("[data-route-week-body]");
+            if (!body)
+                return;
+            body.innerHTML = snapshot.reportScope ? renderScopedWeekReport({
+                zh: locale === "zh", scope: snapshot.reportScope, ...(snapshot.operationId ? { operationId: snapshot.operationId } : {}),
+                productName: snapshot.productName, routeId: snapshot.reviewInput.routeId,
+                routeVersion: snapshot.routeVersion, generatedAt: snapshot.createdAt.slice(0, 16).replace("T", " "),
+                review, outlook, operationLabels: snapshot.operationLabels, stationLabels: snapshot.stationLabels,
+                evidence: snapshot.rnrEvidence ?? [], missingStationIds: snapshot.missingRnrStationIds ?? [],
+                plannedSaWeeks: snapshot.plannedSaWeeks ?? [],
+                saSources: snapshot.saSources ?? [], selectedRnrRevisions: snapshot.selectedRnrRevisions ?? [],
+                ...(snapshot.calculationVersion ? { calculationVersion: snapshot.calculationVersion } : {}),
+            }) : renderRouteWeekSheets({
+                zh: locale === "zh", review, outlook, productName: snapshot.productName,
+                productVersion: snapshot.productVersion, routeId: snapshot.reviewInput.routeId,
+                routeVersion: snapshot.routeVersion, snapshotId: snapshot.id,
+                operationLabels: snapshot.operationLabels, stationLabels: snapshot.stationLabels,
+                generatedAt: snapshot.createdAt.slice(0, 16).replace("T", " "),
+                weekEnd: start => addDays(start, 7),
+            }) + (snapshot.reportSource === "rnr" ? renderRouteRnrEvidenceAppendix({
+                zh: locale === "zh", evidence: snapshot.rnrEvidence ?? [],
+                missingStationIds: snapshot.missingRnrStationIds ?? [],
+                operationLabels: snapshot.operationLabels, stationLabels: snapshot.stationLabels,
+            }) : "");
+            pendingRouteReportSnapshot = undefined;
+            const saveButton = dialog.querySelector("[data-route-week-save]");
+            if (saveButton)
+                saveButton.disabled = true;
+            const status = dialog.querySelector("[data-route-report-save-status]");
+            if (status)
+                status.textContent = locale === "zh" ? "已重开保存时的计算输入；当前草稿的更改不会改写此快照。" : "Reopened saved calculation inputs. Current draft changes do not rewrite this snapshot.";
+            dialog.showModal();
+        }
+        catch (error) {
+            const message = capacityOverviewRoot.querySelector("[data-route-week-error]");
+            if (message) {
+                message.hidden = false;
+                message.textContent = error instanceof Error ? error.message : String(error);
+            }
+        }
+    });
+    capacityOverviewRoot.querySelector("[data-route-week-open]")?.addEventListener("click", () => {
         openRouteWeekReport(routingConfig, dialog);
+    });
+    dialog?.querySelector("[data-route-week-save]")?.addEventListener("click", () => {
+        const status = dialog.querySelector("[data-route-report-save-status]");
+        try {
+            if (!pendingRouteReportSnapshot)
+                throw new Error(locale === "zh" ? "请先生成当前数据报告。" : "Generate a current-data report first.");
+            const archive = parseRouteReportArchive(localStorage.getItem(ROUTE_REPORT_ARCHIVE_STORAGE_KEY));
+            const saved = appendRouteReportSnapshot(archive, pendingRouteReportSnapshot);
+            saveLocalState(ROUTE_REPORT_ARCHIVE_STORAGE_KEY, JSON.stringify(saved));
+            pendingRouteReportSnapshot = undefined;
+            const button = dialog.querySelector("[data-route-week-save]");
+            if (button)
+                button.disabled = true;
+            if (status)
+                status.textContent = locale === "zh" ? "本地报告快照已保存。" : "Local report snapshot saved.";
+            if (savedList)
+                savedList.innerHTML = renderRouteReportSnapshotList(routingConfig);
+        }
+        catch (error) {
+            if (status)
+                status.textContent = error instanceof Error ? error.message : String(error);
+        }
     });
     dialog?.querySelector("[data-route-week-close]")?.addEventListener("click", () => dialog.close());
     dialog?.querySelector("[data-route-week-print]")?.addEventListener("click", () => {
@@ -3976,17 +5176,33 @@ function bindRouteWeekReport(routingConfig) {
 }
 function openRouteWeekReport(routingConfig, dialog) {
     const zh = locale === "zh";
-    const error = calibrationRoot.querySelector("[data-route-week-error]");
-    const weekStart = calibrationRoot.querySelector("[data-report-week]")?.value ?? "";
-    const demandRaw = calibrationRoot.querySelector("[data-report-demand]")?.value ?? "";
+    const error = capacityOverviewRoot.querySelector("[data-route-week-error]");
+    const source = capacityOverviewRoot.querySelector("[data-report-source]")?.value ?? "rnr";
+    const scope = capacityOverviewRoot.querySelector("[data-report-scope]")?.value === "operation" ? "operation" : "route";
+    const operationId = scope === "operation" ? capacityOverviewRoot.querySelector("[data-report-operation]")?.value : undefined;
+    const weekStart = capacityOverviewRoot.querySelector("[data-report-week]")?.value ?? "";
+    const demandRaw = capacityOverviewRoot.querySelector("[data-report-demand]")?.value ?? "";
     const fail = (message) => {
         if (!error)
             return;
         error.hidden = false;
         error.textContent = message;
     };
+    if (source === "batch") {
+        fail(zh ? "连续批量实绩账尚未接入，不能生成批量历史与预测报告。" : "Continuous production actuals are not connected; the batch history and forecast report cannot be generated.");
+        return;
+    }
+    if (scope === "operation" && !routingConfig.operations.some(view => view.operation.operationId === operationId)) {
+        fail(zh ? "请先选择有效工序。" : "Select a valid operation.");
+        return;
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
-        fail(zh ? "请先选择下周起始日期。" : "Choose the next week start date.");
+        fail(zh ? "请先选择计划周起始日期。" : "Choose the plan week start date.");
+        return;
+    }
+    const weekDate = new Date(`${weekStart}T00:00:00Z`);
+    if (!Number.isFinite(weekDate.getTime()) || weekDate.toISOString().slice(0, 10) !== weekStart || weekDate.getUTCDay() !== 1) {
+        fail(zh ? "计划周请从周一开始。" : "Select a Monday as the week start.");
         return;
     }
     const demandQty = demandRaw === "" ? undefined : Number(demandRaw);
@@ -3996,38 +5212,164 @@ function openRouteWeekReport(routingConfig, dialog) {
     }
     if (error)
         error.hidden = true;
-    const review = routeWeekPlanFor(routingConfig, addDays(weekStart, -7), "review", demandQty);
-    const outlook = routeWeekPlanFor(routingConfig, weekStart, "outlook", demandQty);
     const product = routingConfig.product;
-    const html = renderRouteWeekSheets({
-        zh, review, outlook,
-        productName: product?.name ?? routingConfig.productId,
-        productVersion: product?.version ?? "",
-        routeId: routingConfig.route?.routeId ?? "-",
-        generatedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-        weekEnd: start => addDays(start, 7),
+    const version = product?.version ?? "";
+    const reviewWeek = addDays(weekStart, -7);
+    const reviewDemand = product ? currentDemandWeek(product.productId, version, reviewWeek, product.weeklyDemand) : undefined;
+    const outlookDemand = product ? currentDemandWeek(product.productId, version, weekStart, product.weeklyDemand) : undefined;
+    const resolvedDemand = (value) => demandQty ?? (value?.status === "complete" || value?.status === "legacy" ? value.quantity : undefined);
+    const reviewInput = routeWeekPlanInputFor(routingConfig, reviewWeek, "review", resolvedDemand(reviewDemand), operationId);
+    const outlookInput = routeWeekPlanInputFor(routingConfig, weekStart, "outlook", resolvedDemand(outlookDemand), operationId);
+    let rnrEvidence;
+    let missingRnrStationIds;
+    let selectedRnrRevisions;
+    try {
+        ({ evidence: rnrEvidence, missingStationIds: missingRnrStationIds, revisions: selectedRnrRevisions } = collectRouteReportRnrEvidence(routingConfig, operationId));
+    }
+    catch (cause) {
+        fail(cause instanceof Error ? cause.message : String(cause));
+        return;
+    }
+    const review = buildRouteWeekPlan(reviewInput);
+    const outlook = buildRouteWeekPlan(outlookInput);
+    const plannedSaWeeks = [...captureReportSaWeeks(reviewInput), ...captureReportSaWeeks(outlookInput)];
+    const saSources = routeReportStations(routingConfig, operationId).map(station => {
+        const key = planScopeKey(routingConfig.productId, station.stationId);
+        const currentEvents = getPlannedSaEvents(station.stationId, routingConfig.productId);
+        const dayConfig = getStandardSaDayConfig(routingConfig.productId, station.stationId);
+        const frozenWindow = frozenStandardWindows.get(key);
+        return { operationId: station.operationId, stationId: station.stationId,
+            status: frozenWindow ? isFrozenStandardWindowCurrent(frozenWindow, currentEvents, dayConfig) ? "current" : "stale" : "missing",
+            dayConfig: structuredClone(dayConfig), currentEvents: structuredClone(currentEvents),
+            ...(frozenWindow ? { frozenWindow: structuredClone(frozenWindow) } : {}),
+        };
     });
+    const generatedAt = new Date().toISOString();
+    const operationLabels = Object.fromEntries(routingConfig.operations.map(view => [view.operation.operationId, `OP${view.operation.sequence} ${formatKnownText(view.operation.name)}`]));
+    const stationLabels = Object.fromEntries(routingConfig.operations.flatMap(view => view.assignments.map(assignment => [assignment.assignment.stationId, stationIdentity(assignment.station?.name, assignment.assignment.stationId)])));
+    pendingRouteReportSnapshot = {
+        id: globalThis.crypto.randomUUID(), createdAt: generatedAt,
+        productName: product?.name ?? routingConfig.productId, productVersion: product?.version ?? "",
+        routeVersion: routingConfig.route?.version ?? "", operationLabels, stationLabels,
+        reviewInput: structuredClone(reviewInput), outlookInput: structuredClone(outlookInput),
+        reportSource: "rnr", reportScope: scope, ...(operationId ? { operationId } : {}),
+        rnrEvidence: structuredClone(rnrEvidence), missingRnrStationIds: [...missingRnrStationIds],
+        plannedSaWeeks: structuredClone(plannedSaWeeks),
+        saSources, selectedRnrRevisions: structuredClone(selectedRnrRevisions),
+        calculationVersion: ROUTE_REPORT_CALCULATION_VERSION,
+        demandEvidence: {
+            reviewRecordIds: reviewDemand?.recordIds ?? [], outlookRecordIds: outlookDemand?.recordIds ?? [],
+            reviewSource: demandRaw !== "" ? "override" : reviewDemand?.source === "none" ? "missing" : reviewDemand?.source ?? "missing",
+            outlookSource: demandRaw !== "" ? "override" : outlookDemand?.source === "none" ? "missing" : outlookDemand?.source ?? "missing",
+        },
+    };
+    const html = renderScopedWeekReport({ zh, scope, ...(operationId ? { operationId } : {}), review, outlook,
+        productName: product?.name ?? routingConfig.productId, routeId: routingConfig.route?.routeId ?? "-",
+        routeVersion: routingConfig.route?.version ?? "", generatedAt: generatedAt.slice(0, 16).replace("T", " "),
+        operationLabels, stationLabels, evidence: rnrEvidence, missingStationIds: missingRnrStationIds,
+        plannedSaWeeks, saSources, selectedRnrRevisions, calculationVersion: ROUTE_REPORT_CALCULATION_VERSION });
     const body = dialog?.querySelector("[data-route-week-body]");
     if (!dialog || !body)
         return;
     body.innerHTML = html;
+    const saveButton = dialog.querySelector("[data-route-week-save]");
+    if (saveButton)
+        saveButton.disabled = false;
+    const status = dialog.querySelector("[data-route-report-save-status]");
+    if (status)
+        status.textContent = zh ? "当前数据报告尚未保存为快照。" : "Current-data report is not yet saved as a snapshot.";
     dialog.showModal();
 }
+function collectRouteReportRnrEvidence(routingConfig, operationId) {
+    const archive = parseRnrSampleArchive(localStorage.getItem(RNR_ARCHIVE_STORAGE_KEY));
+    const evidence = [];
+    const missingStationIds = [];
+    const revisions = [];
+    for (const station of routeReportStations(routingConfig, operationId)) {
+        const selector = [...capacityOverviewRoot.querySelectorAll("[data-report-rnr-station]")]
+            .find(item => item.dataset.reportRnrStation === station.stationId
+            && item.dataset.reportRnrOperation === station.operationId);
+        const revisionId = selector?.value;
+        if (!revisionId) {
+            missingStationIds.push(station.stationId);
+            continue;
+        }
+        const record = archive.revisions.find(item => item.revisionId === revisionId
+            && item.scope.productId === routingConfig.productId
+            && item.scope.routeId === routingConfig.route?.routeId
+            && item.scope.routeVersion === routingConfig.route?.version
+            && item.scope.operationId === station.operationId && item.scope.stationId === station.stationId);
+        if (!record)
+            throw new Error(locale === "zh" ? `${station.label}：所选样本修订与当前路线不匹配。` : `${station.label}: selected revision does not match this route.`);
+        const saved = parseRnrEvidenceDraft(record.evidenceJson, {
+            productId: record.scope.productId, operationId: record.scope.operationId, stationId: record.scope.stationId,
+        });
+        if ((saved.snapshot.scope.routeId && saved.snapshot.scope.routeId !== record.scope.routeId)
+            || saved.snapshot.scope.startMinute !== record.scope.startMinute
+            || saved.snapshot.scope.endMinute !== record.scope.endMinute) {
+            throw new Error(locale === "zh" ? `${station.label}：归档样本的观察窗口或路线不一致。` : `${station.label}: archived sample window or route does not match.`);
+        }
+        evidence.push({ ...buildRouteReportRnrEvidence({ revision: record,
+                planned: saved.snapshot.plannedEvents, actual: saved.snapshot.actualEvents,
+                offShiftIntervals: standardSaOffShiftIntervals(saved.dayConfig),
+            }), windowLabel: `${formatOptionalMinutePoint(record.scope.startMinute)} – ${formatOptionalMinutePoint(record.scope.endMinute)}` });
+        revisions.push(structuredClone(record));
+    }
+    return { evidence, missingStationIds, revisions };
+}
 function routeWeekPlanFor(routingConfig, weekStart, role, demandQty) {
+    return buildRouteWeekPlan(routeWeekPlanInputFor(routingConfig, weekStart, role, demandQty));
+}
+function captureReportSaWeeks(input) {
+    return input.stations.flatMap(station => {
+        const snap = currentStationWeekSnapshot(planScopeKey(input.productId, station.stationId), input.weekStartDate);
+        if (!snap || snap.days.length !== 7 || snap.shiftCounts.length !== 7)
+            return [];
+        const allowance = currentRnrAllowanceForStation(input.productId, station.operationId, station.stationId);
+        const perShiftUnplanned = allowance?.perShiftMinutes ?? 0;
+        const mostLikelySa = summarizeMostLikely(snap.days, snap.shiftCounts, allowance ?? 0).withBreaksSa;
+        return [{
+                role: input.role, operationId: station.operationId, stationId: station.stationId,
+                perShiftUnplanned, shiftCounts: [...snap.shiftCounts],
+                sourceLossRate: allowance?.projectedLossRate ?? 0,
+                acceptedLossMinutes: allowance?.planningUnplannedMinutes ?? 0,
+                pendingLossMinutes: allowance?.pendingLossMinutes ?? 0,
+                observedShiftCount: allowance?.observedShiftCount ?? 0,
+                ...(snap.withBreaksSa === undefined ? {} : { withBreaksSa: snap.withBreaksSa }),
+                ...(mostLikelySa === undefined ? {} : { mostLikelySa }),
+                ...(snap.sourceVersion === undefined ? {} : { sourceVersion: snap.sourceVersion }),
+                days: snap.days.map((day, index) => ({ date: day.date, mode: day.mode, stale: day.stale,
+                    scheduledMinutes: day.scheduledMinutes, productionMinutes: day.productionMinutes,
+                    mostLikelyProductionMinutes: projectedMostLikelyMinutes(day, snap.shiftCounts[index] ?? 0, allowance),
+                    breakMinutes: day.breakMinutes, setupMinutes: day.setupMinutes,
+                    maintenanceMinutes: day.maintenanceMinutes, plannedStopMinutes: day.plannedStopMinutes,
+                    unscheduledMinutes: day.unscheduledMinutes })),
+            }];
+    });
+}
+function currentRnrAllowanceForStation(productId, operationId, stationId) {
+    const dayConfig = getStandardSaDayConfig(productId, stationId);
+    return observeShiftAllowance({ stationId, shifts: standardSaShiftIntervals(dayConfig),
+        actual: rnrActualEventsByContext.get(actualScopeKey(productId, operationId, stationId)) ?? [],
+        planned: getPlannedSaEvents(stationId, productId),
+    });
+}
+function routeWeekPlanInputFor(routingConfig, weekStart, role, demandQty, selectedOperationId) {
     const zh = locale === "zh";
     const routeId = routingConfig.route?.routeId ?? "";
     const parameters = scenarioState.operationStationParameters ?? [];
-    const stations = routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => {
+    const selectedOperations = routingConfig.operations.filter(item => !selectedOperationId || item.operation.operationId === selectedOperationId);
+    const stations = selectedOperations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => {
         const stationId = view.assignment.stationId;
         const operationId = operation.operation.operationId;
-        const snap = stationWeekSnapshots.get(`${planScopeKey(routingConfig.productId, stationId)}::${weekStart}`);
+        const snap = currentStationWeekSnapshot(planScopeKey(routingConfig.productId, stationId), weekStart);
+        const allowance = currentRnrAllowanceForStation(routingConfig.productId, operationId, stationId);
         const capacity = snap ? buildPeriodCapacity({
             operationId, stationId, parameters,
             days: snap.days.map((day, index) => ({
                 date: day.date, workingDay: day.workingDay, stale: day.stale,
                 bestCaseProductionMinutes: day.productionMinutes,
-                mostLikelyProductionMinutes: day.workingDay && !day.stale
-                    ? Math.max(0, day.productionMinutes - snap.perShiftUnplanned * (snap.shiftCounts[index] ?? 0)) : 0,
+                mostLikelyProductionMinutes: projectedMostLikelyMinutes(day, snap.shiftCounts[index] ?? 0, allowance),
             })),
         }) : undefined;
         return {
@@ -4041,11 +5383,11 @@ function routeWeekPlanFor(routingConfig, weekStart, role, demandQty) {
             ...(view.assignment.plannedShare === undefined ? {} : { plannedShare: view.assignment.plannedShare }),
             ...(view.assignment.allocationMode ? { allocationMode: view.assignment.allocationMode } : {}),
             ...(snap?.withBreaksSa === undefined ? {} : { withBreaksSa: snap.withBreaksSa }),
-            ...(snap?.mostLikelySa === undefined ? {} : { mostLikelySa: snap.mostLikelySa }),
+            ...(snap ? { mostLikelySa: summarizeMostLikely(snap.days, snap.shiftCounts, allowance ?? 0).withBreaksSa } : {}),
             planBasis: "currentParameterRecalc",
         };
     }));
-    const requirements = routingConfig.route ? routingConfig.operations.map(item => resolveOperationOutputRequirement(scenarioState, routingConfig.route, item.operation, weekStart, addDays(weekStart, 6))) : [];
+    const requirements = routingConfig.route ? selectedOperations.map(item => resolveOperationOutputRequirement(scenarioState, routingConfig.route, item.operation, weekStart, addDays(weekStart, 6))) : [];
     const issueText = {
         stage_bom_missing: zh ? "缺少阶段 BOM" : "Stage BOM missing",
         stage_bom_mismatch: zh ? "阶段 BOM 不匹配" : "Stage BOM mismatch",
@@ -4053,41 +5395,484 @@ function routeWeekPlanFor(routingConfig, weekStart, role, demandQty) {
         quantity_missing: zh ? "缺少工序用量" : "Quantity missing",
         quantity_invalid: zh ? "工序用量无效" : "Invalid quantity",
     };
-    return buildRouteWeekPlan({
+    return {
         productId: routingConfig.productId,
         routeId,
         weekStartDate: weekStart,
         role,
         ...(demandQty === undefined ? {} : { demandQty }),
         stations,
-        operationOrder: routingConfig.operations.map(item => item.operation.operationId),
-        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
+        operationOrder: selectedOperations.map(item => item.operation.operationId),
+        ...(!selectedOperationId && routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
         operationUnits: requirements.map(item => ({
             operationId: item.operationId,
             ...(item.unitsPerFinishedProduct === undefined ? {} : { unitsPerFinishedProduct: item.unitsPerFinishedProduct }),
             ...(item.issue ? { issue: issueText[item.issue] ?? item.issue } : {}),
         })),
-        ...(role === "review" ? { actual: { completeSameWeek: false, note: zh ? "本机每工站只有一份草稿，不是历史整周归档。48 小时 R&R 不能按比例扩成整周 Actual。" : "Each station has one local draft, not a historical full-week archive. A 48-hour R&R is not scaled up to a week actual." } } : {}),
+        ...(role === "review" ? { actual: { completeSameWeek: false, note: zh ? "对照周仅是日期位置；本机没有该周完整实绩归档。48 小时 R&R 不能按比例扩成整周 Actual。" : "The comparison week is a date position; there is no complete actual archive for it. A 48-hour R&R is not scaled up to a week actual." } } : {}),
+    };
+}
+function renderCalibrationRouteStatus(routingConfig, selectedOperation) {
+    const zh = locale === "zh";
+    let required = 0;
+    let frozenCount = 0;
+    let completeCount = 0;
+    let parameterCount = 0;
+    const rows = (selectedOperation ? [selectedOperation] : []).flatMap(view => {
+        const operation = view.operation;
+        if (!view.assignments.length)
+            return [`<tr><td>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</td><td colspan="6">${zh ? "尚未分配工站" : "No station assigned"}</td><td>-</td></tr>`];
+        return view.assignments.map(assignment => {
+            const stationId = assignment.assignment.stationId;
+            const active = assignment.planningStatus === "available" || assignment.planningStatus === "missingParameter";
+            const planKey = planScopeKey(routingConfig.productId, stationId);
+            const frozen = frozenStandardWindows.get(planKey);
+            const dayConfig = getStandardSaDayConfig(routingConfig.productId, stationId);
+            const planned = peekPlannedSaEvents(stationId, routingConfig.productId);
+            const saCurrent = Boolean(frozen && isFrozenStandardWindowCurrent(frozen, planned, dayConfig));
+            const saChanges = frozen && !saCurrent ? diffFrozenStandardSa(frozen, planned, dayConfig) : [];
+            const saIssues = validateStandardSaDay(planned, dayConfig);
+            const plannedGapMinutes = findStandardSaDayGaps(planned, dayConfig)
+                .reduce((sum, gap) => sum + gap.endMinute - gap.startMinute, 0);
+            const actualKey = actualScopeKey(routingConfig.productId, operation.operationId, stationId);
+            const actual = rnrActualEventsByContext.get(actualKey) ?? [];
+            const cycle = actualKey === rnrContextKey ? cycleCheckDraft : rnrDrafts.get(actualKey)?.cycle;
+            let rnrComplete = false;
+            let rnrText = zh ? "未记录" : "Not recorded";
+            let rnrTone = "warn";
+            let rnrGapMarkup = "";
+            if (actual.length) {
+                try {
+                    const window = standardSaDayWindow(dayConfig);
+                    const result = reconcileRnrTimeline({
+                        stationId, startMinute: window.startMinute ?? 0, endMinute: window.endMinute ?? 0,
+                        planned, actual, offShiftIntervals: standardSaOffShiftIntervals(dayConfig),
+                    });
+                    const unrecorded = mergeStatusIntervals(result.rows, "unrecorded");
+                    const plannedGaps = mergeStatusIntervals(result.rows, "plannedGap");
+                    rnrComplete = result.unrecordedMinutes === 0 && result.plannedGapMinutes === 0;
+                    rnrGapMarkup = `${coverageMarkup(unrecorded, "unrecorded")}${coverageMarkup(plannedGaps, "plannedGap")}`;
+                    rnrText = rnrComplete ? (zh ? "时间账完整" : "Timeline complete")
+                        : unrecorded.length
+                            ? (zh ? "实际未记录" : "Actual not recorded")
+                            : plannedGaps.length
+                                ? (zh ? "计划空档" : "Planned gap")
+                                : (zh ? "状态不同" : "State differs");
+                }
+                catch {
+                    rnrText = zh ? "记录待核对" : "Review records";
+                    rnrTone = "bad";
+                }
+            }
+            else if (cycleDraftHasSamples(cycle))
+                rnrText = zh ? "仅节拍样本" : "Cycle samples only";
+            if (validationFixtureContexts.has(actualKey))
+                rnrText = `${zh ? "验证样本 · " : "Sample · "}${rnrText}`;
+            const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operation.operationId, stationId);
+            const futureParameter = !parameter && (scenarioState.operationStationParameters ?? []).some(item => item.operationId === operation.operationId && item.stationId === stationId
+                && (item.approvalStatus === "approved" || item.approvalStatus === "effective") && item.effectiveFrom && item.effectiveFrom > todayDateValue());
+            if (active) {
+                required += 1;
+                if (saCurrent)
+                    frozenCount += 1;
+                if (rnrComplete)
+                    completeCount += 1;
+                if (parameter)
+                    parameterCount += 1;
+            }
+            const issues = !active ? [zh ? "备用或不可排产，不计入" : "Backup or unavailable; excluded"] : [
+                !saCurrent ? (saIssues.length
+                    ? (zh ? `标准 SA 待补齐：${plannedGapMinutes ? `空档 ${formatNumber(plannedGapMinutes)} 分钟；` : ""}${formatStandardSaDayIssues(saIssues)}` : `Standard SA incomplete: ${formatStandardSaDayIssues(saIssues)}`)
+                    : frozen
+                        ? (zh ? `标准 SA 已变更 ${saChanges.length} 项；去 SA 定位并重新冻结` : `Standard SA changed in ${saChanges.length} place(s); locate and refreeze`)
+                        : (zh ? "标准 SA 待冻结" : "Freeze standard SA")) : "",
+                !rnrComplete ? (zh ? "R&R 待完成" : "Complete R&R") : "",
+                !parameter ? (zh ? "有效 CT/P/Q 待确认" : "Effective CT/P/Q needed") : "",
+            ].filter(Boolean);
+            const pill = (label, tone) => `<span class="status ${tone}">${escapeHtml(label)}</span>`;
+            const selected = selectedOperationId === operation.operationId && calibrationFocusedStationId === stationId;
+            return `<tr${selected ? ' class="selected"' : ""}>
+        <td>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</td>
+        <td>${escapeHtml(stationIdentity(assignment.station?.name, stationId))}</td>
+        <td>${pill(active ? (zh ? "需核对" : "In scope") : (zh ? "不计入" : "Excluded"), active ? "good" : "warn")}</td>
+        <td>${pill(saCurrent ? (zh ? "已冻结" : "Frozen") : frozen ? (zh ? "已变更 · 待重冻" : "Changed · refreeze") : (zh ? "待冻结" : "Not frozen"), saCurrent ? "good" : "warn")}${active && !saCurrent ? ` <button class="button secondary" type="button" data-calibration-sa-operation="${escapeHtml(operation.operationId)}" data-calibration-sa-station="${escapeHtml(stationId)}">${zh ? "去 SA" : "Open SA"}</button>` : ""}</td>
+        <td>${pill(rnrText, rnrComplete ? "good" : rnrTone)}${rnrGapMarkup}${active && rnrGapMarkup ? `<button class="button secondary" type="button" data-open-rnr-gap data-gap-operation="${escapeHtml(operation.operationId)}" data-gap-station="${escapeHtml(stationId)}">${zh ? "去补录" : "Record"}</button>` : ""}</td>
+        <td>${pill(parameter ? (zh ? "已生效" : "Effective") : futureParameter ? (zh ? "待生效" : "Pending effective") : (zh ? "缺有效版本" : "No effective version"), parameter ? "good" : "warn")}</td>
+        <td>${escapeHtml(issues.join(zh ? "；" : "; ") || (zh ? "记录已齐；参数仍需人工复核" : "Records complete; review parameters"))}</td>
+        <td>${active ? `<button class="button secondary" type="button" data-calibration-operation="${escapeHtml(operation.operationId)}" data-calibration-station="${escapeHtml(stationId)}">${selected ? (zh ? "取消选择" : "Deselect") : (zh ? "查看" : "Open")}</button>` : "-"}</td>
+      </tr>`;
+        });
+    }).join("");
+    return `<section class="calibration-route-status" data-calibration-route-status>
+    <div class="panel-head"><div><h3>${zh ? "当前工序校准状态" : "Current operation calibration status"}</h3>
+      <p class="note">${zh ? "有效参数不等于现场校准通过；不同观察窗口的实绩不合并。" : "An effective parameter is not proof of field validation; actuals from different windows are not merged."}</p></div></div>
+    <p class="note">${zh ? `需核对 ${required} 站 · 标准 SA 已冻结 ${frozenCount} · R&R 时间账完整 ${completeCount} · 参数已生效 ${parameterCount}` : `${required} stations in scope · ${frozenCount} SA frozen · ${completeCount} R&R timelines complete · ${parameterCount} effective parameters`}</p>
+    <div class="table-wrap"><table><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "工站" : "Station"}</th><th>${zh ? "范围" : "Scope"}</th><th>${zh ? "标准 SA" : "Standard SA"}</th><th>R&amp;R</th><th>CT/P/Q</th><th>${zh ? "待处理" : "Next action"}</th><th>${zh ? "详情" : "Details"}</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="8">${zh ? "当前路线没有工序。" : "No operations on this route."}</td></tr>`}</tbody></table></div>
+  </section>`;
+}
+function bindCalibrationRouteStatus() {
+    calibrationRoot.querySelectorAll("[data-calibration-sa-station]").forEach(button => button.addEventListener("click", () => {
+        selectedOperationId = button.dataset.calibrationSaOperation ?? "";
+        selectedWorkflowStationId = button.dataset.calibrationSaStation ?? "";
+        render(selectedProductId);
+        setWorkflowStage("baseline");
+        requestAnimationFrame(() => focusSaChange(0));
+    }));
+    calibrationRoot.querySelectorAll("[data-calibration-station]").forEach(button => button.addEventListener("click", () => {
+        selectedOperationId = button.dataset.calibrationOperation ?? "";
+        const stationId = button.dataset.calibrationStation ?? "";
+        if (calibrationFocusedStationId === stationId) {
+            calibrationFocusedStationId = "";
+            calibrationDetailOpen = false;
+        }
+        else {
+            calibrationFocusedStationId = stationId;
+            selectedWorkflowStationId = stationId;
+            calibrationDetailOpen = true;
+            visualStationId = stationId;
+            visualInspectorMode = "station";
+        }
+        render(selectedProductId);
+        if (calibrationFocusedStationId)
+            calibrationRoot.querySelector("[data-current-station-scope]")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }));
+}
+function stationRunLoss(productId, operationId, stationId) {
+    const dayConfig = getStandardSaDayConfig(productId, stationId);
+    const window = standardSaDayWindow(dayConfig);
+    if (window.startMinute === undefined || window.endMinute === undefined)
+        return {};
+    const planned = peekPlannedSaEvents(stationId, productId);
+    const actual = rnrActualEventsByContext.get(actualScopeKey(productId, operationId, stationId)) ?? [];
+    try {
+        const offShiftIntervals = standardSaOffShiftIntervals(dayConfig);
+        const timeline = reconcileRnrTimeline({
+            stationId, startMinute: window.startMinute, endMinute: window.endMinute, planned, actual, offShiftIntervals,
+        });
+        const speed = reconcileRnrSpeedLoss(actual.filter(event => event.kind === "production").map(event => ({
+            id: event.id, productId, operationId, stationId,
+            startMinute: event.startMinute, endMinute: event.endMinute,
+            okQty: event.okQty ?? 0, nokQty: event.nokQty ?? 0,
+            piecesPerCycle: event.piecesPerCycle ?? 0,
+        })), {});
+        const evidence = buildRnrEvidence({
+            productId, operationId, stationId,
+            startMinute: window.startMinute, endMinute: window.endMinute,
+            planned, actual, offShiftIntervals, speed,
+        });
+        const actualSa = timeline.windowMinutes > 0
+            ? (timeline.actualProductionMinutes - speed.inferredSaLossMinutes) / timeline.windowMinutes
+            : undefined;
+        return {
+            explicit: evidence.explicitMinutes,
+            inferred: evidence.inferredMinutes,
+            unrecorded: timeline.unrecordedMinutes,
+            ...(actual.length && actualSa !== undefined ? { actualSa } : {}),
+        };
+    }
+    catch {
+        return {};
+    }
+}
+function renderOperationCalibrationBoard(selectedOperation, routingConfig) {
+    const zh = locale === "zh";
+    const operation = selectedOperation?.operation;
+    if (!operation)
+        return "";
+    const routeKey = `${routingConfig.productId}::${routingConfig.route?.routeId ?? ""}`;
+    const observations = collectRouteStationObservations(routingConfig);
+    const storedWindow = routeWindowMemory.get(routeKey);
+    const view = buildRouteWindowCapacityView({
+        ...(storedWindow ? { memory: storedWindow } : {}),
+        stations: observations,
+        operationIds: routingConfig.operations.map(item => item.operation.operationId),
+        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
+    });
+    const counted = selectedOperation?.assignments.filter(item => item.planningStatus === "available") ?? [];
+    const actuals = counted.map(item => view.stations.find(station => station.operationId === operation.operationId && station.stationId === item.assignment.stationId)?.actualGoodOutput);
+    const plans = counted.map(item => view.stations.find(station => station.operationId === operation.operationId && station.stationId === item.assignment.stationId)?.bestGoodCapacity);
+    const plannedSum = plans.length > 0 && plans.every(value => value !== undefined)
+        ? plans.reduce((sum, value) => sum + value, 0)
+        : undefined;
+    const actualSum = actuals.length > 0 && actuals.every(value => value !== undefined)
+        ? actuals.reduce((sum, value) => sum + value, 0)
+        : undefined;
+    const dash = "-";
+    const pieces = (value) => value === undefined ? dash : formatOutputUnits(value);
+    const minutes = (value) => value === undefined ? dash : formatNumber(value, 1);
+    const rows = (selectedOperation?.assignments ?? []).map(item => {
+        const stationId = item.assignment.stationId;
+        const countedStation = item.planningStatus === "available";
+        const parameter = item.parameter;
+        const loss = countedStation ? stationRunLoss(routingConfig.productId, operation.operationId, stationId) : {};
+        const plannedEvents = peekPlannedSaEvents(stationId, routingConfig.productId);
+        const dayConfig = getStandardSaDayConfig(routingConfig.productId, stationId);
+        const plannedSa = !validateStandardSaDay(plannedEvents, dayConfig).length
+            ? summarizeStandardSaDay(plannedEvents, dayConfig).bestCaseSaWithBreaks
+            : undefined;
+        const selected = stationId === calibrationFocusedStationId;
+        return `<tr class="operation-station-row${selected ? " selected" : ""}" data-operation-station="${escapeHtml(stationId)}" tabindex="0">
+      <td>${escapeHtml(stationIdentity(item.station?.name, stationId))}${countedStation ? "" : ` · ${zh ? "不计入" : "Excluded"}`}</td>
+      <td>${parameter ? `${formatNumber(parameter.standardCycleSec, 1)} ${zh ? "秒" : "s"}` : dash}</td>
+      <td>${zh ? "计划" : "Planned"} ${plannedSa === undefined ? dash : percent(plannedSa)}<br>${zh ? "实跑" : "Actual"} ${loss.actualSa === undefined ? dash : percent(loss.actualSa)}</td>
+      <td>${parameter ? percent(parameter.performanceRate) : dash}</td>
+      <td>${parameter ? percent(parameter.qualityRate) : dash}</td>
+      <td>${minutes(loss.explicit)}</td>
+      <td>${minutes(loss.inferred)}</td>
+      <td>${minutes(loss.unrecorded)}</td>
+    </tr>`;
+    }).join("");
+    return `<section class="sub-card" style="margin-top:14px;" data-operation-station-board>
+    <div class="panel-head"><div><h3>OP${operation.sequence} ${escapeHtml(formatKnownText(operation.name))}</h3>
+      <p class="note">${zh ? "同一工序的工站都在这张表里。节拍、SA、P、Q 按工站分开，不合成一个数。" : "Every station of this operation is listed here. Cycle, SA, P and Q stay on their own station."}</p></div>
+      <span class="pill">${zh ? "当前工序" : "Current operation"}</span></div>
+    <div class="field-grid">
+      ${field(zh ? "本工序计划良品能力" : "Operation planned good units", pieces(plannedSum))}
+      ${field(zh ? "本工序实跑良品合计" : "Operation actual good units", pieces(actualSum))}
+    </div>
+    <p class="note">${zh ? "任一计入工站缺计划或实跑记录时，对应合计留空。客户需求及供需差额在路线周计划中判断。" : "A missing plan or trial record at any included station leaves that total blank. Customer demand and supply gaps belong to the route weekly plan."}</p>
+    <div class="table-wrap operation-station-scroll"><table><thead><tr>
+      <th>${zh ? "工站" : "Station"}</th><th>${zh ? "节拍" : "Cycle"}</th><th>SA</th><th>P</th><th>Q</th>
+      <th>${zh ? "已记录异常" : "Recorded abnormal"}</th><th>${zh ? "推断损失" : "Inferred loss"}</th><th>${zh ? "待补录" : "Unrecorded"}</th>
+    </tr></thead><tbody>${rows || `<tr><td colspan="8">${zh ? "这道工序还没有工站。" : "This operation has no station."}</td></tr>`}</tbody></table></div>
+  </section>`;
+}
+function bindOperationStationRows() {
+    calibrationRoot.querySelectorAll("[data-operation-station]").forEach(row => {
+        const open = () => {
+            const stationId = row.dataset.operationStation ?? "";
+            if (!stationId)
+                return;
+            if (stationId === calibrationFocusedStationId) {
+                calibrationFocusedStationId = "";
+                calibrationDetailOpen = false;
+                render(selectedProductId);
+                return;
+            }
+            calibrationFocusedStationId = stationId;
+            selectedWorkflowStationId = stationId;
+            calibrationDetailOpen = true;
+            visualStationId = stationId;
+            visualInspectorMode = "station";
+            render(selectedProductId);
+        };
+        row.addEventListener("click", open);
+        row.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                open();
+            }
+        });
     });
 }
+function renderOperationOutputComparison(selectedOperation, productId) {
+    if (!selectedOperation)
+        return "";
+    const zh = locale === "zh";
+    const operationId = selectedOperation.operation.operationId;
+    const members = selectedOperation.assignments.filter(item => item.planningStatus === "available");
+    const stations = members.map(item => {
+        const stationId = item.assignment.stationId;
+        const config = getStandardSaDayConfig(productId, stationId);
+        const window = standardSaDayWindow(config);
+        const scope = actualScopeKey(productId, operationId, stationId);
+        const actual = rnrActualEventsByContext.get(scope) ?? [];
+        const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operationId, stationId);
+        let preview;
+        if (parameter) {
+            try {
+                const speed = reconcileRnrSpeedLoss(actual.filter(event => event.kind === "production").map(event => ({
+                    id: event.id, productId, operationId, stationId,
+                    startMinute: event.startMinute, endMinute: event.endMinute,
+                    okQty: event.okQty ?? 0, nokQty: event.nokQty ?? 0,
+                    piecesPerCycle: event.piecesPerCycle ?? 0,
+                })), speedOptionsForCycle() ?? {});
+                if (speed.readyForCalibration)
+                    preview = buildRnrBestActualPreview({
+                        stationId, planned: peekPlannedSaEvents(stationId, productId), actual,
+                        windowStartMinute: window.startMinute, windowEndMinute: window.endMinute,
+                        offShiftIntervals: standardSaOffShiftIntervals(config),
+                        standardCycleSec: parameter.standardCycleSec, piecesPerCycle: parameter.piecesPerCycle,
+                        plannedQualityRate: parameter.qualityRate, publishedPerformanceRate: parameter.performanceRate,
+                        acceptedUnplannedMinutes: observeShiftAllowance({
+                            stationId, shifts: standardSaShiftIntervals(config), actual,
+                            planned: peekPlannedSaEvents(stationId, productId),
+                        })?.planningUnplannedMinutes ?? 0,
+                        inferredSaLossMinutes: speed.inferredSaLossMinutes,
+                    });
+            }
+            catch { /* A station with invalid evidence remains unavailable in the operation total. */ }
+        }
+        return {
+            stationId, windowStartMinute: window.startMinute ?? 0, windowEndMinute: window.endMinute ?? 0,
+            ...(preview ? { preview } : {}),
+        };
+    });
+    const total = summarizeOperationOutput(stations);
+    const sameWindow = stations.every(item => item.windowStartMinute === stations[0]?.windowStartMinute
+        && item.windowEndMinute === stations[0]?.windowEndMinute);
+    const unavailable = stations.filter(item => !item.preview?.complete).map(item => item.stationId);
+    const units = (value) => value === undefined ? "-" : formatOutputUnits(value);
+    const metric = (label, value) => field(label, units(value));
+    const secondsDelta = (actual, planned) => actual === undefined || planned === undefined
+        ? "-" : `${actual >= planned ? "+" : ""}${formatNumber(actual - planned, 1)} ${zh ? "秒" : "s"}`;
+    const rateDelta = (actual, planned) => actual === undefined || planned === undefined
+        ? "-" : `${actual >= planned ? "+" : ""}${formatNumber((actual - planned) * 100, 1)} ${zh ? "百分点" : "pp"}`;
+    const stationRows = stations.map(item => {
+        const value = item.preview?.complete ? item.preview : undefined;
+        return `<tr><td>${escapeHtml(stationIdentity(selectedOperation.assignments.find(view => view.assignment.stationId === item.stationId)?.station?.name, item.stationId))}</td>
+      <td>${units(value?.bestCaseIdealUnits)}</td><td>${units(value?.actualGrossUnits)}</td>
+      <td>${units(value?.actualGoodUnits)}</td><td>${units(value?.totalGapUnits)}</td>
+      <td>${units(value?.timeGapUnits)}</td><td>${units(value?.inferredSaGapUnits)}</td>
+      <td>${units(value?.paceGapUnits)}</td><td>${units(value?.qualityGapUnits)}</td>
+      <td>${units(value?.mostLikelyGoodUnits)}</td></tr>`;
+    }).join("");
+    const diagnosisRows = stations.map(item => {
+        const value = item.preview?.complete ? item.preview : undefined;
+        return `<tr><td>${escapeHtml(stationIdentity(selectedOperation.assignments.find(view => view.assignment.stationId === item.stationId)?.station?.name, item.stationId))}</td>
+      <td>${secondsDelta(value?.actualCycleSec, value?.standardCycleSec)}</td>
+      <td>${rateDelta(value?.actualPerformanceRate, value?.publishedPerformanceRate)}</td>
+      <td>${rateDelta(value?.actualQualityRate, value?.plannedQualityRate)}</td>
+      <td>${rateDelta(value?.actualSa, value?.plannedSa)}</td></tr>`;
+    }).join("");
+    return `<section class="sub-card" style="margin-top:14px;" data-operation-output-comparison>
+    <div class="panel-head"><h3>${zh ? "当前工序 · Best case / Most likely 与实跑" : "Current operation · Best case / Most likely vs trial"}</h3><span class="pill ${total ? "good" : "warn"}">${total ? (zh ? "同窗汇总" : "Same-window total") : (zh ? "待补齐" : "Incomplete")}</span></div>
+    <p class="note">${zh ? "件数先按各工站自身时间、CT 和参数计算，再合并；CT、P、Q、SA 不在这里合成。以下实跑仅指 R&R 观察窗口，不是真实生产周实绩。" : "Units are calculated with each station's own time, CT and parameters before summing. CT, P, Q and SA are not combined. Trial output is from the R&R observation window, not weekly production actuals."}</p>
+    ${!sameWindow ? `<p class="form-error">${zh ? "工站观察窗口不同，工序总量暂不合并。" : "Station observation windows differ; operation totals are withheld."}</p>` : ""}
+    ${unavailable.length ? `<p class="note">${zh ? "待补齐工站" : "Stations to complete"}：${escapeHtml(unavailable.join(" / "))}</p>` : ""}
+    <div class="field-grid">
+      ${metric(zh ? "Best case 理论件数" : "Best case ideal units", total?.bestCaseIdealUnits)}
+      ${metric(zh ? "实跑总产出" : "Trial gross units", total?.actualGrossUnits)}
+      ${metric(zh ? "Best case 理论 OK" : "Best case ideal OK", total?.bestCaseOkUnits)}
+      ${metric(zh ? "实跑良品" : "Trial good units", total?.actualGoodUnits)}
+      ${metric(zh ? "Best case 理论 NOK" : "Best case ideal NOK", total?.bestCaseNokUnits)}
+      ${metric(zh ? "实跑 NOK" : "Trial NOK", total?.qualityGapUnits)}
+      ${metric(zh ? "良品差额" : "Good-unit gap", total?.totalGapUnits)}
+      ${metric(zh ? "时间损失折算 · 含推断" : "Time gap incl. inference", total?.timeGapUnits)}
+      ${metric(zh ? "其中待归因推断" : "Of which inferred", total?.inferredSaGapUnits)}
+      ${metric(zh ? "性能率差额折算" : "Performance gap", total?.paceGapUnits)}
+      ${metric(zh ? "Most likely 良品" : "Most likely good", total?.mostLikelyGoodUnits)}
+    </div>
+    <details><summary>${zh ? "查看各工站件数与差异来源" : "Station units and gap sources"}</summary>
+      <div class="table-wrap"><table><thead><tr><th>${zh ? "工站" : "Station"}</th><th>Best case</th><th>${zh ? "实跑总产出" : "Trial gross"}</th><th>${zh ? "实跑良品" : "Trial good"}</th><th>${zh ? "良品差额" : "Good gap"}</th><th>${zh ? "时间损失" : "Time gap"}</th><th>${zh ? "其中推断" : "Inferred"}</th><th>${zh ? "性能差额" : "Pace gap"}</th><th>NOK</th><th>Most likely</th></tr></thead><tbody>${stationRows}</tbody></table></div>
+      <div class="table-wrap"><table><caption>${zh ? "各工站参数差异 · 实跑减基准，不合成工序均值" : "Station parameter deltas · trial minus baseline, not averaged"}</caption><thead><tr><th>${zh ? "工站" : "Station"}</th><th>CT Δ</th><th>P Δ</th><th>Q Δ</th><th>SA Δ</th></tr></thead><tbody>${diagnosisRows}</tbody></table></div>
+    </details>
+  </section>`;
+}
+function renderOperationTimeReconciliation(selectedOperation, productId) {
+    if (!selectedOperation)
+        return "";
+    const zh = locale === "zh";
+    const operationId = selectedOperation.operation.operationId;
+    const focusedStation = selectedOperation.assignments.find(item => item.assignment.stationId === calibrationFocusedStationId);
+    const members = focusedStation ? [focusedStation]
+        : selectedOperation.assignments.filter(item => item.planningStatus === "available");
+    const stationLabel = focusedStation ? stationIdentity(focusedStation.station?.name, focusedStation.assignment.stationId) : "";
+    const results = members.map(item => {
+        const stationId = item.assignment.stationId;
+        const config = getStandardSaDayConfig(productId, stationId);
+        const window = standardSaDayWindow(config);
+        const actual = rnrActualEventsByContext.get(actualScopeKey(productId, operationId, stationId)) ?? [];
+        try {
+            return {
+                stationId, hasActual: actual.length > 0, window,
+                result: reconcileRnrTimeline({
+                    stationId, startMinute: window.startMinute ?? 0, endMinute: window.endMinute ?? 0,
+                    planned: peekPlannedSaEvents(stationId, productId), actual,
+                    offShiftIntervals: standardSaOffShiftIntervals(config),
+                }),
+            };
+        }
+        catch (error) {
+            return { stationId, hasActual: false, window, result: undefined, error: error instanceof Error ? error.message : String(error) };
+        }
+    });
+    const complete = results.length > 0 && results.every(item => item.result && item.hasActual);
+    const sameWindow = results.every(item => item.window.startMinute === results[0]?.window.startMinute
+        && item.window.endMinute === results[0]?.window.endMinute);
+    const sum = (field) => results.reduce((total, item) => total + (item.result?.[field] ?? 0), 0);
+    const rows = results.flatMap(item => item.result?.rows.filter(row => !reconciliationDiffOnly || row.status !== "matched")
+        .map(row => ({ ...row, stationId: item.stationId })) ?? []).sort((left, right) => left.startMinute - right.startMinute || left.stationId.localeCompare(right.stationId));
+    const errors = results.flatMap(item => "error" in item ? [`${item.stationId}: ${item.error}`] : []);
+    const state = (kind, planned) => kind === "unrecorded"
+        ? planned ? (zh ? "计划空档" : "Planned gap") : (zh ? "待补录" : "Unrecorded")
+        : formatTimelineKind(kind);
+    return `<section class="sub-card" style="margin-top:14px;" data-operation-reconciliation data-focused-station="${escapeHtml(focusedStation?.assignment.stationId ?? "")}">
+    <div class="panel-head"><h3>${focusedStation ? (zh ? `当前工站 · ${escapeHtml(stationLabel)} · 计划 / 实际时间对账` : `Current station · ${escapeHtml(stationLabel)} · planned / actual time`) : (zh ? "当前工序 · 计划 / 实际时间对账" : "Current operation · planned / actual time")}</h3><div class="panel-actions"><button class="button secondary" type="button" data-reconcile-diff-only aria-pressed="${reconciliationDiffOnly}">${reconciliationDiffOnly ? (zh ? "显示全部" : "Show all") : (zh ? "仅聚焦差异" : "Differences only")}</button><span class="pill ${complete && results.every(item => item.result?.unrecordedMinutes === 0 && item.result?.plannedGapMinutes === 0) ? "good" : "warn"}">${complete ? (zh ? "时间账已记录" : "Timeline recorded") : (zh ? "时间账待补" : "Timeline incomplete")}</span></div></div>
+    <div class="field-grid">
+      ${field(zh ? `计划生产分钟${focusedStation ? "" : " · 各站合计"}` : `Planned production min${focusedStation ? "" : " · station sum"}`, results.length && results.every(item => item.result) ? formatNumber(sum("plannedProductionMinutes")) : "-")}
+      ${field(zh ? `实跑生产分钟${focusedStation ? "" : " · 各站合计"}` : `Actual production min${focusedStation ? "" : " · station sum"}`, complete ? formatNumber(sum("actualProductionMinutes")) : "-")}
+      ${field(zh ? `显式异常分钟${focusedStation ? "" : " · 各站合计"}` : `Recorded abnormal min${focusedStation ? "" : " · station sum"}`, complete ? formatNumber(sum("explicitAbnormalMinutes")) : "-")}
+      ${field(zh ? `待补录分钟${focusedStation ? "" : " · 各站合计"}` : `Unrecorded min${focusedStation ? "" : " · station sum"}`, results.length && results.every(item => item.result) ? formatNumber(sum("unrecordedMinutes")) : "-")}
+    </div>
+    ${sameWindow ? "" : `<p class="note">${zh ? "工站观察窗口不同：分钟仅作逐站合计，不作为同窗工序结论。" : "Station windows differ. Minute totals are station sums, not a shared-window conclusion."}</p>`}
+    ${errors.length ? `<p class="form-error" role="alert">${zh ? "时间账存在重叠或越界，请先修正计划/实际记录：" : "Timeline records overlap or fall outside the observation window: "}${escapeHtml(errors.join(zh ? "；" : "; "))}</p>` : ""}
+    <div class="table-wrap operation-difference-scroll"><table><thead><tr><th>${zh ? "工站" : "Station"}</th><th>${zh ? "开始" : "Start"}</th><th>${zh ? "结束" : "End"}</th><th>${zh ? "计划状态" : "Planned"}</th><th>${zh ? "实际状态" : "Actual"}</th><th>${zh ? "差异" : "Difference"}</th></tr></thead><tbody>
+      ${rows.map(row => `<tr><td>${escapeHtml(row.stationId)}</td><td>${escapeHtml(formatOptionalMinutePoint(row.startMinute))}</td><td>${escapeHtml(formatOptionalMinutePoint(row.endMinute))}</td><td>${escapeHtml(state(row.plannedKind, true))}</td><td>${escapeHtml(state(row.actualKind, false))}</td><td>${row.status === "matched" ? "-" : row.status === "unrecorded" ? (zh ? "待补录" : "Unrecorded") : row.status === "plannedGap" ? (zh ? "计划空档" : "Planned gap") : (zh ? "状态不同" : "Changed state")}</td></tr>`).join("") || `<tr><td colspan="6">${zh ? "当前工序没有差异时段。" : "No differing intervals in this operation."}</td></tr>`}
+    </tbody></table></div>
+  </section>`;
+}
+function bindOperationReconciliationToggle() {
+    calibrationRoot.querySelector("[data-reconcile-diff-only]")?.addEventListener("click", () => {
+        reconciliationDiffOnly = !reconciliationDiffOnly;
+        render(selectedProductId);
+    });
+}
+function renderOperationCycleDiagnosis(selectedOperation, productId) {
+    if (!selectedOperation)
+        return "";
+    const zh = locale === "zh";
+    const operationId = selectedOperation.operation.operationId;
+    const stations = selectedOperation.assignments.filter(item => item.planningStatus === "available").map(item => {
+        const stationId = item.assignment.stationId;
+        const key = actualScopeKey(productId, operationId, stationId);
+        const cycle = key === rnrContextKey ? cycleCheckDraft : rnrDrafts.get(key)?.cycle;
+        const summary = summarizeCycleSamples(cycle ?? emptyCycleSampleDraft());
+        const parameter = selectEffectiveParameter(scenarioState.operationStationParameters ?? [], operationId, stationId);
+        const observed = !summary.legacyUnparsed && !summary.legacyIssues.length ? summary.observedMeanSec : undefined;
+        return { stationId, name: stationIdentity(item.station?.name, stationId), planned: parameter?.standardCycleSec,
+            observed, recorded: summary.recordedCount, valid: summary.validCount, excluded: summary.excludedCount };
+    });
+    const seconds = (value) => value === undefined ? "-" : `${formatNumber(value, 1)} ${zh ? "秒" : "s"}`;
+    return `<section class="sub-card" style="margin-top:14px;" data-operation-cycle-diagnosis>
+    <div class="panel-head"><h3>${zh ? "逐工站节拍样本诊断" : "Cycle samples by station"}</h3><span class="pill">${zh ? `${stations.length} 个计入工站` : `${stations.length} included stations`}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>${zh ? "工站" : "Station"}</th><th>${zh ? "计划 CT" : "Planned CT"}</th><th>${zh ? "样本均值" : "Sample mean"}</th><th>${zh ? "差异 · 样本减计划" : "Delta · sample minus plan"}</th><th>${zh ? "采集 / 有效 / 去除" : "Collected / valid / excluded"}</th></tr></thead><tbody>${stations.map(item => `<tr><td>${escapeHtml(item.name)}</td><td>${seconds(item.planned)}</td><td>${seconds(item.observed)}</td><td>${item.observed === undefined || item.planned === undefined ? "-" : `${item.observed >= item.planned ? "+" : ""}${seconds(item.observed - item.planned)}`}</td><td>${item.recorded} / ${item.valid} / ${item.excluded}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">${zh ? "只比较各站自身样本与计划 CT，不生成工序平均 CT，也不改写已发布参数。" : "Each station is compared against its own planned CT; no operation-average CT is created or published parameter changed."}</p>
+  </section>`;
+}
 function renderCalibration(selectedOperation, routingConfig) {
+    const focusScope = `${routingConfig.productId}::${routingConfig.route?.routeId ?? ""}::${selectedOperation?.operation.operationId ?? ""}`;
+    if (focusScope !== calibrationFocusScope) {
+        calibrationFocusScope = focusScope;
+        calibrationFocusedStationId = "";
+        calibrationDetailOpen = false;
+    }
+    const statusPanel = renderCalibrationRouteStatus(routingConfig, selectedOperation);
+    const operationBoard = renderOperationCalibrationBoard(selectedOperation, routingConfig);
+    const operationOutput = renderOperationOutputComparison(selectedOperation, routingConfig.productId);
+    const operationReconciliation = renderOperationTimeReconciliation(selectedOperation, routingConfig.productId);
+    const operationCycleDiagnosis = renderOperationCycleDiagnosis(selectedOperation, routingConfig.productId);
     const routePanel = renderRouteWindowCapacityPanel(routingConfig);
-    const reportPanel = renderRouteWeekReportPanel(routingConfig);
     const assignment = selectedOperation?.assignments.find(item => item.assignment.stationId === selectedWorkflowStationId)
         ?? selectedOperation?.assignments.find(item => item.planningStatus === "available");
     const stationId = selectedWorkflowStationId || "-";
     if (stationId === "-") {
-        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("stationRequired"))}${routePanel}${reportPanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
+        calibrationRoot.innerHTML = `${statusPanel}${operationBoard}${operationOutput}${operationReconciliation}${operationCycleDiagnosis}${emptyState(t("stationRequired"))}`;
+        bindCalibrationRouteStatus();
+        bindOperationStationRows();
+        bindOperationReconciliationToggle();
         bindRouteWindowControls(selectedOperation, routingConfig);
-        bindRouteWeekReport(routingConfig);
         return;
     }
     const productId = assignment?.assignment.productId ?? selectedProductId;
     const events = getPlannedSaEvents(stationId, productId);
     if (!events.length) {
-        calibrationRoot.innerHTML = `${currentStationHead(t("stageCalibration"), t("calibrationTitle"))}${emptyState(t("baselineRequired"))}${routePanel}${reportPanel}<p class="note">${t("capacityPreviewOnly")}</p>`;
+        calibrationRoot.innerHTML = `${statusPanel}${operationBoard}${operationOutput}${operationReconciliation}${operationCycleDiagnosis}${emptyState(t("baselineRequired"))}`;
+        bindCalibrationRouteStatus();
+        bindOperationStationRows();
+        bindOperationReconciliationToggle();
         bindRouteWindowControls(selectedOperation, routingConfig);
-        bindRouteWeekReport(routingConfig);
         return;
     }
     const dayConfig = getStandardSaDayConfig(productId, stationId);
@@ -4105,7 +5890,6 @@ function renderCalibration(selectedOperation, routingConfig) {
     const samples = cycleSummary.orderedSeconds;
     const speed = reconcileCurrentRnrSpeed();
     let reconciliation;
-    let reconciliationError = "";
     try {
         reconciliation = reconcileRnrTimeline({
             stationId,
@@ -4116,9 +5900,7 @@ function renderCalibration(selectedOperation, routingConfig) {
             offShiftIntervals,
         });
     }
-    catch (error) {
-        reconciliationError = error instanceof Error ? error.message : String(error);
-    }
+    catch { /* The operation table reports station timeline errors. */ }
     const evidence = reconciliation ? buildRnrEvidence({
         productId, operationId: selectedOperation?.operation.operationId ?? "", stationId,
         startMinute: window.startMinute ?? 0, endMinute: window.endMinute ?? 0,
@@ -4140,6 +5922,7 @@ function renderCalibration(selectedOperation, routingConfig) {
                     stationId,
                     shifts: standardSaShiftIntervals(dayConfig),
                     actual: actualEvents,
+                    planned: events,
                 })?.planningUnplannedMinutes ?? 0,
                 inferredSaLossMinutes: speed.inferredSaLossMinutes,
             });
@@ -4167,6 +5950,11 @@ function renderCalibration(selectedOperation, routingConfig) {
         reconciliationComplete: reconciliation?.complete ?? false,
     });
     const evidenceDraft = captureRnrEvidenceDraft(evidencePackage, dayConfig);
+    const referencedSample = activeRnrSampleReference(evidenceDraft, routingConfig.route?.routeId ?? "", routingConfig.route?.version ?? "");
+    evidenceDraft.snapshot.sampleReference = referencedSample ? {
+        sampleId: referencedSample.sampleId, revisionId: referencedSample.revisionId,
+        revision: referencedSample.revision, source: referencedSample.source,
+    } : null;
     syncAutoSavedRnrEvidence(evidenceDraft);
     const cycleDiagnosis = diagnosePlannedCycle(cycleSummary, parameter && parameter.standardCycleSec > 0 ? parameter.standardCycleSec : undefined);
     const suggestionFingerprint = JSON.stringify({ events, actualEvents, samples, speed, evidence, parameter });
@@ -4176,47 +5964,40 @@ function renderCalibration(selectedOperation, routingConfig) {
             / Math.max(productionEvents.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0) - speed.inferredSaLossMinutes, 0.0001)))
         : undefined;
     calibrationRoot.innerHTML = `
+    ${statusPanel}
+    ${operationBoard}
+    ${operationOutput}
+    ${operationReconciliation}
+    ${operationCycleDiagnosis}
+    <details class="calibration-station-details" data-calibration-station-details ${calibrationDetailOpen ? "open" : ""}>
+      <summary>${locale === "zh" ? `工站明细 · ${stationIdentity(assignment?.station?.name, stationId)}` : `Station detail · ${stationIdentity(assignment?.station?.name, stationId)}`}</summary>
     ${currentStationHead(t("stageCalibration"), t("calibrationTitle"), `<span class="pill">${t("observedDraft")}</span>`)}
+    <p class="note">${locale === "zh" ? "下面只展开表中选中的那一台工站。其他工站的节拍、SA、P、Q 仍留在上表。" : "The sections below belong to the station selected in the table. The other stations keep their own cycle, SA, P and Q above."}</p>
     <p class="note">${t("calibrationNote")}</p>
     <section class="metrics" style="margin-top:14px;">
       ${metricCard(t("baselineSaMetric"), baselineValid ? percent(baseline.bestCaseSaWithBreaks) : "-", t("baselineReference"), "good")}
       ${metricCard(t("draftPerformanceMetric"), performance === undefined ? "-" : percent(performance), hasActualRecord ? t("observedDraft") : (locale === "zh" ? "暂无实际记录" : "No actual record"), "neutral")}
       ${metricCard(t("draftQualityMetric"), qualityRate === undefined ? "-" : percent(qualityRate), hasActualRecord ? t("observedDraft") : (locale === "zh" ? "暂无实际记录" : "No actual record"), "neutral")}
     </section>
-    <section class="sub-card" style="margin-top:14px;">
-      <div class="panel-head"><h3>${locale === "zh" ? "计划 / 实际时间对账" : "Planned / actual time reconciliation"}</h3><span class="pill ${reconciliation?.complete ? "good" : "warn"}">${reconciliation?.complete ? (locale === "zh" ? "时间账完整" : "Timeline complete") : (locale === "zh" ? "待核对" : "Review needed")}</span></div>
-      ${reconciliation ? `
-        <div class="field-grid">
-          ${field(locale === "zh" ? "计划生产分钟" : "Planned production minutes", formatNumber(reconciliation.plannedProductionMinutes))}
-          ${field(locale === "zh" ? "实际生产分钟" : "Actual production minutes", hasActualRecord ? formatNumber(reconciliation.actualProductionMinutes) : "-")}
-          ${field(locale === "zh" ? "显式异常分钟" : "Recorded abnormal minutes", hasActualRecord ? formatNumber(reconciliation.explicitAbnormalMinutes) : "-")}
-          ${field(locale === "zh" ? "待补录分钟" : "Unrecorded minutes", formatNumber(reconciliation.unrecordedMinutes))}
-        </div>
-        <div class="table-wrap"><table><thead><tr>
-          <th>${locale === "zh" ? "开始" : "Start"}</th><th>${locale === "zh" ? "结束" : "End"}</th>
-          <th>${locale === "zh" ? "计划状态" : "Planned state"}</th><th>${locale === "zh" ? "实际状态" : "Actual state"}</th>
-          <th>${locale === "zh" ? "差异" : "Difference"}</th>
-        </tr></thead><tbody>${reconciliation.rows.map(row => `<tr>
-          <td>${escapeHtml(formatOptionalMinutePoint(row.startMinute))}</td>
-          <td>${escapeHtml(formatOptionalMinutePoint(row.endMinute))}</td>
-          <td>${row.plannedKind === "unrecorded" ? (locale === "zh" ? "计划空档" : "Planned gap") : formatTimelineKind(row.plannedKind)}</td>
-          <td>${row.actualKind === "unrecorded" ? (locale === "zh" ? "待补录" : "Unrecorded") : formatTimelineKind(row.actualKind)}</td>
-          <td>${row.status === "matched" ? "-" : row.status === "unrecorded" ? (locale === "zh" ? "待补录" : "Unrecorded") : row.status === "plannedGap" ? (locale === "zh" ? "计划空档" : "Planned gap") : (locale === "zh" ? "状态不同" : "Changed state")}</td>
-        </tr>`).join("")}</tbody></table></div>
-      ` : `<p class="form-error" role="alert">${locale === "zh" ? "时间账存在重叠或越界，请先修正计划/实际记录。" : "Timeline records overlap or fall outside the observation window."} ${escapeHtml(reconciliationError)}</p>`}
-    </section>
-    ${renderRnrEvidencePanel(evidence)}
-    ${renderRnrBestActualPreviewPanel(bestActualPreview, validationFixtureContexts.has(`${productId}::${selectedOperation?.operation.operationId ?? ""}::${stationId}`))}
-    ${renderCycleDiagnosisPanel(cycleDiagnosis, cycleSummary)}
+    ${renderRnrEvidencePanel(evidence, actualEvents, events)}
+    ${renderMlLossReview(stationId, events, actualEvents, dayConfig)}
+    ${renderRnrBestActualPreviewPanel(bestActualPreview, validationFixtureContexts.has(`${productId}::${selectedOperation?.operation.operationId ?? ""}::${stationId}`), evidenceDraft.snapshot.sampleReference)}
     ${parameter ? "" : renderInitialPresetPanel(operationId, stationId, cycleSummary)}
     ${renderParameterSuggestionsPanel(suggestions, suggestionFingerprint, observationFingerprint, evidence, parameter, versions, events)}
+    ${renderRnrSampleArchivePanel(evidenceDraft, routingConfig.route?.routeId ?? "", routingConfig.route?.version ?? "", assignment?.station?.equipmentId ?? "")}
     ${renderRnrEvidencePackagePanel(evidenceDraft)}
-    ${routePanel}
-    ${reportPanel}
-    <p class="note">${t("capacityPreviewOnly")}</p>
+    </details>
+    <details class="calibration-route-details"><summary>${locale === "zh" ? "全路线同窗能力 · 技术明细" : "Whole-route same-window capacity · technical detail"}</summary>${routePanel}</details>
   `;
+    calibrationRoot.querySelector("[data-calibration-station-details]")?.addEventListener("toggle", event => {
+        const detail = event.currentTarget;
+        if (detail.isConnected)
+            calibrationDetailOpen = detail.open;
+    });
+    bindCalibrationRouteStatus();
+    bindOperationStationRows();
+    bindOperationReconciliationToggle();
     bindRouteWindowControls(selectedOperation, routingConfig);
-    bindRouteWeekReport(routingConfig);
     calibrationRoot.querySelectorAll("[data-recoverable-event]").forEach(input => {
         input.addEventListener("input", () => {
             const max = Number(input.max);
@@ -4244,7 +6025,52 @@ function renderCalibration(selectedOperation, routingConfig) {
             if (!input || !target)
                 return;
             const recoverableMinutes = boundedRecoverableMinutes(Number(input.value), target.endMinute - target.startMinute);
-            rnrActualEventsByContext.set(key, current.map(event => event.id === eventId ? { ...event, recoverableMinutes, recoverableConfirmed: true } : event));
+            rnrActualEventsByContext.set(key, current.map(event => event.id === eventId
+                ? { ...event, recoverableMinutes, recoverableConfirmed: true, recoverableConfirmedAt: new Date().toISOString() } : event));
+            render(selectedProductId);
+        });
+    });
+    const confirmMlLoss = (events, confirmed) => {
+        const key = actualScopeKey(productId, operationId, stationId);
+        const ids = new Set(events.map(event => event.id));
+        const signature = lossPlanSignature(getPlannedSaEvents(stationId, productId));
+        rnrActualEventsByContext.set(key, (rnrActualEventsByContext.get(key) ?? []).map(event => ids.has(event.id)
+            ? { ...event, mlLossConfirmed: confirmed, mlLossPlanSignature: confirmed ? signature : "",
+                mlLossConfirmedAt: confirmed ? new Date().toISOString() : "" } : event));
+        render(selectedProductId);
+    };
+    calibrationRoot.querySelectorAll("[data-confirm-ml-event]").forEach(button => {
+        button.addEventListener("click", () => {
+            const target = actualEvents.find(event => event.id === button.dataset.confirmMlEvent);
+            if (!target)
+                return;
+            const confirmed = target.mlLossConfirmed === true
+                && target.mlLossPlanSignature === lossPlanSignature(getPlannedSaEvents(stationId, productId));
+            confirmMlLoss([target], !confirmed);
+        });
+    });
+    calibrationRoot.querySelectorAll("[data-confirm-ml-kind]").forEach(button => {
+        button.addEventListener("click", () => {
+            const targets = actualEvents.filter(event => event.kind === button.dataset.confirmMlKind);
+            if (!targets.length)
+                return;
+            const signature = lossPlanSignature(getPlannedSaEvents(stationId, productId));
+            const confirmed = targets.every(event => event.mlLossConfirmed === true && event.mlLossPlanSignature === signature);
+            confirmMlLoss(targets, !confirmed);
+        });
+    });
+    calibrationRoot.querySelectorAll("[data-confirm-timing-shift]").forEach(button => {
+        button.addEventListener("click", () => {
+            const planned = getPlannedSaEvents(stationId, productId);
+            const shift = plannedTimingShifts(planned, rnrActualEventsByContext.get(actualScopeKey(productId, operationId, stationId)) ?? [])
+                .find(item => item.kind === button.dataset.confirmTimingShift);
+            if (!shift)
+                return;
+            const key = actualScopeKey(productId, operationId, stationId);
+            rnrActualEventsByContext.set(key, (rnrActualEventsByContext.get(key) ?? []).map(event => event.kind === shift.kind
+                ? { ...event, timingShiftConfirmed: !shift.confirmed,
+                    timingShiftSignature: shift.confirmed ? "" : shift.signature,
+                    timingShiftConfirmedAt: shift.confirmed ? "" : new Date().toISOString() } : event));
             render(selectedProductId);
         });
     });
@@ -4255,6 +6081,7 @@ function renderCalibration(selectedOperation, routingConfig) {
             return;
         clearCurrentRnrEvidence(evidenceDraft);
     });
+    bindRnrSampleArchive(evidenceDraft, routingConfig.route?.routeId ?? "", routingConfig.route?.version ?? "");
     calibrationRoot.querySelector("[data-evidence-export]")?.addEventListener("click", () => {
         const json = JSON.stringify({ ...evidenceDraft, savedAt: new Date().toISOString() }, null, 2);
         const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
@@ -4389,6 +6216,7 @@ function buildRnrEvidencePackageSnapshot(input) {
         plannedEvents: input.planned,
         actualEvents: input.actual,
         cycleSamplesSec: input.cycleSamplesSec,
+        sampleReference: null,
         cycleSampleRecord: {
             schemaVersion: 2,
             samples: cycleCheckDraft.samples.map((sample, index) => ({
@@ -4437,6 +6265,242 @@ function captureRnrEvidenceDraft(snapshot, dayConfig) {
             publishedVersionIds: publishedSuggestions.filter(item => item.suggestion.productId === snapshot.scope.productId && item.suggestion.operationId === snapshot.scope.operationId && item.suggestion.stationId === snapshot.scope.stationId).map(item => item.versionId),
         },
     };
+}
+function rnrSampleInputSignature(draft) {
+    return JSON.stringify({
+        dayConfig: draft.dayConfig,
+        planned: draft.snapshot.plannedEvents,
+        actual: draft.snapshot.actualEvents,
+        cycle: draft.cycleDraft,
+        validationFixture: draft.validationFixture,
+    });
+}
+function archivedRnrInputSignature(record) {
+    try {
+        const saved = JSON.parse(record.evidenceJson);
+        if (saved?.snapshot?.plannedEvents && saved?.snapshot?.actualEvents && saved.dayConfig && saved.cycleDraft) {
+            return rnrSampleInputSignature(saved);
+        }
+    }
+    catch { /* Use the stored signature if an older payload cannot be decoded. */ }
+    return record.inputSignature;
+}
+function activeRnrSampleReference(draft, routeId, routeVersion) {
+    const id = activeRnrRevisionIdByContext.get(rnrArchiveContextKey(draft, routeId, routeVersion));
+    if (!id)
+        return undefined;
+    try {
+        const { productId, operationId, stationId } = draft.snapshot.scope;
+        const store = parseRnrSampleArchive(localStorage.getItem(RNR_ARCHIVE_STORAGE_KEY));
+        const signatures = { ...store, revisions: store.revisions.map(item => ({ ...item, inputSignature: archivedRnrInputSignature(item) })) };
+        return referencedRnrSampleRevision(signatures, {
+            productId, routeId, routeVersion, operationId, stationId,
+        }, id, rnrSampleInputSignature(draft));
+    }
+    catch {
+        return undefined;
+    }
+}
+function archivedRnrAssessment(record, current) {
+    try {
+        const saved = parseRnrEvidenceDraft(record.evidenceJson, current.snapshot.scope);
+        return assessRnrSampleTechnical({
+            revision: record,
+            planned: saved.snapshot.plannedEvents,
+            actual: saved.snapshot.actualEvents,
+            offShiftIntervals: standardSaOffShiftIntervals(saved.dayConfig),
+        });
+    }
+    catch {
+        return { timeAccount: "invalid", eligibility: "blocked", unrecordedMinutes: null,
+            plannedGapMinutes: null, reasons: ["timeline_invalid"] };
+    }
+}
+function renderArchivedRnrShiftBreakdown(record, current) {
+    const zh = locale === "zh";
+    try {
+        const saved = parseRnrEvidenceDraft(record.evidenceJson, current.snapshot.scope);
+        const shifts = rnrScheduledShiftWindows(saved).map((window, index) => ({
+            ...window, label: zh ? `时段 ${index + 1}` : `Period ${index + 1}`,
+        }));
+        if (!shifts.length)
+            return "";
+        const rows = buildRnrShiftBreakdown({ shifts,
+            planned: saved.snapshot.plannedEvents, actual: saved.snapshot.actualEvents });
+        return `<tr><td colspan="8"><details><summary>${zh ? "分时段明细" : "Period breakdown"} · ${rows.length}</summary>
+      <p class="note">${zh ? "时段由保存时的标准 SA 自动划分，分钟按时钟交集计算。跨时段生产段的 OK/NOK 不按比例分摊；整窗数量仍有效。" : "Periods come from the saved Standard SA. Minutes follow clock overlap. Cross-period OK/NOK is not prorated; whole-window quantities remain valid."}</p>
+      <div class="table-wrap"><table><thead><tr><th>${zh ? "时段 / 时间" : "Period / time"}</th><th>${zh ? "计划生产分钟" : "Planned production min"}</th><th>${zh ? "实际生产分钟" : "Actual production min"}</th><th>${zh ? "实际非生产分钟" : "Actual nonproduction min"}</th><th>${zh ? "待补录分钟" : "Unrecorded min"}</th><th>OK / NOK</th></tr></thead><tbody>
+        ${rows.map(row => `<tr><td>${escapeHtml(row.shift.label)} · ${escapeHtml(formatOptionalMinutePoint(row.shift.startMinute))} – ${escapeHtml(formatOptionalMinutePoint(row.shift.endMinute))}</td>
+          <td>${formatNumber(row.plannedProductionMinutes)}</td><td>${formatNumber(row.actualProductionMinutes)}</td><td>${formatNumber(row.actualNonProductionMinutes)}</td><td>${formatNumber(row.unrecordedMinutes)}</td>
+          <td>${row.quantityStatus === "crossShift" ? (zh ? "跨时段数量未分配（整窗有效）" : "Cross-period quantity unallocated (whole window valid)") : row.quantityStatus === "missing" ? (zh ? "生产数量待补" : "Production quantity missing") : `${formatOutputUnits(row.okQty ?? 0)} / ${formatOutputUnits(row.nokQty ?? 0)}`}</td></tr>`).join("")}
+      </tbody></table></div></details></td></tr>`;
+    }
+    catch {
+        return `<tr><td colspan="8">${zh ? "分时段明细暂不可计算：证据包或时间轴需复核。" : "Period detail unavailable: review the evidence package or timeline."}</td></tr>`;
+    }
+}
+function rnrAssessmentReason(code) {
+    const zh = locale === "zh";
+    const text = {
+        timeline_invalid: ["时间轴或证据包无效", "Invalid timeline or evidence package"],
+        actual_missing: ["缺少实跑记录", "Actual records missing"],
+        unrecorded_time: ["实际时间待补录", "Unrecorded actual time"],
+        planned_gap: ["计划时间有空档", "Planned time has gaps"],
+        production_missing: ["缺少生产段", "Production interval missing"],
+        production_quantity_missing: ["生产段数量无效", "Production quantities invalid"],
+        validation_fixture: ["验证样例不可用于正式验收", "Fixture cannot support formal acceptance"],
+        qualification_rules_pending: ["观察时长、适用范围、证据和代表性规则待定", "Duration, scope, evidence and representativeness rules pending"],
+    };
+    return text[code][zh ? 0 : 1];
+}
+function rnrScheduledShiftWindows(draft) {
+    const start = draft.snapshot.scope.startMinute ?? 0;
+    const end = draft.snapshot.scope.endMinute ?? 0;
+    return standardSaShiftIntervals(draft.dayConfig).map(shift => ({
+        startMinute: Math.max(start, shift.startMinute), endMinute: Math.min(end, shift.endMinute),
+    })).filter(shift => shift.endMinute > shift.startMinute);
+}
+function renderRnrSampleArchivePanel(draft, routeId, routeVersion, equipmentId) {
+    const zh = locale === "zh";
+    const { productId, operationId, stationId } = draft.snapshot.scope;
+    let revisions = [];
+    let archiveError = "";
+    try {
+        revisions = sampleRevisionsForScope(parseRnrSampleArchive(localStorage.getItem(RNR_ARCHIVE_STORAGE_KEY)), {
+            productId, routeId, routeVersion, operationId, stationId,
+        });
+    }
+    catch (error) {
+        archiveError = error instanceof Error ? error.message : String(error);
+    }
+    const activeId = activeRnrRevisionIdByContext.get(rnrArchiveContextKey(draft, routeId, routeVersion));
+    const opened = revisions.find(item => item.revisionId === activeId);
+    const active = revisions.filter(item => item.sampleId === opened?.sampleId).at(-1);
+    const equipmentValue = active?.scope.equipmentId ?? equipmentId;
+    const changed = active ? archivedRnrInputSignature(active) !== rnrSampleInputSignature(draft) : true;
+    const canArchive = !archiveError && Boolean(routeId && routeVersion && draft.snapshot.actualEvents.length) && changed;
+    const lossAllowance = observeShiftAllowance({ stationId,
+        planned: draft.snapshot.plannedEvents,
+        actual: draft.snapshot.actualEvents,
+        shifts: standardSaShiftIntervals(draft.dayConfig) });
+    const confirmedLossCount = draft.snapshot.actualEvents.filter(event => event.mlLossConfirmed === true
+        && event.mlLossPlanSignature === lossPlanSignature(draft.snapshot.plannedEvents)).length;
+    const timingShifts = plannedTimingShifts(draft.snapshot.plannedEvents, draft.snapshot.actualEvents);
+    const draftStatus = opened
+        ? opened.revisionId !== active?.revisionId
+            ? changed
+                ? (zh ? `已重开历史修订 v${opened.revision}；保存将生成 v${(active?.revision ?? 0) + 1}` : `Older revision v${opened.revision} reopened; saving creates v${(active?.revision ?? 0) + 1}`)
+                : (zh ? `已重开历史修订 v${opened.revision}；内容与最新修订相同` : `Older revision v${opened.revision} reopened; matches latest revision`)
+            : changed
+                ? (zh ? `当前样本 v${opened.revision} 已修改，待保存修订` : `Sample v${opened.revision} changed; save a revision`)
+                : (zh ? `当前样本 v${opened.revision} 已归档，内容未修改` : `Sample v${opened.revision} archived; no changes`)
+        : draft.snapshot.actualEvents.length
+            ? (zh ? "当前草稿未关联归档；要修订旧样本请先重开该版本" : "Draft not linked to an archive; reopen a revision before editing it")
+            : (zh ? "等待录入新样本" : "Waiting for a new sample");
+    return `<section class="sub-card" style="margin-top:14px;" data-rnr-archive-panel>
+    <div class="panel-head"><h3>${zh ? "R&R 独立样本归档" : "Independent R&R sample drafts"}</h3><span class="section-label">${zh ? "本地草稿" : "Local draft"} · ${revisions.length}</span></div>
+    <p class="note">${zh ? "样本按产品、路线版本、工序、工站、设备和观察窗口归档；班次名称无需填写。每次保存生成新样本或修订，旧版本保留。归档不等于正式批准。" : "Samples use product, route version, operation, station, equipment and observation window. Shift names are optional. Each save creates a sample or revision; older versions remain. Archiving is not formal approval."}</p>
+    <p class="note" role="status" data-rnr-archive-status>${escapeHtml(draftStatus)}</p>
+    <p class="note">${zh
+        ? `损失核对：已采纳 ${formatNumber(lossAllowance?.planningUnplannedMinutes ?? 0, 1)} 分钟（${confirmedLossCount} 段已标记），超时/异常待确认 ${formatNumber(lossAllowance?.pendingLossMinutes ?? 0, 1)} 分钟；总量一致但时段错位 ${timingShifts.length} 类，其中 ${timingShifts.filter(item => !item.confirmed).length} 类待人工确认。${changed ? "当前确认尚未进入样本修订，请保存新修订。" : "当前确认已包含在所示样本修订中。"}${draft.validationFixture ? " 此样本是验证样例，不能归为真实跑线证据。" : ""}`
+        : `Loss review: ${formatNumber(lossAllowance?.planningUnplannedMinutes ?? 0, 1)} min accepted (${confirmedLossCount} intervals), ${formatNumber(lossAllowance?.pendingLossMinutes ?? 0, 1)} min of overrun/abnormal loss pending; ${timingShifts.length} equal-total timing shifts, ${timingShifts.filter(item => !item.confirmed).length} awaiting review. ${changed ? "Save a new revision to archive current decisions." : "Current decisions are in the shown revision."}${draft.validationFixture ? " This is a validation fixture, not field evidence." : ""}`}</p>
+    <div class="field-grid">
+      <label class="field"><span>${zh ? "物理设备编号" : "Physical equipment ID"}</span><input data-rnr-archive-equipment value="${escapeHtml(equipmentValue)}" /></label>
+    </div>
+    ${rnrArchiveMessage || archiveError ? `<p class="${archiveError ? "form-error" : "note"}" role="status">${escapeHtml(archiveError || rnrArchiveMessage)}</p>` : ""}
+    <div class="panel-actions" style="margin-top:12px;">
+      <button class="button secondary" type="button" data-rnr-archive-new>${zh ? "开始新样本" : "Start new sample"}</button>
+      <button class="button" type="button" data-rnr-archive-save ${canArchive ? "" : "disabled"}>${active ? (zh ? "保存当前样本修订" : "Save sample revision") : (zh ? "归档为新样本" : "Archive new sample")}</button>
+    </div>
+    <div class="table-wrap" style="margin-top:12px;"><table><thead><tr>
+      <th>${zh ? "样本 / 修订" : "Sample / revision"}</th><th>${zh ? "观察窗口" : "Observation window"}</th><th>${zh ? "设备 / 历史备注" : "Equipment / legacy note"}</th><th>${zh ? "来源" : "Source"}</th><th>${zh ? "时间账" : "Time account"}</th><th>${zh ? "验收资格" : "Acceptance eligibility"}</th><th>${zh ? "保存时间" : "Saved at"}</th><th>${zh ? "操作" : "Action"}</th>
+    </tr></thead><tbody>${revisions.length ? revisions.slice(-20).reverse().map(item => {
+        const assessment = archivedRnrAssessment(item, draft);
+        return `<tr>
+      <td>${escapeHtml(item.sampleId.slice(0, 8))} · v${item.revision}</td>
+      <td>${escapeHtml(formatOptionalMinutePoint(item.scope.startMinute))} – ${escapeHtml(formatOptionalMinutePoint(item.scope.endMinute))}</td>
+      <td>${escapeHtml(item.scope.equipmentId)}${item.scope.shiftLabel ? `<br><small>${zh ? "旧班次备注" : "Legacy shift note"}：${escapeHtml(item.scope.shiftLabel)}</small>` : ""}</td>
+      <td>${item.source === "validationFixture" ? (zh ? "验证样例 · 非现场" : "Fixture · not field data") : (zh ? "人工记录" : "Manual record")}</td>
+      <td>${assessment.timeAccount === "complete" ? (zh ? "完整" : "Complete") : assessment.timeAccount === "invalid" ? (zh ? "无效" : "Invalid") : (zh ? "待补录" : "Incomplete")}${assessment.unrecordedMinutes ? ` · ${formatNumber(assessment.unrecordedMinutes)} min` : ""}</td>
+      <td><span class="pill ${assessment.eligibility === "blocked" ? "warn" : ""}">${assessment.eligibility === "blocked" ? (zh ? "不可用于正式验收" : "Not eligible") : (zh ? "规则待定" : "Rules pending")}</span><small>${escapeHtml(assessment.reasons.map(rnrAssessmentReason).join("；"))}</small></td>
+      <td>${escapeHtml(item.capturedAt)}</td>
+      <td><button class="button secondary" type="button" data-rnr-archive-open="${escapeHtml(item.revisionId)}">${zh ? "重开用于试算" : "Reopen for preview"}</button></td>
+    </tr>${renderArchivedRnrShiftBreakdown(item, draft)}`;
+    }).join("") : `<tr><td colspan="8">${zh ? "尚无归档样本" : "No archived samples"}</td></tr>`}</tbody></table></div>
+  </section>`;
+}
+function rnrArchiveContextKey(draft, routeId, routeVersion) {
+    const { productId, operationId, stationId } = draft.snapshot.scope;
+    return [productId, routeId, routeVersion, operationId, stationId].map(encodeURIComponent).join(":");
+}
+function bindRnrSampleArchive(draft, routeId, routeVersion) {
+    const scope = draft.snapshot.scope;
+    const contextKey = rnrArchiveContextKey(draft, routeId, routeVersion);
+    const readStore = () => parseRnrSampleArchive(localStorage.getItem(RNR_ARCHIVE_STORAGE_KEY));
+    calibrationRoot.querySelector("[data-rnr-archive-save]")?.addEventListener("click", () => {
+        try {
+            const equipmentId = calibrationRoot.querySelector("[data-rnr-archive-equipment]")?.value.trim() ?? "";
+            const store = readStore();
+            const opened = store.revisions.find(item => item.revisionId === activeRnrRevisionIdByContext.get(contextKey));
+            const latest = store.revisions.filter(item => item.sampleId === opened?.sampleId).at(-1);
+            const sampleId = opened?.sampleId ?? globalThis.crypto.randomUUID();
+            const result = appendRnrSampleRevision(store, {
+                revisionId: globalThis.crypto.randomUUID(), sampleId, capturedAt: new Date().toISOString(),
+                scope: { productId: scope.productId, routeId, routeVersion, operationId: scope.operationId,
+                    stationId: scope.stationId, equipmentId,
+                    ...(latest?.scope.shiftLabel !== undefined ? { shiftLabel: latest.scope.shiftLabel } : {}),
+                    ...(latest?.scope.shiftCoverage ? { shiftCoverage: latest.scope.shiftCoverage } : {}),
+                    startMinute: scope.startMinute ?? 0, endMinute: scope.endMinute ?? 0 },
+                source: draft.validationFixture ? "validationFixture" : "manual",
+                inputSignature: rnrSampleInputSignature(draft), evidenceJson: JSON.stringify(draft),
+            });
+            saveLocalState(RNR_ARCHIVE_STORAGE_KEY, JSON.stringify(result.store));
+            activeRnrRevisionIdByContext.set(contextKey, result.revision.revisionId);
+            rnrArchiveMessage = locale === "zh" ? `已保存本地样本 v${result.revision.revision}。` : `Local sample v${result.revision.revision} saved.`;
+            render(selectedProductId);
+        }
+        catch (error) {
+            rnrArchiveMessage = error instanceof Error ? error.message : String(error);
+            render(selectedProductId);
+        }
+    });
+    calibrationRoot.querySelector("[data-rnr-archive-new]")?.addEventListener("click", () => {
+        if (draft.snapshot.actualEvents.length && !globalThis.confirm(locale === "zh"
+            ? "开始新样本会清空当前工站的实跑时间段和节拍草稿；已归档版本保留。继续？"
+            : "Starting a new sample clears current actual intervals and cycle samples. Archived versions remain. Continue?"))
+            return;
+        const actualKey = actualScopeKey(scope.productId, scope.operationId, scope.stationId);
+        rnrActualEventsByContext.set(actualKey, []);
+        cycleCheckDraft = emptyCycleSampleDraft();
+        rnrDrafts.delete(actualKey);
+        validationFixtureContexts.delete(actualKey);
+        activeRnrRevisionIdByContext.delete(contextKey);
+        rnrArchiveMessage = locale === "zh" ? "新样本已开始；计划 SA 保留。" : "New sample started; planned SA retained.";
+        resetRnrActualDraft();
+        render(selectedProductId);
+    });
+    calibrationRoot.querySelectorAll("[data-rnr-archive-open]").forEach(button => button.addEventListener("click", () => {
+        try {
+            const record = readStore().revisions.find(item => item.revisionId === button.dataset.rnrArchiveOpen);
+            if (!record || record.scope.productId !== scope.productId || record.scope.routeId !== routeId
+                || record.scope.routeVersion !== routeVersion || record.scope.operationId !== scope.operationId
+                || record.scope.stationId !== scope.stationId)
+                throw new Error("Sample does not belong to the selected route and station");
+            const restored = parseRnrEvidenceDraft(record.evidenceJson, scope);
+            if (!globalThis.confirm(locale === "zh"
+                ? "重开会以该修订替换当前工站的计划和 R&R 草稿；已归档版本不变。继续？"
+                : "Reopen replaces current planned and R&R drafts. Archived revisions remain unchanged. Continue?"))
+                return;
+            applyRnrEvidenceDraft(restored);
+            activeRnrRevisionIdByContext.set(contextKey, record.revisionId);
+            rnrArchiveMessage = locale === "zh" ? `已重开样本 v${record.revision}。` : `Sample v${record.revision} reopened.`;
+            render(selectedProductId);
+        }
+        catch (error) {
+            rnrArchiveMessage = error instanceof Error ? error.message : String(error);
+            render(selectedProductId);
+        }
+    }));
 }
 function evidenceStorageKeyForScope(scope) {
     const { productId, operationId, stationId } = scope;
@@ -4554,8 +6618,8 @@ function isValidationFixturePlan(events) {
 function applyRnrEvidenceDraft(draft) {
     const scope = draft.snapshot.scope;
     const config = draft.dayConfig;
-    const planKey = `${scope.productId}::${scope.stationId}`;
-    const actualKey = `${scope.productId}::${scope.operationId}::${scope.stationId}`;
+    const planKey = planScopeKeyForRoute(scope.productId, scope.stationId, scope.routeId);
+    const actualKey = actualScopeKeyForRoute(scope.productId, scope.operationId, scope.stationId, scope.routeId);
     const fixturePlan = isValidationFixturePlan(draft.snapshot.plannedEvents);
     const liveWindow = standardSaDayWindow(fixturePlan ? getStandardSaDayConfig(scope.productId, scope.stationId) : config);
     const delta = fixturePlan ? liveWindow.startMinute - config.startMinute : 0;
@@ -4582,7 +6646,6 @@ function applyRnrEvidenceDraft(draft) {
             plannedSaEvents = draft.snapshot.plannedEvents;
             plannedSaEventsAreDefault = false;
         }
-        frozenStandardWindows.delete(planKey);
         copyProjectionDrafts.delete(planKey);
     }
     rnrActualEventsByContext.set(actualKey, actualEvents);
@@ -4611,6 +6674,7 @@ function applyRnrEvidenceDraft(draft) {
 function clearCurrentRnrEvidence(draft) {
     const { productId, operationId, stationId } = draft.snapshot.scope;
     const key = evidenceStorageKey(draft);
+    activeRnrRevisionIdByContext.clear();
     try {
         removeLocalState(key);
     }
@@ -4625,7 +6689,6 @@ function clearCurrentRnrEvidence(draft) {
     plannedSaContextKey = planKey;
     plannedSaEvents = events;
     plannedSaEventsAreDefault = true;
-    frozenStandardWindows.delete(planKey);
     copyProjectionDrafts.delete(planKey);
     rnrActualEventsByContext.delete(actualKey);
     rnrDrafts.delete(actualKey);
@@ -4668,6 +6731,7 @@ function renderRnrEvidencePackagePanel(draft) {
       <div class="field-grid">
         ${field(zh ? "最近自动保存" : "Last auto-save", savedAt ? savedAt.replace("T", " ").slice(0, 19) : "-")}
         ${field(zh ? "数据来源" : "Data source", draft.validationFixture ? (zh ? "验证样本 · 非现场记录" : "Validation sample") : (zh ? "现场草稿" : "Field draft"))}
+        ${field(zh ? "当前试算样本引用" : "Sample revision used by preview", snapshot.sampleReference ? `${snapshot.sampleReference.sampleId.slice(0, 8)} · v${snapshot.sampleReference.revision}` : (zh ? "未引用归档修订" : "No archived revision"))}
       </div>
       ${evidenceDraftMessage ? `<p class="note" role="status">${escapeHtml(evidenceDraftMessage)}</p>` : ""}
       <details style="margin-top:14px;"><summary class="backup-toggle">${zh ? "数据备份与清除" : "Backup and clear"}</summary>
@@ -4679,11 +6743,14 @@ function renderRnrEvidencePackagePanel(draft) {
     </section>
   `;
 }
-function renderRnrBestActualPreviewPanel(preview, isValidationFixture) {
+function renderRnrBestActualPreviewPanel(preview, isValidationFixture, reference) {
     const zh = locale === "zh";
     return `<section class="sub-card" style="margin-top:14px;">
     <div class="panel-head"><h3>${zh ? "Best case 与实跑对比" : "Best case versus actual"}</h3><div class="panel-actions"><span class="pill" data-current-station-scope>${zh ? "当前工站" : "Current station"}</span><span class="pill warn">${isValidationFixture ? (zh ? "验证样本 · 草稿预览" : "Validation sample · draft preview") : (zh ? "草稿预览" : "Draft preview")}</span></div></div>
-    <p class="note">${zh ? "仅比较当前工站的完整观察窗口：Best case = 计划生产分钟 × 标准 CT × 每循环件数，不乘 P、Q。计划停机、休息、换型和维护已从计划生产分钟扣除。Actual = 实际生产分钟、现场 OK/NOK 与回算 Actual CT/Q。不含需求份额和多工站分配。" : "Station-level complete-window preview only: Best case is planned production minutes × standard CT × pieces per cycle, without P or Q. Breaks, changeover, maintenance and planned stops are already out of those minutes. Actual uses recorded production minutes and OK/NOK. Demand share and multi-station allocation are excluded."}</p>
+    <p class="note">${reference
+        ? (zh ? `当前内部试算引用归档样本 ${escapeHtml(reference.sampleId.slice(0, 8))} · v${reference.revision}；修改输入后引用自动失效。` : `Internal preview references archived sample ${escapeHtml(reference.sampleId.slice(0, 8))} · v${reference.revision}; editing inputs clears the reference.`)
+        : (zh ? "当前按实时草稿试算，未引用归档样本修订。" : "This preview uses the live draft and references no archived sample revision.")}</p>
+    <p class="note">${zh ? "这里只对照当前工站的 CT、P、Q、SA；件数及损失折算已移至上方工序汇总。Best case 件数 = 计划生产分钟 × 60 ÷ 标准 CT × 每循环件数，不乘 P、Q。" : "This section compares the selected station's CT, P, Q and SA. Unit output and loss equivalents are in the operation summary above. Best case units = planned production minutes × 60 ÷ standard CT × pieces per cycle, without P or Q."}</p>
     ${preview?.complete ? `<div class="field-grid">
       ${field(zh ? "标准时间开动率（扣计划休息/停机）" : "Planned time availability (excl. planned breaks/stops)", percent(preview.plannedSa))}
       ${field(zh ? "Actual 时间开动率（扣实际休息/停机/推断）" : "Actual time availability (excl. actual breaks/stops/inference)", percent(preview.actualSa))}
@@ -4691,17 +6758,7 @@ function renderRnrBestActualPreviewPanel(preview, isValidationFixture) {
       ${field(zh ? "Actual Q" : "Actual Q", preview.actualQualityRate === undefined ? "-" : percent(preview.actualQualityRate))}
       ${field(zh ? "标准 CT（秒/循环）" : "Standard CT (sec/cycle)", formatNumber(preview.standardCycleSec, 1))}
       ${field(zh ? "Actual CT（秒/循环）" : "Actual CT (sec/cycle)", preview.actualCycleSec === undefined ? "-" : formatNumber(preview.actualCycleSec, 1))}
-      ${field(zh ? "Best case 理论件数（件）" : "Best case ideal units", formatOutputUnits(preview.bestCaseIdealUnits))}
-      ${field(zh ? "实跑总产出（件）" : "Actual gross units", formatOutputUnits(preview.actualGrossUnits))}
-      ${field(zh ? "Best case 理论 OK（件）" : "Best case ideal OK units", formatOutputUnits(preview.bestCaseOkUnits))}
-      ${field(zh ? "实跑良品件数" : "Actual good units", formatOutputUnits(preview.actualGoodUnits))}
-      ${field(zh ? "Best case 理论 NOK（件）" : "Best case ideal NOK units", formatOutputUnits(preview.bestCaseNokUnits))}
-      ${field(zh ? "实跑 NOK（件）" : "Actual NOK units", formatOutputUnits(preview.qualityGapUnits))}
       ${field(zh ? "实录生产时间占比（扣实际休息/停机）" : "Recorded production share (excl. actual breaks/stops)", percent(preview.actualRecordedSa))}
-      ${field(zh ? "良品差额（件）" : "Good-unit gap", formatOutputUnits(preview.totalGapUnits))}
-      ${field(zh ? "时间损失折算（件，含推断）" : "Time gap in units incl. inference", formatOutputUnits(preview.timeGapUnits))}
-      ${field(zh ? "其中待归因推断（件）" : "Of which inferred units", formatOutputUnits(preview.inferredSaGapUnits))}
-      ${field(zh ? "性能率差额折算（件）" : "Performance gap in units", formatOutputUnits(preview.paceGapUnits))}
     </div>` : `<p class="note">${zh ? "需先补齐当前工站完整观察窗口的计划与实际记录，才显示可比结果。" : "Complete both planned and actual records for the whole observation window before comparing."}</p>`}
     ${preview && !preview.complete ? `<div class="field-grid">
       ${field(zh ? "观察窗口分钟" : "Observation window min", formatNumber(preview.windowMinutes))}
@@ -4731,8 +6788,6 @@ function renderMostLikelyActualComparison(preview) {
       ${field(zh ? "Most likely 时间开动率" : "Most likely availability", percent(preview.mostLikelySa))}
       ${field(zh ? "Actual 时间开动率" : "Actual availability", percent(preview.actualSa))}
       ${field(zh ? "SA 差额" : "SA delta", percent(preview.actualSa - preview.mostLikelySa))}
-      ${field(zh ? "Most likely 良品（件）" : "Most likely good units", formatOutputUnits(preview.mostLikelyGoodUnits))}
-      ${field(zh ? "实跑良品（件）" : "Actual good units", formatOutputUnits(preview.actualGoodUnits))}
     </div>
   </section>`;
 }
@@ -4740,7 +6795,7 @@ function currentStationHead(eyebrow, title, actions = "") {
     return `<div class="panel-head"><div><p class="eyebrow">${eyebrow}</p><h2>${title}</h2></div><div class="panel-actions"><span class="pill" data-current-station-scope>${t("currentStationScope")}</span>${actions}</div></div>`;
 }
 function peekPlannedSaEvents(stationId, productId) {
-    const planKey = stationPlanKey(productId, stationId);
+    const planKey = planScopeKey(productId, stationId);
     if (planKey === plannedSaContextKey)
         return plannedSaEvents;
     return plannedSaContexts.get(planKey)?.events
@@ -4750,7 +6805,7 @@ function collectRouteStationObservations(routingConfig) {
     return routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.planningStatus === "available").map(view => {
         const stationId = view.assignment.stationId;
         const operationId = operation.operation.operationId;
-        const actualKey = stationActualKey(routingConfig.productId, operationId, stationId);
+        const actualKey = actualScopeKey(routingConfig.productId, operationId, stationId);
         const cycle = actualKey === rnrContextKey ? cycleCheckDraft : rnrDrafts.get(actualKey)?.cycle;
         const speedOptions = speedOptionsForCycle();
         const dayConfig = getStandardSaDayConfig(routingConfig.productId, stationId);
@@ -4780,15 +6835,19 @@ function bindRouteWindowControls(selectedOperation, routingConfig) {
             routeWindowMemory.set(routeKey, { key: value, explicit: true });
         renderCalibration(selectedOperation, routingConfig);
     });
-    calibrationRoot.querySelector("[data-window-demand]")?.addEventListener("change", event => {
-        const input = event.currentTarget;
-        if (!input.checkValidity()) {
-            input.reportValidity();
-            return;
-        }
-        windowDemandByRoute.set(routeKey, input.value);
-        renderCalibration(selectedOperation, routingConfig);
-    });
+    calibrationRoot.querySelectorAll("[data-open-rnr-gap]").forEach(button => button.addEventListener("click", () => {
+        openRnrGap(button.dataset.gapOperation ?? "", button.dataset.gapStation ?? "");
+    }));
+}
+function openRnrGap(operationId, stationId) {
+    if (!operationId || !stationId)
+        return;
+    selectedOperationId = operationId;
+    selectedWorkflowStationId = stationId;
+    rnrMode = "timeWindow";
+    render(selectedProductId);
+    setWorkflowStage("reality");
+    document.querySelector("[data-rnr-gap-list]")?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 function formatRouteBlocker(code, stationWindow) {
     const zh = locale === "zh";
@@ -4810,7 +6869,7 @@ function formatRouteBlocker(code, stationWindow) {
     }
     return text;
 }
-function renderRouteWindowSelect(view) {
+function renderRouteWindowSelect(view, stationLabels) {
     const zh = locale === "zh";
     const selectedKey = view.selected ? routeWindowKey(view.selected) : "";
     const placeholder = view.candidates.length === 0
@@ -4820,7 +6879,7 @@ function renderRouteWindowSelect(view) {
             : "";
     const options = view.candidates.map(candidate => {
         const key = routeWindowKey(candidate);
-        const label = `${formatOptionalMinutePoint(candidate.startMinute)} – ${formatOptionalMinutePoint(candidate.endMinute)} · ${candidate.stationIds.join(", ")}`;
+        const label = `${formatOptionalMinutePoint(candidate.startMinute)} – ${formatOptionalMinutePoint(candidate.endMinute)} · ${candidate.stationIds.map(id => stationLabels.get(id) ?? id).join(", ")}`;
         return `<option value="${escapeHtml(key)}" ${key === selectedKey ? "selected" : ""}>${escapeHtml(label)}</option>`;
     }).join("");
     return `<label class="field" for="routeWindowSelect">${zh ? "路线观察窗口" : "Route observation window"}
@@ -4829,9 +6888,14 @@ function renderRouteWindowSelect(view) {
 }
 function renderRouteWindowCapacityPanel(routingConfig) {
     const zh = locale === "zh";
+    const operationLabels = new Map(routingConfig.operations.map(item => [
+        item.operation.operationId, `OP${item.operation.sequence} ${formatKnownText(item.operation.name)}`,
+    ]));
+    const stationLabels = new Map(routingConfig.operations.flatMap(item => item.assignments.map(assignment => [
+        assignment.assignment.stationId, formatKnownText(assignment.station?.name ?? assignment.assignment.stationId),
+    ])));
+    const operationLabel = (id) => id ? operationLabels.get(id) ?? id : "-";
     const routeKey = `${routingConfig.productId}::${routingConfig.route?.routeId ?? ""}`;
-    const rawDemand = windowDemandByRoute.get(routeKey) ?? "";
-    const demandQty = rawDemand === "" ? undefined : Number(rawDemand);
     const stations = collectRouteStationObservations(routingConfig);
     const storedWindow = routeWindowMemory.get(routeKey);
     const resolution = resolveRouteObservationWindow(storedWindow, collectRouteWindowCandidates(stations));
@@ -4845,7 +6909,6 @@ function renderRouteWindowCapacityPanel(routingConfig) {
         operationIds: routingConfig.operations.map(item => item.operation.operationId),
         ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
         ...(Object.keys(operationUnitsPerProduct).length ? { operationUnitsPerProduct } : {}),
-        ...(demandQty === undefined ? {} : { demandQty }),
     });
     if (view.memory)
         routeWindowMemory.set(routeKey, view.memory);
@@ -4856,28 +6919,24 @@ function renderRouteWindowCapacityPanel(routingConfig) {
     return `<section class="sub-card" style="margin-top:14px;" data-whole-route-scope>
     <div class="panel-head"><h3>${zh ? "同窗工序能力" : "Same-window route capacity"}</h3><div class="panel-actions"><span class="pill">${t("wholeRouteScope")}</span><span class="pill warn">${zh ? "本地试算" : "Local simulation"}</span></div></div>
     <div class="field-grid">
-      ${renderRouteWindowSelect(view)}
+      ${renderRouteWindowSelect(view, stationLabels)}
       ${field(zh ? "所选观察窗口" : "Selected observation window", selectedLabel)}
       ${field(zh ? "路线计划等效成品能力" : "Planned product-equivalent capacity", value(view.bestGoodCapacity))}
       ${field(zh ? "路线实跑等效成品上限" : "Actual product-equivalent upper bound", value(view.actualGoodOutput))}
-      ${field(zh ? "计划 / 实跑瓶颈工序" : "Planned / actual bottleneck", `${view.bestBottleneckOperationId ?? (routingConfig.route?.stationFlowPolicies?.length && view.bestGoodCapacity !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")} / ${view.actualBottleneckOperationId ?? (routingConfig.route?.stationFlowPolicies?.length && view.actualGoodOutput !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")}`)}
-      ${view.demandQty === undefined ? "" : field(zh ? "本窗口能力余量（计划 / 实跑）" : "Window capacity margin (planned / actual)", `${value(view.bestGap)} / ${value(view.actualGap)}`)}
+      ${field(zh ? "计划 / 实跑瓶颈工序" : "Planned / actual bottleneck", `${view.bestBottleneckOperationId ? operationLabel(view.bestBottleneckOperationId) : (routingConfig.route?.stationFlowPolicies?.length && view.bestGoodCapacity !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")} / ${view.actualBottleneckOperationId ? operationLabel(view.actualBottleneckOperationId) : (routingConfig.route?.stationFlowPolicies?.length && view.actualGoodOutput !== undefined ? (zh ? "工站流转约束" : "Station links") : "-")}`)}
     </div>
     <p class="note">${zh ? "路线观察窗口按当前产品与路线记住。切换当前工序或工站不会改它，也不会截取不同窗口的交集。" : "The route window is remembered for this product and route. Switching the current operation or station does not change it or intersect different windows."}</p>
     ${view.error ? `<p class="form-error" role="alert">${escapeHtml(view.error)}</p>` : ""}
     ${view.flowIssue ? `<p class="form-error" role="alert">${escapeHtml(view.flowIssue)}</p>` : ""}
-    <label class="field" style="display:block;max-width:280px;margin-top:14px;">${zh ? "本窗口需求件数" : "Demand units for this window"}
-      <input type="number" min="0" step="1" data-window-demand value="${escapeHtml(rawDemand)}" />
-    </label>
     <div class="table-wrap"><table><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "目标产出/WIP" : "Output/WIP"}</th><th>${zh ? "每件成品所需件数" : "Units per finished product"}</th><th>${zh ? "用量来源" : "Quantity source"}</th></tr></thead><tbody>
-      ${requirements.map(item => `<tr><td>${escapeHtml(item.operationId)}</td><td>${escapeHtml(item.outputItem ?? "-")}</td><td>${item.unitsPerFinishedProduct === undefined ? "-" : formatNumber(item.unitsPerFinishedProduct)}</td><td>${item.issue ? escapeHtml({ stage_bom_missing: zh ? "缺少阶段 BOM" : "Stage BOM missing", stage_bom_mismatch: zh ? "阶段 BOM 不匹配" : "Stage BOM mismatch", source_not_effective: zh ? "来源版本未生效" : "Source not effective", quantity_missing: zh ? "缺少工序用量" : "Quantity missing", quantity_invalid: zh ? "工序用量无效" : "Invalid quantity" }[item.issue] ?? item.issue) : escapeHtml(item.source === "stageBom" ? `${zh ? "阶段 BOM" : "Stage BOM"} · ${item.sourceRef ?? "-"}${item.version ? ` · ${item.version}` : ""}` : `${zh ? "本地验证输入" : "Local validation"}${item.version ? ` · ${item.version}` : ""}`)}</td></tr>`).join("")}
+      ${requirements.map(item => `<tr><td>${escapeHtml(operationLabel(item.operationId))}</td><td>${escapeHtml(item.outputItem ?? "-")}</td><td>${item.unitsPerFinishedProduct === undefined ? "-" : formatNumber(item.unitsPerFinishedProduct)}</td><td>${item.issue ? escapeHtml({ stage_bom_missing: zh ? "缺少阶段 BOM" : "Stage BOM missing", stage_bom_mismatch: zh ? "阶段 BOM 不匹配" : "Stage BOM mismatch", source_not_effective: zh ? "来源版本未生效" : "Source not effective", quantity_missing: zh ? "缺少工序用量" : "Quantity missing", quantity_invalid: zh ? "工序用量无效" : "Invalid quantity" }[item.issue] ?? item.issue) : escapeHtml(item.source === "stageBom" ? `${zh ? "阶段 BOM" : "Stage BOM"} · ${item.sourceRef ?? "-"}${item.version ? ` · ${item.version}` : ""}` : `${zh ? "本地验证输入" : "Local validation"}${item.version ? ` · ${item.version}` : ""}`)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="note">${zh ? "本窗口的计划和实跑都按工站 100% 的生产时间计算。70% / 30% 一类占用只用于周或月的综合产能，不在本窗口扣减。工序用量在第一阶段维护；缺少有效用量时路线结果留空。未填本窗口需求时不计算余量。" : "This window's planned and actual results use 100% of each station's production time. Shares such as 70% / 30% apply only to weekly or monthly capacity, not this window. Operation quantities are maintained in stage 1. Route totals require valid quantities. Margin requires window demand."}</p>
+    <p class="note">${zh ? "本窗口的计划和实跑都按工站 100% 的生产时间计算。70% / 30% 一类占用只用于周或月的综合产能，不在本窗口扣减。工序用量在第一阶段维护；缺少有效用量时路线结果留空。客户需求及供需差额在路线周计划中判断。" : "This window's planned and trial results use 100% of each station's production time. Shares such as 70% / 30% apply only to weekly or monthly capacity, not this window. Operation quantities are maintained in stage 1. Route totals require valid quantities. Customer demand and supply gaps belong to the route weekly plan."}</p>
     <div class="table-wrap"><table><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "工站" : "Station"}</th><th>${zh ? "计划生产分钟" : "Planned production min"}</th><th>${zh ? "计划良品能力" : "Planned good units"}</th><th>${zh ? "实跑 OK" : "Actual OK"}</th><th>${zh ? "实跑时间开动率" : "Actual time availability"}</th><th>${zh ? "待补条件" : "Missing inputs"}</th></tr></thead><tbody>
-      ${view.stations.map(item => `<tr><td>${escapeHtml(item.operationId)}</td><td>${escapeHtml(item.stationId)}</td><td>${item.plannedProductionMinutes === undefined ? "-" : formatNumber(item.plannedProductionMinutes, 1)}</td><td>${value(item.bestGoodCapacity)}</td><td>${value(item.actualGoodOutput)}</td><td>${item.actualSa === undefined ? "-" : percent(item.actualSa)}</td><td>${item.blockers.length ? item.blockers.map(code => escapeHtml(formatRouteBlocker(code, item.standardWindow))).join("；") : "-"}</td></tr>`).join("") || `<tr><td colspan="7">${zh ? "没有可排产的工站" : "No planning-allowed stations"}</td></tr>`}
+      ${view.stations.map(item => `<tr><td>${escapeHtml(operationLabel(item.operationId))}</td><td>${escapeHtml(stationLabels.get(item.stationId) ?? item.stationId)}</td><td>${item.plannedProductionMinutes === undefined ? "-" : formatNumber(item.plannedProductionMinutes, 1)}</td><td>${value(item.bestGoodCapacity)}</td><td>${value(item.actualGoodOutput)}</td><td>${item.actualSa === undefined ? "-" : percent(item.actualSa)}</td><td>${formatStationWindowGaps(item)}${(item.unrecordedIntervals?.length || item.plannedGapIntervals?.length) ? `<button class="button secondary" type="button" data-open-rnr-gap data-gap-operation="${escapeHtml(item.operationId)}" data-gap-station="${escapeHtml(item.stationId)}">${zh ? "去补录" : "Record"}</button>` : ""}</td></tr>`).join("") || `<tr><td colspan="7">${zh ? "没有可排产的工站" : "No planning-allowed stations"}</td></tr>`}
     </tbody></table></div>
     <div class="table-wrap"><table><thead><tr><th>${zh ? "工序" : "Operation"}</th><th>${zh ? "工站数" : "Stations"}</th><th>${zh ? "计划良品能力" : "Planned good units"}</th><th>${zh ? "实跑 OK" : "Actual OK"}</th></tr></thead><tbody>
-      ${view.operations.map(item => `<tr><td>${escapeHtml(item.operationId)}</td><td>${formatNumber(item.stationCount)}</td><td>${value(item.bestGoodCapacity)}</td><td>${value(item.actualGoodOutput)}</td></tr>`).join("")}
+      ${view.operations.map(item => `<tr><td>${escapeHtml(operationLabel(item.operationId))}</td><td>${formatNumber(item.stationCount)}</td><td>${value(item.bestGoodCapacity)}</td><td>${value(item.actualGoodOutput)}</td></tr>`).join("")}
     </tbody></table></div>
   </section>`;
 }
@@ -5005,7 +7064,46 @@ function renderParameterSuggestionsPanel(suggestions, fingerprint, observationFi
     ${calibrationActionError ? `<p class="form-error" role="alert">${escapeHtml(calibrationActionError)}</p>` : ""}
   </section>`;
 }
-function renderRnrEvidencePanel(evidence) {
+function renderMlLossReview(stationId, planned, actual, dayConfig) {
+    const zh = locale === "zh";
+    const signature = lossPlanSignature(planned);
+    const production = planned.filter(event => event.kind === "production");
+    const overlap = (event) => production.reduce((sum, interval) => sum + Math.max(0, Math.min(event.endMinute, interval.endMinute) - Math.max(event.startMinute, interval.startMinute)), 0);
+    const abnormalities = actual.filter(event => rnrAbnormalKinds.has(event.kind) && overlap(event) > 0);
+    const rows = abnormalities.map(event => {
+        const confirmed = event.mlLossConfirmed === true && event.mlLossPlanSignature === signature;
+        const minutes = overlap(event);
+        const accepted = confirmed ? Math.max(0, minutes - (event.recoverableConfirmed ? Math.min(minutes, event.recoverableMinutes ?? 0) : 0)) : 0;
+        return `<tr><td>${escapeHtml(formatTimelineKind(event.kind))}</td><td>${escapeHtml(formatOptionalMinutePoint(event.startMinute))}–${escapeHtml(formatOptionalMinutePoint(event.endMinute))}</td><td>${formatNumber(minutes, 1)}</td><td>${formatNumber(accepted, 1)}</td><td><button class="button secondary${confirmed ? " is-confirmed" : ""}" type="button" data-confirm-ml-event="${escapeHtml(event.id)}">${confirmed ? (zh ? "撤销采纳" : "Undo acceptance") : (zh ? "确认纳入 ML" : "Accept for ML")}</button></td></tr>`;
+    });
+    for (const kind of PLANNED_LOSS_KINDS) {
+        const plannedKind = planned.filter(event => event.kind === kind);
+        const actualKind = actual.filter(event => event.kind === kind);
+        const plannedMinutes = plannedKind.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0);
+        const actualMinutes = actualKind.reduce((sum, event) => sum + event.endMinute - event.startMinute, 0);
+        const intrusion = actualKind.reduce((sum, event) => sum + overlap(event), 0);
+        const overrun = Math.min(Math.max(0, actualMinutes - plannedMinutes), intrusion);
+        if (overrun <= 0)
+            continue;
+        const confirmed = actualKind.every(event => event.mlLossConfirmed === true && event.mlLossPlanSignature === signature);
+        rows.push(`<tr><td>${escapeHtml(formatTimelineKind(kind))} ${zh ? "超时" : "overrun"}</td><td>${zh ? "本观察窗" : "Observation window"}</td><td>${formatNumber(overrun, 1)}</td><td>${confirmed ? formatNumber(overrun, 1) : "0"}</td><td><button class="button secondary${confirmed ? " is-confirmed" : ""}" type="button" data-confirm-ml-kind="${kind}">${confirmed ? (zh ? "撤销采纳" : "Undo acceptance") : (zh ? "确认纳入 ML" : "Accept for ML")}</button></td></tr>`);
+    }
+    const allowance = observeShiftAllowance({ stationId, planned, actual, shifts: standardSaShiftIntervals(dayConfig) });
+    const timingShifts = plannedTimingShifts(planned, actual);
+    const shortfalls = plannedActionShortfalls(planned, actual);
+    return `<section class="sub-card" style="margin-top:14px;"><div class="panel-head"><h3>${zh ? "ML 的 SA 损失确认" : "Confirm SA losses for ML"}</h3><span class="pill">${zh ? "本地试算" : "Local calculation"}</span></div>
+    <p class="note">${zh ? "只统计侵入原计划生产的分钟。异常与计划动作超时须逐项确认；可补救分钟在上方单独确认。平稳日仅带入已设动作对应的超时损失。修改计划或实跑时间后须重新确认。" : "Only minutes intruding on planned production count. Accept each abnormal loss or planned overrun; confirm recoverable minutes separately above. Stable days include overrun losses only for configured actions. Changes to the plan or actual intervals require renewed acceptance."}</p>
+    ${rows.length ? `<div class="table-wrap"><table><thead><tr><th>${zh ? "损失" : "Loss"}</th><th>${zh ? "范围" : "Range"}</th><th>${zh ? "待判分钟" : "Candidate min"}</th><th>${zh ? "已纳入分钟" : "Accepted min"}</th><th>${zh ? "操作" : "Action"}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>` : `<p class="note">${zh ? "没有侵入计划生产的显式损失。" : "No recorded losses intrude on planned production."}</p>`}
+    ${timingShifts.length ? `<h4>${zh ? "提示清单 · 总时间一致，时段错位" : "Review list · Equal total, shifted timing"}</h4>
+      <p class="note">${zh ? "逐类比较休息、换型、维护保养和计划停机。错位分钟指实际动作落在该类计划时段之外的分钟；总量相等不作为超时损失扣减，仍须人工确认。各时段状态差异继续保留。" : "Compare breaks, setup, maintenance and planned stops by category. Displaced minutes are actual action time outside its planned windows. Equal totals create no overrun deduction but require review; interval differences remain visible."}</p>
+      <ul class="message-list">${timingShifts.map(item => `<li><strong>${escapeHtml(formatTimelineKind(item.kind))}</strong> · ${zh ? "计划/实际" : "Planned/actual"} ${formatNumber(item.minutes, 1)}/${formatNumber(item.minutes, 1)} ${zh ? "分钟" : "min"} · ${zh ? "错位" : "displaced"} ${formatNumber(item.displacedMinutes, 1)} ${zh ? "分钟" : "min"} · ${item.confirmed ? (zh ? "已确认：无额外超时损失" : "Confirmed: no extra overrun") : (zh ? "待人工确认" : "Pending review")}
+        <button class="button secondary${item.confirmed ? " is-confirmed" : ""}" type="button" data-confirm-timing-shift="${item.kind}">${item.confirmed ? (zh ? "撤销确认" : "Undo review") : (zh ? "确认总量一致" : "Confirm equal total")}</button></li>`).join("")}</ul>` : ""}
+    ${shortfalls.length ? `<h4>${zh ? "提示清单 · 实际计划动作短于计划" : "Notice · Planned actions shorter than scheduled"}</h4>
+      <p class="note">${zh ? "以下仅供核对实际时段；不要求人工确认，不自动增加 ML 产能，也不抵扣其他超时或异常损失。" : "Review the actual intervals. No manual confirmation is required; these minutes do not automatically raise ML capacity or offset other losses."}</p>
+      <ul class="message-list">${shortfalls.map(item => `<li><strong>${escapeHtml(formatTimelineKind(item.kind))}</strong> · ${zh ? "计划" : "Planned"} ${formatNumber(item.plannedMinutes, 1)} ${zh ? "分钟，实际" : "min, actual"} ${formatNumber(item.actualMinutes, 1)} ${zh ? "分钟，缩短" : "min, shorter by"} ${formatNumber(item.savedMinutes, 1)} ${zh ? "分钟 · 仅提示" : "min · Notice only"}</li>`).join("")}</ul>` : ""}
+    <p class="note">${zh ? `已确认额外损失 ${formatNumber(allowance?.planningUnplannedMinutes ?? 0, 1)} 分钟 / 原计划生产 ${formatNumber(allowance?.sourceProductionMinutes ?? 0, 1)} 分钟，复制源窗口按 ${percent(allowance?.projectedLossRate ?? 0)} 稀释；待确认 ${formatNumber(allowance?.pendingLossMinutes ?? 0, 1)} 分钟。` : `Accepted loss ${formatNumber(allowance?.planningUnplannedMinutes ?? 0, 1)} min / planned production ${formatNumber(allowance?.sourceProductionMinutes ?? 0, 1)} min; source copies use ${percent(allowance?.projectedLossRate ?? 0)} loss. Pending ${formatNumber(allowance?.pendingLossMinutes ?? 0, 1)} min.`}</p></section>`;
+}
+function renderRnrEvidencePanel(evidence, actual, planned) {
     if (!evidence)
         return "";
     const blockerLabels = {
@@ -5020,7 +7118,14 @@ function renderRnrEvidencePanel(evidence) {
         unexplained_inferred_loss: ["推断损失原因待查（不影响 SA 计算）", "Inferred loss cause unknown (SA can still be calculated)"],
     };
     const rows = [
-        ...evidence.explicit.map(item => `<tr><td>${locale === "zh" ? "已记录异常" : "Recorded abnormal"}</td><td>${escapeHtml(formatTimelineKind(item.category))}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.minutes, 1)}</td><td><div class="recoverable-edit"><input data-recoverable-event="${escapeHtml(item.sourceEventId)}" data-saved-recoverable="${item.recoverableMinutes}" data-recoverable-confirmed="${item.recoverableConfirmed ? "1" : "0"}" type="number" min="0" max="${item.minutes}" step="1" value="${item.recoverableMinutes}" aria-label="${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}" /><button type="button" class="button secondary${item.recoverableConfirmed ? " is-confirmed" : ""}" data-confirm-recoverable="${escapeHtml(item.sourceEventId)}">${locale === "zh" ? "确认" : "Confirm"}</button></div></td><td>${formatNumber(item.minutes - item.recoverableMinutes, 1)}</td><td>${escapeHtml(item.evidenceSource || "-")}</td><td>${item.isEstimated ? (locale === "zh" ? "是" : "Yes") : (locale === "zh" ? "否" : "No")}</td><td>${escapeHtml(item.sourceEventId)}</td></tr>`),
+        ...evidence.explicit.map(item => {
+            const source = actual.find(event => event.id === item.sourceEventId);
+            const confirmed = source?.mlLossConfirmed === true && source.mlLossPlanSignature === lossPlanSignature(planned);
+            const eligible = planned.filter(event => event.kind === "production").reduce((sum, event) => sum +
+                Math.max(0, Math.min(item.endMinute, event.endMinute) - Math.max(item.startMinute, event.startMinute)), 0);
+            const accepted = confirmed ? Math.max(0, eligible - (item.recoverableConfirmed ? Math.min(eligible, item.recoverableMinutes) : 0)) : 0;
+            return `<tr><td>${locale === "zh" ? "已记录异常" : "Recorded abnormal"}</td><td>${escapeHtml(formatTimelineKind(item.category))}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.minutes, 1)}</td><td><div class="recoverable-edit"><input data-recoverable-event="${escapeHtml(item.sourceEventId)}" data-saved-recoverable="${item.recoverableMinutes}" data-recoverable-confirmed="${item.recoverableConfirmed ? "1" : "0"}" type="number" min="0" max="${item.minutes}" step="1" value="${item.recoverableMinutes}" aria-label="${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}" /><button type="button" class="button secondary${item.recoverableConfirmed ? " is-confirmed" : ""}" data-confirm-recoverable="${escapeHtml(item.sourceEventId)}">${locale === "zh" ? "确认" : "Confirm"}</button></div></td><td>${formatNumber(accepted, 1)}</td><td>${escapeHtml(item.evidenceSource || "-")}</td><td>${item.isEstimated ? (locale === "zh" ? "是" : "Yes") : (locale === "zh" ? "否" : "No")}</td><td>${escapeHtml(item.sourceEventId)}</td></tr>`;
+        }),
         ...evidence.inferred.map(item => `<tr><td>${locale === "zh" ? "推断损失" : "Inferred loss"}</td><td>${locale === "zh" ? "待归因" : "Unclassified"}</td><td>${escapeHtml(formatOptionalMinutePoint(item.startMinute))} - ${escapeHtml(formatOptionalMinutePoint(item.endMinute))}</td><td>${formatNumber(item.estimatedMinutes, 1)}</td><td>-</td><td>-</td><td>${locale === "zh" ? "产出反推" : "Output inference"}</td><td>${locale === "zh" ? "是" : "Yes"}</td><td>${escapeHtml(item.sourceProductionEventId)}</td></tr>`),
     ].join("");
     return `
@@ -5033,78 +7138,177 @@ function renderRnrEvidencePanel(evidence) {
       ${rows ? `<div class="table-wrap"><table><thead><tr><th>${locale === "zh" ? "来源类型" : "Evidence type"}</th><th>${locale === "zh" ? "类别" : "Category"}</th><th>${locale === "zh" ? "起止时钟" : "Time window"}</th><th>${locale === "zh" ? "分钟" : "Minutes"}</th><th>${locale === "zh" ? "可补救分钟" : "Recoverable minutes"}</th><th>${locale === "zh" ? "进入排产" : "Into planning"}</th><th>${locale === "zh" ? "证据来源" : "Source"}</th><th>${locale === "zh" ? "估算" : "Estimated"}</th><th>${locale === "zh" ? "原始事件ID" : "Source event ID"}</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="note">${locale === "zh" ? "暂无异常证据或推断损失。" : "No abnormal evidence or inferred loss yet."}</p>`}
       ${evidence.blockers.length ? `<ul class="message-list">${evidence.blockers.map(blocker => `<li>${escapeHtml(blockerLabels[blocker.code][locale === "zh" ? 0 : 1])}${blocker.sourceEventId ? ` · ${escapeHtml(blocker.sourceEventId)}` : ""}</li>`).join("")}</ul>` : ""}
       ${evidence.notices.length ? `<ul class="message-list">${evidence.notices.map(notice => `<li>${escapeHtml(noticeLabels[notice.code][locale === "zh" ? 0 : 1])}${notice.sourceEventId ? ` · ${escapeHtml(notice.sourceEventId)}` : ""}</li>`).join("")}</ul>` : ""}
-      <p class="note">${locale === "zh" ? "可补救分钟不能超过该段已记录分钟。填好后点该行「确认」，进入排产和 Most likely 才改变；未确认的输入不会生效。实跑记录本身不改。推断损失不进入班次预留。" : "Recoverable minutes cannot exceed the recorded interval. Confirm the row before Most likely changes. The recorded interval stays unchanged."}</p>
+      <p class="note">${locale === "zh" ? "此处「确认」只确认可补救分钟；下方还须单独确认该段损失是否纳入 ML。未经损失采纳确认的记录不扣减周能力。推断损失不进入预留。" : "This confirmation accepts recoverable minutes only. Accept the loss for ML separately below; an unaccepted event does not reduce weekly capacity. Inferred losses remain excluded."}</p>
     </section>
   `;
 }
-function renderLocalTrialStatus() {
+function renderLocalTrialStatus(catalog, stationWindowBlockers) {
     const routeId = selectedRouteId() ?? "";
     const route = scenarioState.routes.find(item => item.routeId === routeId);
     if (!route || !isLocalDraftRoute(route))
         return "";
     const trial = assessLocalTrial(scenarioState, selectedProductId, routeId);
+    const separation = presentTrialSeparation({
+        locale: locale === "zh" ? "zh" : "en",
+        routeId,
+        localFlowOpen: trial.localFlowOpen,
+        formalReady: trial.formalReady,
+        formalIssues: trial.formalIssues,
+        gaps: trial.gaps,
+        catalog,
+        processNames: Object.fromEntries((scenarioState.processMasters ?? []).map(item => [item.processId, formatKnownText(item.name)])),
+        stationWindowBlockers,
+    });
+    return renderTrialLayers(separation);
+}
+function renderTrialLayers(separation) {
     const zh = locale === "zh";
-    const gaps = trial.gaps.map(localIssueText);
-    const formal = trial.formalIssues.map(issue => issue.message);
+    const card = (title, label, note, tone) => `
+    <article class="trial-layer ${tone}">
+      <span>${escapeHtml(title)}</span>
+      <strong>${escapeHtml(label)}</strong>
+      <p>${escapeHtml(note)}</p>
+    </article>`;
+    const rows = separation.formalItems.map(item => `
+    <tr>
+      <td>${escapeHtml(item.ownerLabel)}</td>
+      <td>${escapeHtml(item.subject)}</td>
+      <td>${escapeHtml(item.reason)}${technicalDetails(item.technical)}</td>
+    </tr>`).join("");
     return `
-    <section class="sub-card" style="margin-bottom:14px;">
-      <h3>${zh ? "本地试算与正式发布" : "Local trial and formal release"}</h3>
-      <div class="field-grid">
-        ${field(zh ? "本地试算" : "Local trial", trial.localFlowOpen ? (zh ? "可继续记录标准 SA / R&R" : "SA / R&R can continue") : (zh ? "未打开" : "Closed"))}
-        ${field(zh ? "本工站计算" : "Station calculation", trial.calculable ? (zh ? "参数已齐" : "Parameters present") : (zh ? "待补" : "Incomplete"))}
-        ${field(zh ? "正式发布" : "Formal release", trial.formalReady ? (zh ? "可通过" : "Ready") : (zh ? "仍被拒绝" : "Still rejected"))}
+    <section class="sub-card" style="margin-bottom:14px;" data-trial-layers>
+      <h3>${zh ? "三层结论" : "Three separate conclusions"}</h3>
+      <div class="trial-layers">
+        ${card(zh ? "同窗计算" : "Same-window calculation", separation.sameWindowLabel, separation.sameWindowNote, separation.sameWindowComplete ? "good" : "warn")}
+        ${card(zh ? "本地路线" : "Local route", separation.localTrialLabel, separation.localTrialNote, separation.localTrialOpen ? "good" : "warn")}
+        ${card(zh ? "正式发布" : "Formal release", separation.formalLabel, zh ? "正式发布仍按路线、工艺和阶段物料逐项判断。" : "Formal release is judged item by item for the route, process and stage material.", separation.formalSatisfied ? "good" : "bad")}
       </div>
-      ${gaps.length ? `<p class="note">${zh ? "待补" : "Still missing"}：${escapeHtml(gaps.join("；"))}</p>` : ""}
-      ${formal.length ? `<p class="note">${zh ? "正式发布尚缺" : "Formal release still needs"}：${escapeHtml(formal.join("；"))}</p>` : ""}
+      ${separation.localGaps.length ? `<p class="note">${escapeHtml(zh ? "本地试算还要补" : "Local trial still needs")}：${escapeHtml(separation.localGaps.map(item => item.reason).join(zh ? "；" : "; "))}</p>` : ""}
+      ${rows ? `<div class="table-wrap"><table><caption>${zh ? "正式发布门禁" : "Formal release gate"}</caption><thead><tr><th>${zh ? "归属" : "Owner"}</th><th>${zh ? "对象" : "Subject"}</th><th>${zh ? "原因" : "Reason"}</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
     </section>
   `;
 }
-function renderPreflight(preflight) {
-    const readinessRows = preflight.readiness.issues.map(issue => `
+function currentRouteWindowBlockers(routingConfig) {
+    const stations = collectRouteStationObservations(routingConfig);
+    const routeKey = `${routingConfig.productId}::${routingConfig.route?.routeId ?? ""}`;
+    const storedWindow = routeWindowMemory.get(routeKey);
+    const view = buildRouteWindowCapacityView({
+        ...(storedWindow ? { memory: storedWindow } : {}),
+        stations,
+        operationIds: routingConfig.operations.map(item => item.operation.operationId),
+        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
+    });
+    return view.stations.map(item => item.blockers);
+}
+function renderOperationShareSummary(preflight, routingConfig, selectedOperation) {
+    if (!selectedOperation)
+        return "";
+    const zh = locale === "zh";
+    const operationId = selectedOperation.operation.operationId;
+    const members = selectedOperation.assignments.filter(item => item.planningStatus === "available");
+    const supply = currentRouteShareSupply(routingConfig);
+    const shares = members.map(item => {
+        const stationId = item.assignment.stationId;
+        const evaluation = preflight.shareEvaluations.find(row => row.operationId === operationId && row.stationId === stationId);
+        return {
+            allocationWeight: item.assignment.plannedShare ?? 1,
+            ...(supply.basis === "weekLedger" && evaluation?.requiredShareBasis === "weekLedger"
+                ? { availableMinutes: supply.minutes[stationId], requiredShare: evaluation.requiredCapacityShare } : {}),
+        };
+    });
+    const requiredShare = summarizeOperationRequiredShare(shares);
+    const routeKey = `${routingConfig.productId}::${routingConfig.route?.routeId ?? ""}`;
+    const selectedWindow = routeWindowMemory.get(routeKey);
+    const windowView = buildRouteWindowCapacityView({
+        ...(selectedWindow ? { memory: selectedWindow } : {}),
+        stations: collectRouteStationObservations(routingConfig),
+        operationIds: routingConfig.operations.map(item => item.operation.operationId),
+        ...(routingConfig.route?.stationFlowPolicies?.length ? { stationFlowPolicies: routingConfig.route.stationFlowPolicies } : {}),
+    });
+    const rows = members.map(item => windowView.stations.find(row => row.operationId === operationId
+        && row.stationId === item.assignment.stationId));
+    const plannedGood = rows.length && rows.every(row => row?.bestGoodCapacity !== undefined)
+        ? rows.reduce((sum, row) => sum + row.bestGoodCapacity, 0) : undefined;
+    const actualGood = rows.length && rows.every(row => row?.actualGoodOutput !== undefined)
+        ? rows.reduce((sum, row) => sum + row.actualGoodOutput, 0) : undefined;
+    const attainment = plannedGood && actualGood !== undefined ? actualGood / plannedGood : undefined;
+    return `<section class="sub-card" data-operation-share-summary>
+    <div class="panel-head"><h3>OP${selectedOperation.operation.sequence} ${escapeHtml(formatKnownText(selectedOperation.operation.name))} · ${zh ? "需求占用与试跑" : "Demand occupancy and trial run"}</h3><span class="pill">${zh ? "当前工序 · 归一化 100%" : "Current operation · normalized 100%"}</span></div>
+    <div class="field-grid">
+      ${field(zh ? "预测需求占用 · 同周" : "Forecast demand occupancy · same week", requiredShare === undefined ? (zh ? "排班依据不足" : "Schedule basis missing") : percent(requiredShare))}
+      ${field(zh ? "试跑良品 / 计划能力 · 本窗口" : "Trial good / planned capacity · this window", attainment === undefined ? "-" : percent(attainment))}
+      ${field(zh ? "本窗口计划良品能力" : "Planned good units · this window", plannedGood === undefined ? "-" : formatOutputUnits(plannedGood))}
+      ${field(zh ? "本窗口实跑良品" : "Trial good units · this window", actualGood === undefined ? "-" : formatOutputUnits(actualGood))}
+    </div>
+    <p class="note">${zh ? "预测值用需求除以各工站按份额折算后的同周能力之和；缺任一工站周账即留空。试跑达成来自本观察窗口，不是同周生产实绩，两个百分比不能直接相减。" : "The forecast divides demand by the sum of same-week station capacities after applying each allocation share. It stays blank if a station ledger is missing. Trial attainment uses this observation window, not same-week production actuals; the two percentages must not be subtracted."}</p>
+  </section>`;
+}
+function renderPreflight(preflight, routingConfig, selectedOperation) {
+    const catalog = preflightCatalog(routingConfig);
+    const displayLocale = locale === "zh" ? "zh" : "en";
+    const readiness = presentReadinessIssues(preflight.readiness.issues, catalog, displayLocale);
+    const shares = presentShareRows(preflight.shareEvaluations, routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.assignment.planningAllowed).map(view => ({
+        operationId: operation.operation.operationId,
+        stationId: view.assignment.stationId,
+        ...(view.assignment.plannedShare === undefined ? {} : { plannedShare: view.assignment.plannedShare }),
+    }))), catalog, displayLocale);
+    const batches = presentBatchRows(preflight.batchChecks, catalog, displayLocale);
+    const stationWindowBlockers = currentRouteWindowBlockers(routingConfig);
+    const selectedRoute = scenarioState.routes.find(item => item.routeId === selectedRouteId());
+    const viewingLocalDraft = selectedRoute ? isLocalDraftRoute(selectedRoute) : false;
+    const displayReadiness = viewingLocalDraft
+        ? readiness.filter(row => !isFormalReleaseCause(row.technical.causeCode))
+        : readiness;
+    const summary = presentPreflightSummary(displayReadiness, shares, batches);
+    const completePlanWeek = shares.length > 0 && shares.every(item => item.basis === "weekLedger");
+    const readinessRows = displayReadiness.map(issue => `
     <tr>
       <td><span class="status ${issue.severity === "error" ? "bad" : "warn"}">${formatIssueSeverity(issue.severity)}</span></td>
-      <td>${escapeHtml(issue.code)}</td>
-      <td>${escapeHtml(issue.operationId ?? "-")}</td>
-      <td>${escapeHtml(issue.stationId ?? "-")}</td>
-      <td>${escapeHtml(formatKnownText(issue.message))}</td>
+      <td>${escapeHtml(issue.problemType)}</td>
+      <td>${escapeHtml(issue.operation.label)}</td>
+      <td>${escapeHtml(issue.station.label)}</td>
+      <td>${escapeHtml(issue.action)}${technicalDetails(issue.technical)}</td>
     </tr>
   `).join("");
-    const shareRows = preflight.shareEvaluations.map(item => `
+    const shareRows = shares.map(item => `
     <tr>
-      <td>${escapeHtml(item.operationId)}</td>
-      <td>${escapeHtml(item.stationId)}</td>
-      <td>${formatShare(item.requestedCapacityShare)}</td>
-      <td>${formatShare(item.requiredCapacityShare)}</td>
-      <td>${formatShare(item.actualCapacityShare)}</td>
-      <td><span class="status ${riskTone(item.status)}">${formatRiskStatus(item.status)}</span></td>
-      <td>${item.risks.length ? escapeHtml(formatKnownText(item.risks.map(risk => risk.message).join(" / "))) : "-"}</td>
+      <td>${escapeHtml(item.operation.label)}</td>
+      <td>${escapeHtml(item.station.label)}</td>
+      <td>${escapeHtml(item.requestedLabel)}</td>
+      <td>${escapeHtml(item.requiredLabel)}</td>
+      <td>${escapeHtml(item.actualLabel)}</td>
+      <td><span class="status ${item.statusTone}">${escapeHtml(item.statusLabel)}</span></td>
+      <td>${escapeHtml(item.action)}${technicalDetails(item.technical)}</td>
     </tr>
   `).join("");
-    const batchRows = preflight.batchChecks.map(item => `
+    const batchRows = preflight.batchChecks.map((item, index) => {
+        const display = batches[index];
+        const status = item.status;
+        return `
     <tr>
-      <td>${escapeHtml(item.operationId)}</td>
+      <td>${escapeHtml(display?.operation.label ?? (locale === "zh" ? "信息缺失" : "Missing"))}</td>
       <td>${formatNumber(item.quantity)}</td>
       <td>${formatNumber(item.minimumProcessHU)}</td>
       <td>${formatNumber(item.batchMultiple)}</td>
-      <td><span class="status ${batchTone(item.status)}">${formatBatchStatus(item.status)}</span></td>
+      <td><span class="status ${batchTone(status)}">${formatBatchStatus(status)}</span></td>
       <td>${formatNumber(item.suggestedQuantity)}</td>
-      <td>${escapeHtml(formatKnownText(item.message))}</td>
+      <td>${escapeHtml(display?.action ?? "")}${display ? technicalDetails(display.technical) : ""}</td>
     </tr>
-  `).join("");
-    const selectedRoute = scenarioState.routes.find(item => item.routeId === selectedRouteId());
-    const viewingLocalDraft = selectedRoute ? isLocalDraftRoute(selectedRoute) : false;
+  `;
+    }).join("");
     const canEnterAnalysis = !viewingLocalDraft && preflight.ready && preflight.blockers.length === 0;
+    const calculationBlocked = displayReadiness.some(row => row.severity === "error") || batches.some(row => row.technical.code === "invalid");
     preflightRoot.innerHTML = `
     <div class="panel-head">
       <div>
-        <p class="eyebrow">${t("parameterPreflight")} · ${escapeHtml(selectedRoute?.routeId ?? "-")}</p>
-        <h2>${viewingLocalDraft ? (locale === "zh" ? "正式发布仍被拒绝" : "Formal release is still rejected") : (canEnterAnalysis ? t("readyForCapacity") : t("blockedBeforeCapacity"))}</h2>
+        <p class="eyebrow">${t("parameterPreflight")} · ${escapeHtml(formatKnownText(routingConfig.product?.name ?? routingConfig.productId))}</p>
+        <h2>${viewingLocalDraft ? (locale === "zh" ? "试算结论与正式发布门禁" : "Trial result and formal release gate") : (canEnterAnalysis ? t("readyForCapacity") : t("blockedBeforeCapacity"))}</h2>
       </div>
-      <span class="pill ${canEnterAnalysis ? "good" : "bad"}">${canEnterAnalysis ? t("ready") : t("blocked")}</span>
+      <span class="pill ${viewingLocalDraft ? "bad" : (canEnterAnalysis ? "good" : "bad")}">${viewingLocalDraft ? (locale === "zh" ? "正式发布未通过" : "Formal release not passed") : (canEnterAnalysis ? t("ready") : t("blocked"))}</span>
     </div>
-    ${renderLocalTrialStatus()}
+    ${renderLocalTrialStatus(catalog, stationWindowBlockers)}
     <div class="field-grid">
-      ${field(t("readinessIssues"), preflight.readiness.ready ? t("ready") : t("blocked"))}
+      ${field(t("readinessIssues"), viewingLocalDraft ? (calculationBlocked ? t("blocked") : (locale === "zh" ? "无计算阻止项" : "No calculation blocker")) : (preflight.readiness.ready ? t("ready") : t("blocked")))}
       ${field(t("operationsChecked"), formatNumber(preflight.readiness.operationsChecked))}
       ${field(t("planningAllowedAssignments"), formatNumber(preflight.readiness.planningAllowedAssignments.length))}
       ${field(t("blockedBackupAssignments"), formatNumber(preflight.readiness.blockedBackupAssignments.length))}
@@ -5112,23 +7316,33 @@ function renderPreflight(preflight) {
     <div class="split">
       <section>
         <h3>${t("blockers")}</h3>
-        ${preflight.blockers.length ? list(preflight.blockers) : emptyState(t("noHardBlocker"))}
+        ${summary.blockers.length ? list(summary.blockers) : emptyState(viewingLocalDraft ? (locale === "zh" ? "同窗计算没有额外阻止项。正式发布条件在上方按归属列出。" : "Same-window calculation has no extra blocker. Formal release conditions are listed above by owner.") : t("noHardBlocker"))}
       </section>
       <section>
         <h3>${t("warnings")}</h3>
-        ${preflight.warnings.length ? list(preflight.warnings) : emptyState(t("noWarning"))}
+        ${summary.warnings.length ? list(summary.warnings) : emptyState(t("noWarning"))}
       </section>
     </div>
     <div class="action-bar">
-      <span>${canEnterAnalysis ? t("preflightPassedAction") : t("preflightBlockedAction")}</span>
+      <span>${viewingLocalDraft
+        ? (locale === "zh" ? "同窗计算和本地试算可以继续查看。正式产能分析仍要等路线、工艺和阶段物料通过门禁。" : "Same-window and local trial results stay visible. Formal capacity analysis still waits for the route, process and stage-material gate.")
+        : (canEnterAnalysis ? t("preflightPassedAction") : t("preflightBlockedAction"))}</span>
       <span class="section-label">${t("capacityPreviewOnly")}</span>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>${t("severity")}</th><th>${t("code")}</th><th>${t("operation")}</th><th>${t("station")}</th><th>${t("message")}</th></tr></thead>
+        <thead><tr><th>${t("severity")}</th><th>${locale === "zh" ? "问题类型" : "Issue"}</th><th>${t("operation")}</th><th>${t("station")}</th><th>${t("message")}</th></tr></thead>
         <tbody>${readinessRows || `<tr><td colspan="5">${t("noReadinessIssue")}</td></tr>`}</tbody>
       </table>
     </div>
+    <h3 class="preflight-share-title">${locale === "zh" ? "工站份额 · 数据层" : "Station share · data layers"}</h3>
+    <dl class="evidence-layers">
+      <div><dt>${locale === "zh" ? "计划 SA / 周账" : "Planned SA / week ledger"}</dt><dd>${completePlanWeek
+        ? (locale === "zh" ? "同周账完整 · 预测可计算" : "Complete shared week · forecast available")
+        : (locale === "zh" ? "同周账待补 · 预测留空" : "Shared week incomplete · no forecast")}</dd></div>
+      <div><dt>${locale === "zh" ? "R&R 试跑" : "R&R trial"}</dt><dd>${locale === "zh" ? "验证数据 · 见上方逐站状态" : "Validation evidence · see station status above"}</dd></div>
+      <div><dt>${locale === "zh" ? "真实生产" : "Production actuals"}</dt><dd>${locale === "zh" ? "尚未接入 · 不以 R&R 代替" : "Not connected · R&R is not production actuals"}</dd></div>
+    </dl>
     <div class="table-wrap">
       <table>
         <thead><tr><th>${t("operation")}</th><th>${t("station")}</th><th>${t("requested")}</th><th>${t("required")}</th><th>${t("actual")}</th><th>${t("riskStatus")}</th><th>${t("riskMessages")}</th></tr></thead>
@@ -5142,16 +7356,72 @@ function renderPreflight(preflight) {
       </table>
     </div>
   `;
+    const technicalPreflight = preflightRoot.innerHTML;
+    preflightRoot.innerHTML = `${renderOperationShareSummary(preflight, routingConfig, selectedOperation)}
+    <details class="calibration-preflight-details"><summary>${locale === "zh" ? "预检与正式发布门禁 · 技术明细" : "Preflight and formal release gate · technical detail"}</summary>${technicalPreflight}</details>`;
 }
-function formatShare(value) {
-    return value === undefined ? "-" : percent(value);
+function preflightCatalog(routingConfig) {
+    return {
+        operations: routingConfig.operations.map(item => ({
+            operationId: item.operation.operationId,
+            sequence: item.operation.sequence,
+            name: formatKnownText(item.operation.name),
+        })),
+        stations: routingConfig.operations.flatMap(item => item.assignments.map(view => ({
+            operationId: item.operation.operationId,
+            stationId: view.assignment.stationId,
+            name: view.station?.name ? formatKnownText(view.station.name) : "",
+        }))),
+    };
 }
-function riskTone(status) {
-    if (status === "ok")
-        return "good";
-    if (status === "warning")
-        return "warn";
-    return "bad";
+function currentRouteShareSupply(routingConfig) {
+    const stationIds = [...new Set(routingConfig.operations.flatMap(operation => operation.assignments.filter(view => view.assignment.planningAllowed).map(view => view.assignment.stationId)))];
+    const weeksByStation = {};
+    const minutesByStationWeek = {};
+    for (const stationId of stationIds) {
+        const prefix = `${planScopeKey(routingConfig.productId, stationId)}::`;
+        const weeks = [...stationWeekSnapshots.keys()].filter(key => key.startsWith(prefix)).map(key => key.slice(prefix.length));
+        weeksByStation[stationId] = weeks;
+        minutesByStationWeek[stationId] = {};
+        for (const week of weeks) {
+            const snapshot = currentStationWeekSnapshot(planScopeKey(routingConfig.productId, stationId), week);
+            const minutes = snapshot ? completeWeekAvailableMinutes(snapshot.days) : undefined;
+            if (minutes !== undefined)
+                minutesByStationWeek[stationId][week] = minutes;
+        }
+    }
+    return resolveShareMinuteSupply(stationIds, weeksByStation, minutesByStationWeek);
+}
+function technicalDetails(detail) {
+    const lines = [
+        detail.causeCode && detail.causeCode !== detail.code ? `${detail.code} / ${detail.causeCode}` : detail.code,
+        detail.subjectId,
+        detail.productId,
+        detail.operationId,
+        detail.stationId,
+        detail.assignmentId,
+        detail.message,
+    ].filter((line) => Boolean(line));
+    return `<details class="preflight-tech"><summary>${locale === "zh" ? "技术详情" : "Technical detail"}</summary><p>${escapeHtml(lines.join(" · "))}</p></details>`;
+}
+function formatStationWindowGaps(item) {
+    const parts = item.blockers.map(code => {
+        if (code === "actual_window_incomplete")
+            return coverageMarkup(item.unrecordedIntervals, "unrecorded");
+        if (code === "planned_window_gap")
+            return coverageMarkup(item.plannedGapIntervals, "plannedGap");
+        return escapeHtml(formatRouteBlocker(code, item.standardWindow));
+    }).filter(Boolean);
+    return parts.length ? parts.join("") : "-";
+}
+function coverageMarkup(intervals, kind) {
+    const formatted = formatCoverageSummary(intervals ?? [], locale === "zh" ? "zh" : "en", kind);
+    if (!formatted.summary)
+        return "";
+    const details = formatted.details.length > 1
+        ? `<details class="preflight-tech"><summary>${locale === "zh" ? "时段明细" : "Gap detail"}</summary><ul class="rnr-gap-list">${formatted.details.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul></details>`
+        : "";
+    return `<div>${escapeHtml(formatted.summary)}${details}</div>`;
 }
 function batchTone(status) {
     if (status === "ok")
@@ -5166,12 +7436,61 @@ function localRouteId() {
     return route && isLocalDraftRoute(route) ? routeId : "";
 }
 function planScopeKey(productId, stationId) {
-    const routeId = localRouteId();
-    return routeId ? `${routeId}::${productId}::${stationId}` : `${productId}::${stationId}`;
+    return planScopeKeyForRoute(productId, stationId, localRouteId());
+}
+function standardSaSourceSignature(key) {
+    const config = standardSaDayConfigs.get(key);
+    const events = key === plannedSaContextKey ? plannedSaEvents : plannedSaContexts.get(key)?.events;
+    return config && events ? `${JSON.stringify(config)}::${standardWindowFingerprint(events)}` : undefined;
+}
+function currentStationWeekSnapshot(planKey, weekStart) {
+    const snapshot = stationWeekSnapshots.get(`${planKey}::${weekStart}`);
+    return weekMatchesStandardSaSource(snapshot, standardSaSourceSignature(planKey)) ? snapshot : undefined;
+}
+function persistStandardSaState() {
+    if (plannedSaContextKey) {
+        plannedSaContexts.set(plannedSaContextKey, { events: plannedSaEvents, areDefault: plannedSaEventsAreDefault });
+    }
+    const state = emptyStandardSaLocalState();
+    state.plans = Object.fromEntries(plannedSaContexts);
+    state.configs = Object.fromEntries(standardSaDayConfigs);
+    state.frozen = Object.fromEntries(frozenStandardWindows);
+    state.weeks = Object.fromEntries(stationWeekSnapshots);
+    const serialized = JSON.stringify(state);
+    if (serialized === lastSavedStandardSaState)
+        return;
+    try {
+        saveLocalState(standardSaStorageKey, serialized);
+        lastSavedStandardSaState = serialized;
+    }
+    catch {
+        localStoreError = locale === "zh" ? "标准 SA 无法保存在本机；请勿清除站点数据。" : "Could not save standard SA locally.";
+    }
+}
+function restoreStandardSaState() {
+    const raw = localStorage.getItem(standardSaStorageKey);
+    if (!raw)
+        return;
+    try {
+        const saved = parseStandardSaLocalState(raw);
+        for (const [key, value] of Object.entries(saved.plans))
+            plannedSaContexts.set(key, value);
+        for (const [key, value] of Object.entries(saved.configs))
+            standardSaDayConfigs.set(key, value);
+        for (const [key, value] of Object.entries(saved.frozen))
+            frozenStandardWindows.set(key, value);
+        for (const [key, value] of Object.entries(saved.weeks))
+            stationWeekSnapshots.set(key, value);
+        lastSavedStandardSaState = raw;
+    }
+    catch {
+        localStoreError = locale === "zh"
+            ? "本机标准 SA 记录无法读取，原数据未清除。"
+            : "Saved standard SA could not be read; the original record was kept.";
+    }
 }
 function actualScopeKey(productId, operationId, stationId) {
-    const routeId = localRouteId();
-    return routeId ? `${routeId}::${productId}::${operationId}::${stationId}` : `${productId}::${operationId}::${stationId}`;
+    return actualScopeKeyForRoute(productId, operationId, stationId, localRouteId());
 }
 function updateLocalValidationBanner(routingConfig) {
     const banner = document.querySelector("#localValidationBanner");
@@ -5280,7 +7599,7 @@ function dropLocalRuntimeState() {
     catch { /* Browser storage may be disabled. */ }
 }
 function libraryTypeMatches(item, query) {
-    return [item.name, libraryDisplayText(item.name), item.processTypeId]
+    return [...libraryNameVariants(item.name), item.processTypeId]
         .join(" ")
         .toLocaleLowerCase()
         .includes(query.trim().toLocaleLowerCase());
@@ -5327,7 +7646,7 @@ function updateLibraryTypeResults() {
 }
 function libraryProcessSearchText(process) {
     const typeName = scenarioState.processTypes?.find(item => item.processTypeId === process.processType)?.name ?? process.processType;
-    return [process.processId, process.name, libraryDisplayText(process.name), process.businessCode ?? "", process.processType, typeName, libraryDisplayText(typeName), process.version]
+    return [process.processId, ...libraryNameVariants(process.name), process.businessCode ?? "", process.processType, ...libraryNameVariants(typeName), process.version]
         .join(" ")
         .toLocaleLowerCase();
 }
@@ -5345,6 +7664,9 @@ function updateLibraryProcessSearch() {
 }
 function renderProcessLibrary() {
     const zh = locale === "zh";
+    const selectedType = (scenarioState.processTypes ?? []).find(type => type.processTypeId === libraryForm.processTypeId);
+    const typeProcesses = (scenarioState.processMasters ?? []).filter(process => process.processType === selectedType?.processTypeId);
+    const defaultProcess = selectedType && typeProcesses.find(process => libraryNamesEquivalent(process.name, selectedType.name));
     const processes = [...(scenarioState.processMasters ?? [])]
         .sort((a, b) => Number(isLocalDraftProcess(b)) - Number(isLocalDraftProcess(a)) || a.name.localeCompare(b.name, zh ? "zh" : "en"));
     const selected = (scenarioState.processMasters ?? []).find(process => process.processId === librarySelectedProcessId);
@@ -5409,13 +7731,29 @@ function renderProcessLibrary() {
       </details>
     </section>
     <section class="library-step">
-      <h3><span>02</span>${zh ? "建立具体工艺" : "File a specific process"}</h3>
-      <div class="field-grid library-process-fields">
-        <label class="field">${zh ? "工艺名称" : "Process name"}<input id="libraryProcessName" type="text" value="${escapeHtml(libraryForm.name)}" placeholder="${zh ? "例如：压铸" : "e.g. Die casting"}" title="${zh ? "填写可复用的工艺名称；产品专属工序名称在路线编排中填写" : "Name a reusable process; set product-specific operation names in the route editor"}"></label>
-        <label class="field">${zh ? "企业业务编号 · 可选" : "Business code · optional"}<input id="libraryBusinessCode" type="text" value="${escapeHtml(libraryForm.businessCode)}"></label>
-        <label class="field">${zh ? "说明 · 可选" : "Description · optional"}<input id="libraryProcessDescription" type="text" value="${escapeHtml(libraryForm.description)}"></label>
+      <h3><span>02</span>${zh ? "采用或建立可复用工艺" : "Use or create a reusable process"}</h3>
+      <div class="library-process-mode" role="group" aria-label="${zh ? "工艺建立方式" : "Process setup mode"}">
+        <button type="button" data-library-process-mode="default" aria-pressed="${libraryProcessMode === "default"}">${zh ? "默认工艺" : "Default process"}</button>
+        <button type="button" data-library-process-mode="detail" aria-pressed="${libraryProcessMode === "detail"}">${zh ? "另建细分工艺" : "Create a distinct process"}</button>
       </div>
-      <div class="panel-actions"><button class="button" type="button" id="createLibraryProcess" ${libraryForm.processTypeId ? "" : "disabled"}>${zh ? "写入工艺库" : "Save process"}</button></div>
+      ${libraryProcessMode === "default" ? `
+        <div class="field-grid library-process-fields">
+          <label class="field">${zh ? "工艺名称" : "Process name"}<input type="text" readonly value="${escapeHtml(selectedType ? libraryDisplayText(selectedType.name) : "-")}"></label>
+          <label class="field">${zh ? "工艺类型" : "Process type"}<input type="text" readonly value="${escapeHtml(selectedType ? libraryDisplayText(selectedType.name) : "-")}"></label>
+          <label class="field">${zh ? "内部工艺编号" : "Internal process ID"}<input type="text" readonly value="${escapeHtml(defaultProcess?.processId ?? (selectedType ? (zh ? "建档后生成" : "Generated on creation") : "-"))}"></label>
+        </div>
+        <div class="panel-actions">${defaultProcess
+        ? `<span class="library-process-status">${zh ? "已有默认工艺，可直接用于路线" : "Default process available for routes"}</span>`
+        : `<button class="button" type="button" id="createLibraryDefaultProcess" ${selectedType ? "" : "disabled"}>${zh ? "建立默认工艺" : "Create default process"}</button>`}</div>
+      ` : `
+        <div class="field-grid library-process-fields">
+          <label class="field">${zh ? "细分工艺名称" : "Distinct process name"}<input id="libraryProcessName" type="text" value="${escapeHtml(libraryForm.name)}" placeholder="${zh ? "仅填写跨产品可复用的定义" : "Reusable across products"}"></label>
+          <label class="field">${zh ? "企业业务编号 · 可选" : "Business code · optional"}<input id="libraryBusinessCode" type="text" value="${escapeHtml(libraryForm.businessCode)}"></label>
+          <label class="field">${zh ? "说明 · 可选" : "Description · optional"}<input id="libraryProcessDescription" type="text" value="${escapeHtml(libraryForm.description)}"></label>
+        </div>
+        <div class="panel-actions"><button class="button" type="button" id="createLibraryProcess" ${selectedType ? "" : "disabled"}>${zh ? "建立细分工艺" : "Create distinct process"}</button><span class="note">${zh ? "产品专属加工内容留在路线工序中。" : "Set product-specific work in route operations."}</span></div>
+      `}
+      ${selectedType ? `<p class="note">${zh ? "当前类型下的工艺" : "Processes in this type"}：${typeProcesses.length ? typeProcesses.map(process => escapeHtml(libraryDisplayText(process.name))).join(zh ? "、" : ", ") : (zh ? "尚未建立" : "None yet")}</p>` : ""}
       ${libraryNotice ? `<p class="form-ok" role="status">${escapeHtml(libraryNotice)}</p>` : ""}
       ${libraryError ? `<p class="form-error" role="alert">${escapeHtml(libraryError)}</p>` : ""}
     </section>
@@ -5486,10 +7824,19 @@ const libraryGlossary = [
     ["Die casting", "压铸"],
     ["Ultrasonic cleaning", "超声清洗"],
 ];
+function libraryNameVariants(value) {
+    const trimmed = value.trim();
+    const pair = libraryGlossary.find(([en, zh]) => trimmed.localeCompare(en, undefined, { sensitivity: "accent" }) === 0 || trimmed === zh);
+    return pair ? pair : [trimmed];
+}
+function libraryNamesEquivalent(left, right) {
+    return (libraryNameVariants(left)[0] ?? "").toLocaleLowerCase() === (libraryNameVariants(right)[0] ?? "").toLocaleLowerCase();
+}
 function libraryDisplayText(value) {
     const trimmed = value.trim();
     for (const [en, zh] of libraryGlossary) {
-        const sameEn = trimmed.localeCompare(en, undefined, { sensitivity: "accent" }) === 0;
+        const sameEn = trimmed.localeCompare(en, undefined, { sensitivity: "accent" }) === 0
+            || formatSystemTerm(trimmed).localeCompare(en, undefined, { sensitivity: "accent" }) === 0;
         if (locale === "zh" && (sameEn || trimmed === zh))
             return zh;
         if (locale !== "zh" && (sameEn || trimmed === zh))
@@ -5527,12 +7874,12 @@ function processSourceLabel(process) {
     return process.sourceSystem;
 }
 function readLibraryForm() {
-    const read = (id) => processLibraryRoot.querySelector(`#${id}`)?.value ?? "";
+    const read = (id, fallback = "") => processLibraryRoot.querySelector(`#${id}`)?.value ?? fallback;
     libraryForm = {
-        name: read("libraryProcessName"),
+        name: read("libraryProcessName", libraryForm.name),
         processTypeId: read("libraryProcessType"),
-        description: read("libraryProcessDescription"),
-        businessCode: read("libraryBusinessCode"),
+        description: read("libraryProcessDescription", libraryForm.description),
+        businessCode: read("libraryBusinessCode", libraryForm.businessCode),
         newTypeName: read("libraryNewTypeName"),
         newTypeFamily: read("libraryNewTypeFamily") === "quality" ? "quality" : "manufacturing",
     };
@@ -5609,7 +7956,7 @@ function bindProcessLibrary() {
     });
     processLibraryRoot.querySelector("#libraryGoRoute")?.addEventListener("click", () => {
         setWorkflowStage("routing");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollContentToTop();
     });
     processLibraryRoot.querySelector("#libraryNewTypeDetails")?.addEventListener("toggle", event => {
         libraryShowNewType = event.currentTarget.open;
@@ -5620,9 +7967,7 @@ function bindProcessLibrary() {
         const selected = scenarioState.processTypes?.find(item => item.processTypeId === libraryForm.processTypeId);
         if (libraryTypeQuery.trim() && selected && !libraryTypeMatches(selected, libraryTypeQuery)) {
             libraryForm.processTypeId = "";
-            const create = processLibraryRoot.querySelector("#createLibraryProcess");
-            if (create)
-                create.disabled = true;
+            processLibraryRoot.querySelectorAll("#createLibraryProcess, #createLibraryDefaultProcess").forEach(create => { create.disabled = true; });
         }
         const select = processLibraryRoot.querySelector("#libraryProcessType");
         if (select)
@@ -5638,9 +7983,18 @@ function bindProcessLibrary() {
         readLibraryForm();
         renderProcessLibrary();
     });
+    processLibraryRoot.querySelectorAll("[data-library-process-mode]").forEach(button => {
+        button.addEventListener("click", () => {
+            readLibraryForm();
+            libraryProcessMode = button.dataset.libraryProcessMode === "detail" ? "detail" : "default";
+            renderProcessLibrary();
+            if (libraryProcessMode === "detail")
+                processLibraryRoot.querySelector("#libraryProcessName")?.focus();
+        });
+    });
     processLibraryRoot.querySelector("#returnFromLibrary")?.addEventListener("click", () => {
         setWorkflowStage(libraryReturnStage);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollContentToTop();
     });
     const processSearch = processLibraryRoot.querySelector("#librarySearch");
     const updateProcessSearch = () => {
@@ -5673,9 +8027,10 @@ function bindProcessLibrary() {
             renderProcessLibrary();
             return;
         }
-        const matching = (scenarioState.processTypes ?? []).find(item => libraryDisplayText(item.name).toLocaleLowerCase() === libraryForm.newTypeName.trim().toLocaleLowerCase());
+        const matching = (scenarioState.processTypes ?? []).find(item => libraryNamesEquivalent(item.name, libraryForm.newTypeName));
         if (matching) {
             libraryForm.processTypeId = matching.processTypeId;
+            libraryTypeQuery = "";
             libraryError = locale === "zh" ? `目录中已有「${libraryDisplayText(matching.name)}」，已为你选中。` : `Type ${libraryDisplayText(matching.name)} already exists and is now selected.`;
             libraryNotice = "";
             renderProcessLibrary();
@@ -5691,6 +8046,7 @@ function bindProcessLibrary() {
             return;
         }
         libraryForm.processTypeId = result.processType.processTypeId;
+        libraryTypeQuery = "";
         libraryForm.newTypeName = "";
         libraryShowNewType = false;
         const warning = similarLibraryText(result.warnings);
@@ -5698,8 +8054,34 @@ function bindProcessLibrary() {
             ? `已新增本地类型：${libraryDisplayText(result.processType.name)}，归类为${processFamilyLabel(processTypeFamilyOf(result.processType))}。还没有写成工艺。${warning}`
             : `Added local type ${libraryDisplayText(result.processType.name)} under ${processFamilyLabel(processTypeFamilyOf(result.processType))}. It is not a process yet. ${warning}`);
     });
+    processLibraryRoot.querySelector("#createLibraryDefaultProcess")?.addEventListener("click", () => {
+        readLibraryForm();
+        const type = scenarioState.processTypes?.find(item => item.processTypeId === libraryForm.processTypeId);
+        if (!type)
+            return;
+        const existing = scenarioState.processMasters?.find(process => process.processType === type.processTypeId && libraryNamesEquivalent(process.name, type.name));
+        if (existing) {
+            librarySelectedProcessId = existing.processId;
+            renderProcessLibrary();
+            return;
+        }
+        const result = createLocalProcess(scenarioState, { name: type.name, processTypeId: type.processTypeId });
+        if ("issues" in result) {
+            commitLibraryChange(result, "");
+            return;
+        }
+        librarySelectedProcessId = result.process.processId;
+        commitLibraryChange(result, locale === "zh" ? `已建立默认工艺：${libraryDisplayText(type.name)}。尚未加入产品路线。` : `Created default process ${libraryDisplayText(type.name)}. It has not been added to a product route.`);
+    });
     processLibraryRoot.querySelector("#createLibraryProcess")?.addEventListener("click", () => {
         readLibraryForm();
+        const duplicate = scenarioState.processMasters?.find(process => process.processType === libraryForm.processTypeId && libraryNamesEquivalent(process.name, libraryForm.name));
+        if (duplicate) {
+            libraryError = locale === "zh" ? `该类型下已有「${libraryDisplayText(duplicate.name)}」，请直接采用。` : `${libraryDisplayText(duplicate.name)} already exists in this type. Use the existing process.`;
+            libraryNotice = "";
+            renderProcessLibrary();
+            return;
+        }
         const result = createLocalProcess(scenarioState, {
             name: libraryForm.name,
             processTypeId: libraryForm.processTypeId,
@@ -5792,7 +8174,7 @@ function getRouteStatus(routingConfig) {
 }
 function formatKnownText(value) {
     if (locale !== "zh")
-        return value;
+        return libraryDisplayText(value);
     const exact = {
         "Product A Housing": "产品A壳体",
         "Product B Housing": "产品B壳体",
@@ -5883,7 +8265,7 @@ function formatDemandScenario(value) {
         peak: "峰值需求",
         custom: "自定义",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatRole(value) {
     const labels = {
@@ -5892,7 +8274,7 @@ function formatRole(value) {
         backup: "备用工站",
         series: "量产工站",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatPlanningStatus(value) {
     const labels = {
@@ -5900,7 +8282,7 @@ function formatPlanningStatus(value) {
         blocked: "被阻止",
         warning: "需关注",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatApprovalStatus(value) {
     const labels = {
@@ -5911,7 +8293,7 @@ function formatApprovalStatus(value) {
         rejected: "已拒绝",
         notRequired: "已放行（无需客户批准）",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatAllocationMode(value) {
     const labels = {
@@ -5920,7 +8302,7 @@ function formatAllocationMode(value) {
         defaultCapacityCeiling: "100%（未设固定上限）",
         manual: "手工设定",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatTimelineKind(value) {
     const labels = {
@@ -5936,7 +8318,7 @@ function formatTimelineKind(value) {
         qualityHold: "质量隔离",
         laborIssue: "人员问题",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatPlannedCategory(value) {
     const labels = {
@@ -5944,7 +8326,7 @@ function formatPlannedCategory(value) {
         plannedActivity: "计划动作 / 计划损失",
         notPlanned: "未排产 / 不开机",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatCapacityStatus(value) {
     const labels = {
@@ -5953,7 +8335,7 @@ function formatCapacityStatus(value) {
         warning: "需关注",
         critical: "严重",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatEffectivePeriod(from, to) {
     if (!from && !to)
@@ -5972,7 +8354,7 @@ function formatRouteStatusLabel(value) {
         "ready with backup gate": "就绪但存在备用门禁",
         ready: "就绪",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatIssueSeverity(value) {
     const labels = {
@@ -5980,7 +8362,7 @@ function formatIssueSeverity(value) {
         warning: "警告",
         info: "信息",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatRiskStatus(value) {
     const labels = {
@@ -5988,7 +8370,7 @@ function formatRiskStatus(value) {
         warning: "需关注",
         critical: "严重",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function formatBatchStatus(value) {
     const labels = {
@@ -5996,7 +8378,7 @@ function formatBatchStatus(value) {
         needsApproval: "需要审批",
         invalid: "无效",
     };
-    return locale === "zh" ? labels[value] ?? value : value;
+    return locale === "zh" ? labels[value] ?? value : formatSystemTerm(value);
 }
 function metricCard(label, value, detail, tone) {
     return `<article class="metric ${tone}"><p>${escapeHtml(label)}</p><strong>${escapeHtml(value)}</strong><span>${escapeHtml(detail)}</span></article>`;

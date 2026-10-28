@@ -108,7 +108,7 @@ describe("independent week minute ledger", () => {
     const copy = {
       issues: [], weekStartMinuteOfDay: 480, events: [{
         id: "span", kind: "production", startMinute: 480, endMinute: 480 + 1500, occurrenceDate: "2026-10-12",
-        sourceEventId: "source-1", origin: "sourceCopy", sourceWindowId: "window", sourceWindowVersion: 1, stationId: "OP10", source: "manual",
+        sourceEventId: "source-1", origin: "sourceCopy", sourceWindowId: "window", sourceWindowVersion: 1, stationId: "OP20A", source: "manual",
       }],
     };
     const conflict = Array.from({ length: 7 }, () => blank());

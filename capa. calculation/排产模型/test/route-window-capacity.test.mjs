@@ -19,14 +19,14 @@ const input = {
   startMinute: 480, endMinute: 1920,
   operationIds: ["op-a-10", "op-a-20"],
   operationUnitsPerProduct: { "op-a-10": 1, "op-a-20": 1 },
-  stations: [station("op-a-10", "OP10", 0.7), station("op-a-10", "OP10B", 0.3), station("op-a-20", "OP20", 1)],
+  stations: [station("op-a-10", "OP20A", 0.7), station("op-a-10", "OP20B", 0.3), station("op-a-20", "OP30", 1)],
 };
 
 describe("same-window route capacity", () => {
   it("does not count an unlinked upstream station in route capacity", () => {
     const linked = calculateRouteWindowCapacity({ ...input, stationFlowPolicies: [{
       fromOperationId: "op-a-10", toOperationId: "op-a-20",
-      allowedPairs: [{ fromStationId: "OP10B", toStationId: "OP20" }],
+      allowedPairs: [{ fromStationId: "OP20B", toStationId: "OP30" }],
     }] });
     assert.equal(linked.bestGoodCapacity, 3096);
     assert.equal(linked.actualGoodOutput, 2912);
@@ -80,11 +80,11 @@ describe("same-window route capacity", () => {
   });
 
   it("keeps off-shift time out of the planned-gap check", () => {
-    const parameter = sampleScenario.operationStationParameters.find(item => item.stationId === "OP10");
+    const parameter = sampleScenario.operationStationParameters.find(item => item.stationId === "OP20A");
     const shared = {
-      productId: "A-Housing", operationId: "op-a-10", stationId: "OP10", parameter,
-      planned: [{ id: "plan", productId: "A-Housing", stationId: "OP10", kind: "production", startMinute: 510, endMinute: 1230, source: "manual" }],
-      actual: [{ id: "actual", productId: "A-Housing", stationId: "OP10", kind: "production", startMinute: 510, endMinute: 1230, source: "runRate", okQty: 1800, nokQty: 0, piecesPerCycle: 1 }],
+      productId: "A-Housing", operationId: "op-a-10", stationId: "OP20A", parameter,
+      planned: [{ id: "plan", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 510, endMinute: 1230, source: "manual" }],
+      actual: [{ id: "actual", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 510, endMinute: 1230, source: "runRate", okQty: 1800, nokQty: 0, piecesPerCycle: 1 }],
       speedOptions: { verifiedStandardCycleSec: parameter.standardCycleSec },
     };
     const covered = calculateRouteWindowCapacity({
@@ -101,13 +101,79 @@ describe("same-window route capacity", () => {
     assert.equal(uncovered.stations[0].actualGoodOutput, undefined);
   });
 
+  it("keeps Actual empty only for real unrecorded time, not a different state or off-shift blank", () => {
+    const parameter = sampleScenario.operationStationParameters.find(item => item.stationId === "OP20A");
+    const base = {
+      productId: "A-Housing", operationId: "op-a-10", stationId: "OP20A", parameter,
+      speedOptions: { verifiedStandardCycleSec: parameter.standardCycleSec },
+    };
+    const changed = calculateRouteWindowCapacity({
+      startMinute: 0, endMinute: 60, operationIds: ["op-a-10"], operationUnitsPerProduct: { "op-a-10": 1 },
+      stations: [{
+        ...base,
+        planned: [{ id: "plan", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 60, source: "manual" }],
+        actual: [{ id: "actual", productId: "A-Housing", stationId: "OP20A", kind: "break", startMinute: 0, endMinute: 60, source: "runRate" }],
+      }],
+    });
+    assert.equal(changed.stations[0].blockers.includes("actual_window_incomplete"), false);
+    assert.equal(changed.stations[0].blockers.includes("actual_production_missing"), true);
+
+    const offShift = calculateRouteWindowCapacity({
+      startMinute: 0, endMinute: 120, operationIds: ["op-a-10"], operationUnitsPerProduct: { "op-a-10": 1 },
+      stations: [{
+        ...base,
+        offShiftIntervals: [{ startMinute: 60, endMinute: 120 }],
+        planned: [{ id: "plan", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 60, source: "manual" }],
+        actual: [{ id: "actual", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 60, source: "runRate", okQty: 10, nokQty: 0, piecesPerCycle: 1 }],
+      }],
+    });
+    assert.equal(offShift.stations[0].blockers.includes("actual_window_incomplete"), false);
+    assert.equal(offShift.stations[0].unrecordedIntervals, undefined);
+
+    const middle = calculateRouteWindowCapacity({
+      startMinute: 0, endMinute: 120, operationIds: ["op-a-10"], operationUnitsPerProduct: { "op-a-10": 1 },
+      stations: [{
+        ...base,
+        planned: [{ id: "plan", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 120, source: "manual" }],
+        actual: [
+          { id: "a", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 0, endMinute: 60, source: "runRate", okQty: 10, nokQty: 0, piecesPerCycle: 1 },
+          { id: "b", productId: "A-Housing", stationId: "OP20A", kind: "production", startMinute: 90, endMinute: 120, source: "runRate", okQty: 10, nokQty: 0, piecesPerCycle: 1 },
+        ],
+      }],
+    });
+    assert.deepEqual(middle.stations[0].unrecordedIntervals, [{ startMinute: 60, endMinute: 90 }]);
+    assert.equal(middle.stations[0].blockers.includes("actual_window_incomplete"), true);
+    assert.equal(middle.stations[0].actualGoodOutput, undefined);
+  });
+
   it("leaves route Actual unknown if a planning station has no complete actual track", () => {
     const result = calculateRouteWindowCapacity({
-      ...input, stations: [...input.stations.slice(0, 2), station("op-a-20", "OP20", 1, false)],
+      ...input, stations: [...input.stations.slice(0, 2), station("op-a-20", "OP30", 1, false)],
     });
     assert.equal(result.bestGoodCapacity > 0, true);
     assert.equal(result.actualGoodOutput, undefined);
     assert.ok(result.stations[2].blockers.includes("actual_window_incomplete"));
+  });
+
+  it("keeps a shared on-shift gap visible in both planned and actual coverage", () => {
+    const parameter = sampleScenario.operationStationParameters.find(item => item.stationId === "OP20A");
+    const events = [
+      { startMinute: 0, endMinute: 30 },
+      { startMinute: 60, endMinute: 120 },
+    ];
+    const result = calculateRouteWindowCapacity({
+      startMinute: 0, endMinute: 120, operationIds: ["op-a-10"], operationUnitsPerProduct: { "op-a-10": 1 },
+      stations: [{
+        productId: "A-Housing", operationId: "op-a-10", stationId: "OP20A", parameter,
+        planned: events.map((event, index) => ({ id: `p-${index}`, productId: "A-Housing", stationId: "OP20A", kind: "production", source: "manual", ...event })),
+        actual: events.map((event, index) => ({ id: `a-${index}`, productId: "A-Housing", stationId: "OP20A", kind: "production", source: "runRate", okQty: 10, nokQty: 0, piecesPerCycle: 1, ...event })),
+        speedOptions: { verifiedStandardCycleSec: parameter.standardCycleSec },
+      }],
+    });
+    assert.deepEqual(result.stations[0].plannedGapIntervals, [{ startMinute: 30, endMinute: 60 }]);
+    assert.deepEqual(result.stations[0].unrecordedIntervals, [{ startMinute: 30, endMinute: 60 }]);
+    assert.ok(result.stations[0].blockers.includes("planned_window_gap"));
+    assert.ok(result.stations[0].blockers.includes("actual_window_incomplete"));
   });
 
   it("blocks a planned gap, invalid quantity or duplicate assignment", () => {

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { buildRnrEvidence, reconcileRnrSpeedLoss } from "../dist/index.js";
 
 const event = (id, kind, startMinute, endMinute, extra = {}) => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "runRate", ...extra,
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "runRate", ...extra,
 });
 const production = (id, start, end, qty) => event(id, "production", start, end, {
   okQty: qty, nokQty: 0, piecesPerCycle: 1,
@@ -11,11 +11,11 @@ const production = (id, start, end, qty) => event(id, "production", start, end, 
 
 function evidenceInput(planned, actual, options = {}) {
   const speed = reconcileRnrSpeedLoss(actual.filter(item => item.kind === "production").map(item => ({
-    id: item.id, productId: "A", operationId: "OP10", stationId: "OP10",
+    id: item.id, productId: "A", operationId: "OP20A", stationId: "OP20A",
     startMinute: item.startMinute, endMinute: item.endMinute,
     okQty: item.okQty, nokQty: item.nokQty, piecesPerCycle: item.piecesPerCycle,
   })), options);
-  return { productId: "A", operationId: "OP10", stationId: "OP10",
+  return { productId: "A", operationId: "OP20A", stationId: "OP20A",
     startMinute: planned[0].startMinute, endMinute: planned.at(-1).endMinute,
     planned, actual, speed };
 }

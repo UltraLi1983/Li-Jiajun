@@ -1,6 +1,6 @@
 import { validateProductRoutingMasterData } from "./routing-master-data-engine.js";
 import { selectEffectiveParameter } from "./parameter-versioning.js";
-export function checkProductReadiness(scenario, productId, routeId) {
+export function checkProductReadiness(scenario, productId, routeId, asOfDate, throughDate) {
     const issues = [];
     const product = scenario.products?.find(item => item.productId === productId);
     const planningAllowedAssignments = [];
@@ -15,13 +15,18 @@ export function checkProductReadiness(scenario, productId, routeId) {
         issues.push({ severity: "error", code: "route_missing", productId, message: `${productId} does not have a matching route` });
         return buildResult(productId, issues, [], planningAllowedAssignments, blockedBackupAssignments);
     }
-    const routeMasterData = validateProductRoutingMasterData(scenario, productId, route.routeId);
+    const routeMasterData = validateProductRoutingMasterData(scenario, productId, route.routeId, {
+        ...(asOfDate ? { asOfDate } : {}),
+        ...(throughDate ? { throughDate } : {}),
+    });
     for (const issue of routeMasterData.issues) {
         issues.push({
             severity: issue.severity,
             code: "route_master_invalid",
+            causeCode: issue.code,
             productId,
             ...(issue.operationId ? { operationId: issue.operationId } : {}),
+            ...(issue.subjectId ? { subjectId: issue.subjectId } : {}),
             message: issue.message,
         });
     }

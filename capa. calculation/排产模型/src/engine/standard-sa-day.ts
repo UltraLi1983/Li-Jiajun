@@ -122,7 +122,7 @@ export function reconcileAutoFilledGaps(events: TimelineEvent[], config: Standar
   if (!shifts.length) return events;
   return events.flatMap(event => {
     const legacyAutoGap = event.autoFilled !== false && event.kind === "unscheduled"
-      && event.source === "manual" && event.label === "未排产"
+      && event.source === "manual"
       && /^planned-unscheduled-\d{13}-\d+$/.test(event.id);
     if (event.kind !== "unscheduled" || (event.autoFilled !== true && !legacyAutoGap)) return [event];
     return shifts.flatMap((shift, index) => {

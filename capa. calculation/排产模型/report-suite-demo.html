@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>产能报告中心 · 输出目标态演示</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1c2930; background: #f4f7f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #52a6bc; outline-offset: 2px; }
+    .app-header { background: #fff; border-bottom: 1px solid #d7e1e4; }
+    .header-inner { max-width: 1510px; margin: auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 6px; background: #1f6d70; color: #fff; font-size: 19px; font-weight: 800; }
+    .brand h1 { margin: 0; font-size: 20px; line-height: 1.25; }
+    .brand p { margin: 3px 0 0; color: #62727d; font-size: 12px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #afd7d9; border-radius: 4px; background: #edf8f7; color: #1d676c; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .tag.amber { border-color: #e7cf99; background: #fff7e8; color: #8a5a0e; }
+    .tag.red { border-color: #ecc3c0; background: #fff0ee; color: #a03631; }
+    .tag.gray { border-color: #cad7db; background: #f5f8f8; color: #53646e; }
+    .button { min-height: 36px; padding: 7px 12px; border: 1px solid #1f6d70; border-radius: 5px; background: #1f6d70; color: white; font-weight: 700; font-size: 12px; }
+    .button:hover { background: #155b60; }
+    .button.secondary { border-color: #cbd8dc; background: #fff; color: #344b58; }
+    .button.secondary:hover { background: #f2f7f7; }
+    .layout { max-width: 1510px; margin: auto; display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: start; min-height: calc(100vh - 71px); }
+    .rail { padding: 22px 12px 24px 16px; border-right: 1px solid #d7e1e4; min-height: calc(100vh - 71px); }
+    .rail-label { padding: 0 10px; margin: 0 0 10px; color: #73848e; font-size: 11px; font-weight: 800; }
+    .report-nav { display: grid; gap: 4px; }
+    .nav-button { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 55px; padding: 9px 10px; border: 1px solid transparent; border-radius: 5px; background: transparent; text-align: left; color: #334651; }
+    .nav-button:hover { background: #eaf2f3; }
+    .nav-button[aria-current="page"] { border-color: #a6cdd2; background: #dfeef0; color: #155f67; }
+    .nav-index { display: grid; place-items: center; width: 25px; height: 25px; flex: 0 0 25px; border-radius: 50%; background: #fff; font-size: 11px; font-weight: 800; }
+    .nav-name { display: block; font-size: 13px; font-weight: 750; }
+    .nav-sub { display: block; margin-top: 2px; color: #687a86; font-size: 11px; }
+    .rail-foot { margin: 22px 10px 0; padding-top: 15px; border-top: 1px solid #d7e1e4; color: #677983; font-size: 11px; line-height: 1.5; }
+    .main { min-width: 0; padding: 22px 25px 48px; }
+    .demo-note { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; margin-bottom: 18px; border-left: 3px solid #a87322; background: #fff8eb; color: #674a20; font-size: 12px; line-height: 1.45; }
+    .demo-note strong { white-space: nowrap; }
+    .report-view[hidden] { display: none; }
+    .view-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid #d7e1e4; }
+    .kicker { margin: 0 0 5px; color: #1f6d70; font-size: 11px; font-weight: 800; }
+    h2 { margin: 0; font-size: 23px; line-height: 1.25; }
+    .view-sub { margin: 7px 0 0; color: #5d707c; font-size: 13px; line-height: 1.5; }
+    .view-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; justify-content: flex-end; }
+    .context { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 14px 0; border-bottom: 1px solid #d7e1e4; }
+    .context-item { padding: 3px 13px; border-right: 1px solid #d7e1e4; min-width: 0; }
+    .context-item:first-child { padding-left: 0; }
+    .context-item:last-child { border-right: 0; }
+    .label { display: block; color: #647884; font-size: 11px; font-weight: 700; }
+    .context-item strong { display: block; margin-top: 4px; font-size: 13px; overflow-wrap: anywhere; }
+    .section { padding: 19px 0 21px; border-bottom: 1px solid #d7e1e4; }
+    .section:last-child { border-bottom: 0; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    h3 { margin: 0; font-size: 16px; line-height: 1.3; }
+    h4 { margin: 0 0 8px; font-size: 13px; }
+    .muted { color: #657783; font-size: 12px; line-height: 1.5; }
+    .section-title .muted { margin: 0; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .metric { min-width: 0; padding: 12px 13px; border: 1px solid #d3e0e3; border-top: 3px solid #1f6d70; border-radius: 5px; background: #fff; }
+    .metric.blue { border-top-color: #296ba3; }
+    .metric.red { border-top-color: #bc4941; }
+    .metric.amber { border-top-color: #a86e19; }
+    .metric.green { border-top-color: #278252; }
+    .metric strong { display: block; margin: 4px 0 2px; font-size: 23px; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .metric span:last-child { color: #647783; font-size: 11px; line-height: 1.45; }
+    .decision { display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: center; padding: 13px 16px; margin-top: 12px; border-left: 4px solid #a86e19; background: #fff; }
+    .decision.good { border-left-color: #278252; }
+    .decision.bad { border-left-color: #bc4941; }
+    .decision strong { display: block; font-size: 15px; }
+    .decision p { margin: 4px 0 0; color: #5b6c77; font-size: 12px; }
+    .decision-number { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .decision.bad .decision-number { color: #b23d37; }
+    .decision.good .decision-number { color: #258052; }
+    .chart-panel { padding: 15px 16px; border: 1px solid #d3e0e3; border-radius: 5px; background: #fff; overflow: hidden; }
+    .chart-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .chart-head strong { font-size: 13px; }
+    .legend { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: #526772; font-size: 11px; }
+    .swatch { display: inline-block; width: 13px; height: 9px; margin-right: 5px; vertical-align: -1px; border-radius: 1px; }
+    .swatch.best { background: #1f6d70; }.swatch.likely { background: #296ba3; }.swatch.verified { background: #d28b3c; }.swatch.history { background: #bc4941; }
+    .bar-row { display: grid; grid-template-columns: 116px minmax(0, 1fr) 66px; align-items: center; gap: 10px; margin: 9px 0; font-size: 12px; }
+    .bar-row b { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .capacity-group { display: grid; grid-template-columns: 116px minmax(0, 1fr) 66px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #e1e9eb; font-size: 12px; }
+    .capacity-group > strong { font-size: 12px; }
+    .capacity-stack, .capacity-values { display: grid; grid-template-rows: repeat(2, 14px); gap: 5px; }
+    .capacity-values { text-align: right; font-size: 13px; line-height: 14px; font-variant-numeric: tabular-nums; }
+    .capacity-values b:last-child { color: #296ba3; }
+    .capacity-group + .bar-row { margin-top: 12px; }
+    .bar-track { height: 14px; position: relative; background: #edf2f3; }
+    .bar-track::after { content: ""; position: absolute; top: -3px; bottom: -3px; left: var(--demand-position, 81.82%); border-left: 2px dashed #9a6a20; }
+    .bar-fill { display: block; height: 100%; width: var(--width); background: var(--color); }
+    .table-wrap { width: 100%; overflow-x: auto; border: 1px solid #d3e0e3; border-radius: 5px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid #e0e8ea; text-align: left; white-space: nowrap; }
+    th { background: #f4f8f9; color: #5d707c; font-size: 11px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .num { text-align: right; }
+    .strong { font-weight: 750; }
+    .negative { color: #ad3e37; font-weight: 750; }
+    .positive { color: #20774d; font-weight: 750; }
+    .detail-line { margin: 9px 0 0; color: #647783; font-size: 11px; line-height: 1.5; }
+    .source-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; margin: 0; }
+    .source-list > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #d7e1e4; font-size: 12px; }
+    .source-list dt { color: #61747e; }.source-list dd { margin: 0; text-align: right; font-weight: 700; }
+    .timeline-scroll { overflow-x: auto; }
+    .timeline-content { min-width: 720px; }
+    .timeline { display: grid; gap: 9px; }
+    .timeline-row { display: grid; grid-template-columns: 95px minmax(0, 1fr) 84px; align-items: center; gap: 10px; font-size: 12px; }
+    .timeline-track { position: relative; display: flex; height: 32px; background: #edf2f3; border: 1px solid #d7e1e4; overflow: hidden; }
+    .timeline-track::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, rgba(255,255,255,.65) 1px, transparent 1px); background-size: calc(100% / var(--tick-count, 12)) 100%; }
+    .timeline-track span { display: grid; place-items: center; min-width: 0; height: 100%; overflow: hidden; color: white; font-size: 10px; font-weight: 700; }
+    .timeline-track .prod { background: #23754e; }.timeline-track .break { background: #a46815; }.timeline-track .setup { background: #296ba3; }.timeline-track .maint { background: #a9423c; }
+    .timeline-row b { text-align: right; font-variant-numeric: tabular-nums; }
+    .timeline-axis { position: relative; height: 25px; margin: 2px 94px 0 105px; color: #5d707c; font-size: 10px; font-variant-numeric: tabular-nums; }
+    .timeline-axis span { position: absolute; top: 3px; white-space: nowrap; transform: translateX(-50%); }
+    .timeline-axis span:first-child { transform: none; }
+    .timeline-axis span:last-child { transform: translateX(-100%); }
+    .two-col { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 16px; }
+    .plain-panel { min-width: 0; padding: 15px; border: 1px solid #d3e0e3; border-radius: 5px; background: #fff; }
+    .plain-panel p { margin: 7px 0 0; color: #5e707b; font-size: 12px; line-height: 1.5; }
+    .plain-panel ul { padding-left: 17px; margin: 8px 0 0; color: #465b66; font-size: 12px; line-height: 1.7; }
+    .step-list { display: grid; gap: 8px; margin-top: 11px; }
+    .step { display: grid; grid-template-columns: 100px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e2e9eb; font-size: 12px; }
+    .step:last-child { border-bottom: 0; }.step span { color: #647783; }
+    .segment { display: inline-flex; border: 1px solid #b9c9cf; border-radius: 5px; overflow: hidden; background: #fff; }
+    .segment button { min-width: 49px; min-height: 32px; padding: 5px 10px; border: 0; border-right: 1px solid #cbd7db; background: #fff; color: #536873; font-size: 11px; font-weight: 700; }
+    .segment button:last-child { border-right: 0; }.segment button[aria-pressed="true"] { background: #1f6d70; color: #fff; }
+    .curve { display: block; width: 100%; height: auto; min-height: 180px; overflow: visible; }
+    .curve text { font-family: inherit; font-size: 11px; fill: #687b86; }
+    .curve .grid { stroke: #dce6e9; stroke-width: 1; }.curve .planned { stroke: #a56816; stroke-width: 3; fill: none; }.curve .actual { stroke: #2d9ac1; stroke-width: 3.5; fill: none; }.curve .forecast { stroke: #8bcf49; stroke-width: 3; stroke-dasharray: 6 5; fill: none; }.curve .cursor { stroke: #8a9da5; stroke-dasharray: 3 3; }
+    .footnote { margin-top: 14px; color: #72838c; font-size: 11px; }
+    .chapter-head { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 13px 0; border-bottom: 2px solid #b8d5d8; }
+    .chapter-head > span { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 4px; background: #dcecee; color: #165f65; font-size: 12px; font-weight: 800; }
+    .chapter-head h3 { font-size: 17px; }.chapter-head p { margin: 3px 0 0; color: #657783; font-size: 11px; }
+    .board-mode { background: #071522; color: #eef7fa; }
+    .board-mode .app-header, .board-mode .rail, .board-mode .demo-note, .board-mode .footnote { display: none; }
+    .board-mode .layout { display: block; max-width: none; min-height: 100vh; }
+    .board-mode .main { padding: 0; }
+    #view-board { min-height: 100vh; padding: 19px 28px 15px; background: #071522; color: #f0f7fb; }
+    .board-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 16px; }
+    .board-identity { position: relative; min-width: 0; padding-left: 22px; }
+    .board-identity::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 4px; width: 6px; border-radius: 3px; background: #45b8ef; }
+    .board-identity p { margin: 0 0 3px; color: #42baf2; font-size: 14px; font-weight: 800; }
+    .board-identity h2 { font-size: clamp(21px, 1.6vw, 32px); line-height: 1.2; }
+    .board-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 9px; font-size: 13px; white-space: nowrap; }
+    .board-actions > strong { font-size: 19px; }.board-shift { color: #bdd0db; font-size: 17px; }
+    .board-demo { padding: 9px 11px; border: 1px solid #4d5860; border-radius: 6px; background: #2e2b29; color: #ffbf65; font-size: 12px; font-weight: 800; }
+    .board-actions button { min-height: 35px; padding: 7px 11px; border: 1px solid #496881; border-radius: 5px; background: #152e43; color: #e3f5fc; font-weight: 700; font-size: 12px; }
+    .board-actions button:hover { background: #1c415c; }.board-actions #board-play { border-color: #3d9cbe; background: #164460; }
+    .board-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 11px; margin-bottom: 13px; }
+    .board-kpi { min-width: 0; min-height: 130px; padding: 13px 15px 11px; border: 1px solid #39627d; border-radius: 8px; background: #112239; }
+    .board-kpi.red { background: #30232b; border-color: #754651; }.board-kpi.green { background: #1a3029; border-color: #426d59; }
+    .board-kpi > span { display: block; color: #b9cbd5; font-size: 14px; font-weight: 750; }
+    .board-kpi strong { display: block; margin: 4px 0 1px; color: #47b9f1; font-size: clamp(32px, 3.3vw, 56px); line-height: 1.05; font-variant-numeric: tabular-nums; }
+    .board-kpi strong small { font-size: 15px; }.board-kpi.red strong { color: #ff7379; }.board-kpi.green strong { color: #a2de58; }
+    .board-kpi p { margin: 5px 0 0; color: #b1c2cc; font-size: 12px; line-height: 1.4; }
+    .board-core { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr); gap: 13px; margin-bottom: 13px; }
+    .board-panel { min-width: 0; border: 1px solid #2c4760; border-radius: 8px; background: #112239; }
+    .board-chart-panel, .board-delivery-panel { min-height: 260px; padding: 13px 17px 10px; }
+    .board-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .board-panel-head h3 { color: #f1f8fc; font-size: clamp(15px, 1.2vw, 20px); }
+    .board-panel-head > span { color: #a9becd; font-size: 12px; }
+    .board-legend { display: flex; gap: 11px; flex-wrap: wrap; color: #bfd0db; font-size: 11px; }
+    .board-legend span::before { content: ""; display: inline-block; width: 17px; margin-right: 5px; vertical-align: 3px; border-top: 3px solid currentColor; }
+    .board-legend .plan-key { color: #ffbf65; }.board-legend .actual-key { color: #46bdee; }.board-legend .forecast-key { color: #9cda54; }
+    .board-mode .curve { min-height: 0; max-height: 250px; margin-top: 6px; }
+    .board-mode .curve text { fill: #bfd0db; }.board-mode .curve .grid { stroke: #32495e; }
+    .board-mode .curve .planned { stroke: #ffbf65; stroke-dasharray: 6 4; }.board-mode .curve .actual { stroke: #46bdee; }.board-mode .curve .forecast { stroke: #9cda54; }
+    .board-slider { display: flex; align-items: center; gap: 9px; color: #a9becd; font-size: 11px; }
+    .board-slider input { flex: 1; accent-color: #46bdee; }.board-slider strong { min-width: 42px; color: #e8f5fb; text-align: right; }
+    .board-equation { display: grid; grid-template-columns: 100px minmax(0, 1fr) 65px; align-items: center; gap: 8px; margin-top: 7px; padding: 10px 11px; border: 1px solid #39556b; border-radius: 6px; background: #172b42; font-size: 12px; }
+    .board-equation span { color: #b6c9d2; font-weight: 750; }.board-equation strong { font-size: 13px; overflow-wrap: anywhere; }.board-equation b { color: #4bc1f5; text-align: right; font-size: 22px; font-variant-numeric: tabular-nums; }.board-equation b.warn { color: #ff7379; }.board-equation em { font-style: normal; }
+    .board-delivery-panel > p { margin: 9px 0 0; color: #b5c9d4; font-size: 11px; line-height: 1.4; }
+    .board-gauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 13px; }
+    .board-gauge { min-height: 145px; padding: 12px 14px; }.board-gauge .board-panel-head h3 { font-size: 16px; }
+    .board-gauge > strong { display: inline-block; margin: 4px 9px 3px 0; color: #9edf56; font-size: clamp(30px, 2.2vw, 43px); line-height: 1.1; font-variant-numeric: tabular-nums; }.board-gauge > strong.amber { color: #ffc070; }
+    .board-gauge > span { color: #b2c6d0; font-size: 11px; }.board-gauge p { margin: 7px 0 0; color: #a6bac7; font-size: 11px; line-height: 1.4; }
+    .board-progress { height: 8px; border-radius: 4px; background: #2d4457; overflow: hidden; }.board-progress i { display: block; height: 100%; background: #9edf56; border-radius: 4px; }
+    .board-events { padding: 11px 16px 6px; }.board-table-wrap { overflow-x: auto; }
+    .board-events table { min-width: 700px; margin-top: 7px; color: #ebf5fa; font-size: 12px; }.board-events th, .board-events td { padding: 8px 9px; border-bottom-color: #344b60; }
+    .board-events th { background: transparent; color: #a9bfcb; }.board-events td strong { font-size: 13px; }.board-events tbody tr:last-child td { border-bottom: 0; }
+    .event-pill { display: inline-block; padding: 4px 7px; border-radius: 4px; background: #285364; color: #c9f2fc; font-weight: 800; white-space: nowrap; }.event-pill.urgent { background: #6a3542; color: #ffe2e5; }.event-pill.quality { background: #5c4528; color: #ffe5b8; }
+    .board-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 11px; color: #b0c5cf; font-size: 11px; }.board-bottom strong { color: #ffbf65; }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 205px minmax(0, 1fr); } .main { padding: 20px 17px 40px; } }
+    @media (max-width: 820px) { .layout { display: block; } .rail { min-height: 0; padding: 10px 12px; border-right: 0; border-bottom: 1px solid #d7e1e4; } .rail-label, .rail-foot, .nav-sub, .nav-index { display: none; } .report-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; } .nav-button { min-height: 38px; width: auto; flex: 0 0 auto; align-items: center; padding: 8px 11px; white-space: nowrap; } .nav-name { font-size: 12px; } .context { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; } .context-item:nth-child(2) { border-right: 0; } .context-item:nth-child(3) { padding-left: 0; } .two-col { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .header-inner { padding: 12px 15px; align-items: flex-start; } .brand h1 { font-size: 17px; } .brand-mark { width: 32px; height: 32px; flex-basis: 32px; } .header-actions { justify-content: flex-end; } .header-actions .tag { display: none; } .main { padding: 14px 12px 35px; } h2 { font-size: 20px; } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .metric strong { font-size: 21px; } .bar-row, .capacity-group { grid-template-columns: 92px minmax(0, 1fr) 57px; gap: 6px; font-size: 11px; } .capacity-group > strong { font-size: 11px; } .capacity-values { font-size: 11px; } .timeline-row { grid-template-columns: 57px minmax(0, 1fr) 62px; gap: 6px; font-size: 11px; } .timeline-axis { margin: 2px 68px 0 63px; } .source-list { grid-template-columns: 1fr; } .decision { grid-template-columns: 1fr; } }
+    @media (max-width: 1300px) { .board-top { flex-direction: column; }.board-actions { justify-content: flex-start; }.board-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }.board-core { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .board-gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 600px) { #view-board { padding: 15px 12px 22px; } .board-identity h2 { font-size: 21px; }.board-identity p { font-size: 11px; }.board-actions { gap: 6px; white-space: normal; }.board-actions > strong { font-size: 15px; }.board-shift { font-size: 13px; }.board-demo { padding: 7px; }.board-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }.board-kpi { min-height: 110px; padding: 10px; }.board-kpi > span { font-size: 11px; }.board-kpi strong { font-size: 33px; }.board-kpi p { font-size: 10px; }.board-core, .board-gauges { gap: 8px; }.board-chart-panel, .board-delivery-panel { min-height: 0; padding: 12px; }.board-panel-head h3 { font-size: 15px; }.board-gauge { min-height: 138px; padding: 10px; }.board-gauge .board-panel-head h3 { font-size: 13px; }.board-gauge .board-panel-head > span { font-size: 10px; }.board-equation { grid-template-columns: 70px minmax(0, 1fr) 46px; gap: 5px; padding: 8px; }.board-equation span, .board-equation strong { font-size: 10px; }.board-equation b { font-size: 17px; }.board-events { padding: 9px; } }
+    @media print { :root { background: #fff; print-color-adjust: exact; -webkit-print-color-adjust: exact; } .app-header, .rail, .demo-note, .segment, .button { display: none !important; } .layout { display: block; min-height: 0; } .main { padding: 0; } .report-view[hidden] { display: none; } .section { break-inside: avoid; } .chart-panel, .metric, .plain-panel, .table-wrap { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <header class="app-header"><div class="header-inner">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">C</div><div><h1>产能报告中心</h1><p>产品 A 壳体 / A-Housing · 本地路线 V1 · 输出目标态</p></div></div>
+    <div class="header-actions"><span class="tag amber">模拟数据 · 非正式结论</span><button class="button secondary" type="button" id="print-report" title="打印当前报告">打印当前报告</button></div>
+  </div></header>
+  <div class="layout">
+    <aside class="rail"><p class="rail-label">报告与运行视图</p><nav class="report-nav" aria-label="报告导航">
+      <button class="nav-button" type="button" data-view="sa"><span class="nav-index">01</span><span><span class="nav-name">产能与验证综合报告</span><span class="nav-sub">计划 SA · R&amp;R · 路线评价</span></span></button>
+      <button class="nav-button" type="button" data-view="future"><span class="nav-index">02</span><span><span class="nav-name">历史 → 未来模拟</span><span class="nav-sub">已确认实绩参数</span></span></button>
+      <button class="nav-button" type="button" data-view="board"><span class="nav-index">03</span><span><span class="nav-name">班内交付大屏</span><span class="nav-sub">实绩接续未来预测</span></span></button>
+    </nav><p class="rail-foot">一份综合报告、一份未来模拟报告、一个班内大屏。演示数据不构成客户承诺。</p></aside>
+    <main class="main" id="main">
+      <div class="demo-note"><strong>目标态演示</strong><span>以下数值为说明报告结构而设置的同一产品模拟场景，不来自当前系统记录。真实生成时，各指标必须绑定数据来源、时间范围和完整度门禁。</span></div>
+
+      <article class="report-view" id="view-assessment" aria-labelledby="title-assessment" hidden>
+        <div class="view-top"><div><p class="kicker">03 / CAPACITY ASSESSMENT</p><h2 id="title-assessment">路线能力评价</h2><p class="view-sub">从各工站能力汇总到工序，再以路线瓶颈对照客户需求；验证能力与正式验收分开。</p></div><div class="view-meta"><span class="tag amber">模拟评价</span><span class="tag gray">正式验收待确认</span></div></div>
+        <div class="context"><div class="context-item"><span class="label">产品 / 路线</span><strong>A-Housing / V1</strong></div><div class="context-item"><span class="label">观察周</span><strong>2026-10-26 起</strong></div><div class="context-item"><span class="label">客户需求</span><strong>1,800 件 / 周</strong></div><div class="context-item"><span class="label">数据范围</span><strong>3 工序 · 4 工站</strong></div></div>
+        <section class="section"><div class="section-title"><h3>周能力结论</h3><span class="tag amber">未签发</span></div><div class="metrics">
+          <div class="metric"><span class="label">Best case · 路线</span><strong>1,920</strong><span>件 / 周 · 纯计划动作</span></div>
+          <div class="metric blue"><span class="label">Most likely · 路线</span><strong>1,862</strong><span>件 / 周 · 含已接受损失</span></div>
+          <div class="metric amber"><span class="label">验证周能力 · 模拟</span><strong>1,810</strong><span>件 / 周 · R&amp;R 样本外推</span></div>
+          <div class="metric green"><span class="label">较客户需求</span><strong>+10</strong><span>件 / 周 · 仅模拟余量</span></div>
+        </div><div class="decision good"><div><strong>模拟显示需求可覆盖，但余量仅 10 件</strong><p>OP30 装配为当前路线瓶颈。此处没有正式通过结论；样本资格、外推规则与签发流程仍需确认。</p></div><span class="decision-number">+0.6%</span></div></section>
+        <section class="section"><div class="section-title"><h3>工序周能力对比</h3><p class="muted">虚线为周需求 1,800 件；工序之间取瓶颈，不相加。</p></div><div class="chart-panel"><div class="chart-head"><strong>同周、同路线版本</strong><div class="legend"><span><i class="swatch best"></i>Best</span><span><i class="swatch likely"></i>Most likely</span><span><i class="swatch verified"></i>验证模拟</span></div></div>
+          <div class="capacity-group" role="group" aria-label="OP10 压铸"><strong>OP10 · 压铸</strong><div class="capacity-stack"><div class="bar-track" role="img" aria-label="Best case 2,070 件"><i class="bar-fill" style="--width:94.1%;--color:#1f6d70"></i></div><div class="bar-track" role="img" aria-label="Most likely 2,008 件"><i class="bar-fill" style="--width:91.3%;--color:#296ba3"></i></div></div><div class="capacity-values"><b>2,070</b><b>2,008</b></div></div>
+          <div class="capacity-group" role="group" aria-label="OP20 机加工"><strong>OP20 · 机加工</strong><div class="capacity-stack"><div class="bar-track" role="img" aria-label="Best case 2,070 件"><i class="bar-fill" style="--width:94.1%;--color:#1f6d70"></i></div><div class="bar-track" role="img" aria-label="Most likely 2,070 件"><i class="bar-fill" style="--width:94.1%;--color:#296ba3"></i></div></div><div class="capacity-values"><b>2,070</b><b>2,070</b></div></div>
+          <div class="capacity-group" role="group" aria-label="OP30 装配"><strong>OP30 · 装配</strong><div class="capacity-stack"><div class="bar-track" role="img" aria-label="Best case 1,920 件"><i class="bar-fill" style="--width:87.3%;--color:#1f6d70"></i></div><div class="bar-track" role="img" aria-label="Most likely 1,862 件"><i class="bar-fill" style="--width:84.6%;--color:#296ba3"></i></div></div><div class="capacity-values"><b>1,920</b><b>1,862</b></div></div>
+          <div class="bar-row"><span>验证模拟</span><div class="bar-track"><i class="bar-fill" style="--width:82.3%;--color:#d28b3c"></i></div><b>1,810</b></div>
+        </div><p class="detail-line">统一刻度 0–2,200 件。OP20 并行两站的能力先按工站规则折算并汇总，工站 CT / P / Q / SA 仍在明细中独立保留。</p></section>
+        <section class="section"><div class="section-title"><h3>工序与工站依据</h3></div><div class="table-wrap"><table><thead><tr><th>工序</th><th>工站</th><th class="num">Best</th><th class="num">Most likely</th><th class="num">验证模拟</th><th>差额 / 状态</th></tr></thead><tbody>
+          <tr><td>OP10 压铸</td><td>压铸01</td><td class="num">2,070</td><td class="num">2,008</td><td class="num">1,980</td><td>工站级证据</td></tr>
+          <tr><td>OP20 机加工</td><td>机加工01 + 机加工02</td><td class="num">2,070</td><td class="num">2,070</td><td class="num">2,010</td><td>两站贡献相加</td></tr>
+          <tr><td class="strong">OP30 装配</td><td>装配01</td><td class="num">1,920</td><td class="num">1,862</td><td class="num strong">1,810</td><td><span class="tag amber">瓶颈 · 待签发</span></td></tr>
+        </tbody></table></div><p class="detail-line">验证模拟数值仅用于展示预期报告形态；正式验证资格与公式尚未定版，不能从 48 小时 R&amp;R 直接得到已确认整周 Actual。</p></section>
+        <section class="section"><div class="section-title"><h3>来源与发布状态</h3></div><dl class="source-list"><div><dt>逐日客户需求</dt><dd>演示需求 D-W44</dd></div><div><dt>排产与 SA</dt><dd>演示周账 P-W44</dd></div><div><dt>R&amp;R 证据</dt><dd>演示样本 RR-01</dd></div><div><dt>正式验收</dt><dd>未签发</dd></div></dl></section>
+      </article>
+
+      <article class="report-view" id="view-sa" aria-labelledby="title-sa">
+        <div class="view-top"><div><p class="kicker">01 / INTEGRATED CAPACITY REPORT</p><h2 id="title-sa">产能与验证综合报告</h2><p class="view-sub">同一报告依次呈现计划 SA、R&amp;R 同窗证据与路线周能力评价；不同时间口径在章节内分别标明。</p></div><div class="view-meta"><span class="tag amber">目标态模拟</span><span class="tag gray">正式验收待签发</span></div></div>
+        <div class="context"><div class="context-item"><span class="label">产品 / 路线</span><strong>A-Housing / V1</strong></div><div class="context-item"><span class="label">计划与需求周</span><strong>2026-10-26 起</strong></div><div class="context-item"><span class="label">R&amp;R 样本</span><strong>10-22 08:30 → 10-23 08:30</strong></div><div class="context-item"><span class="label">报告范围</span><strong>3 工序 · 4 工站</strong></div></div>
+        <div class="chapter-head"><span>01</span><div><h3>计划 SA 与周/月能力</h3><p>排班、固定休息与指定日期动作构成计划基准。</p></div></div>
+        <section class="section"><div class="section-title"><h3>工站计划状态</h3></div><div class="metrics"><div class="metric"><span class="label">窗口总分钟</span><strong>1,440</strong><span>OP10 示例生产日</span></div><div class="metric green"><span class="label">计划生产分钟</span><strong>1,230</strong><span>源于任务剩余排班时间</span></div><div class="metric amber"><span class="label">计划动作</span><strong>210</strong><span>休息 120 + 换型 90 分钟</span></div><div class="metric blue"><span class="label">Best case SA</span><strong>85.4%</strong><span>1,230 ÷ 1,440</span></div></div></section>
+        <section class="section"><div class="section-title"><h3>生产日计划时间轴</h3><p class="muted">位置来自起止时刻，不按日合计分钟虚构时段。</p></div><div class="chart-panel"><div class="chart-head"><strong>2026-10-26 08:30 → 10-27 08:30</strong><div class="legend"><span><i class="swatch" style="background:#23754e"></i>生产</span><span><i class="swatch" style="background:#a46815"></i>休息</span><span><i class="swatch" style="background:#296ba3"></i>换型</span><span><i class="swatch" style="background:#a9423c"></i>保养</span></div></div><div class="timeline-scroll"><div class="timeline-content"><div class="timeline">
+          <div class="timeline-row"><b>压铸01</b><div class="timeline-track"><span class="prod" style="width:31%">生产</span><span class="break" style="width:4%">休</span><span class="prod" style="width:27%">生产</span><span class="setup" style="width:6.25%">换型</span><span class="prod" style="width:25%">生产</span><span class="break" style="width:4.33%">休息</span><span class="prod" style="width:2.42%"></span></div><b>85.4%</b></div>
+          <div class="timeline-row"><b>机加工01</b><div class="timeline-track"><span class="prod" style="width:29%">生产</span><span class="break" style="width:4%">休</span><span class="prod" style="width:29%">生产</span><span class="setup" style="width:6.25%">换型</span><span class="prod" style="width:27.42%">生产</span><span class="break" style="width:4.33%">休息</span></div><b>85.4%</b></div>
+          <div class="timeline-row"><b>机加工02</b><div class="timeline-track"><span class="prod" style="width:35%">生产</span><span class="break" style="width:4%">休</span><span class="prod" style="width:25%">生产</span><span class="setup" style="width:6.25%">换型</span><span class="prod" style="width:25.42%">生产</span><span class="break" style="width:4.33%">休息</span></div><b>85.4%</b></div>
+          <div class="timeline-row"><b>装配01</b><div class="timeline-track"><span class="prod" style="width:27%">生产</span><span class="break" style="width:4%">休</span><span class="prod" style="width:27%">生产</span><span class="maint" style="width:11.67%">保养</span><span class="prod" style="width:26%">生产</span><span class="break" style="width:4.33%">休息</span></div><b>80.0%</b></div>
+        </div><div class="timeline-axis" id="plan-timeline-axis" aria-label="24 小时时间刻度"></div></div></div></div><p class="detail-line">时间块与 SA 比例一致，但块的具体起止为版式示意；实际报告逐段由排产事件生成，轨道宽度、标签和 SA 必须由同一批起止记录计算。</p></section>
+        <section class="section"><div class="section-title"><h3>周能力汇总</h3></div><div class="table-wrap"><table><thead><tr><th>工序</th><th>工站</th><th class="num">计划生产分钟 / 周</th><th class="num">Best 良品 / 周</th><th class="num">Most likely / 周</th><th>计划依据</th></tr></thead><tbody><tr><td>OP10 压铸</td><td>压铸01</td><td class="num">7,380</td><td class="num">2,070</td><td class="num">2,008</td><td>6 个生产日</td></tr><tr><td>OP20 机加工</td><td>机加工01 + 02</td><td class="num">各站独立周账</td><td class="num">2,070</td><td class="num">2,070</td><td>先按份额折算</td></tr><tr><td>OP30 装配</td><td>装配01</td><td class="num">6,912</td><td class="num">1,920</td><td class="num">1,862</td><td>含指定日保养</td></tr></tbody></table></div><p class="detail-line">月能力不是简单乘四：指定日期事件、工作日数量和需求周次都需逐期展开。此处未将 R&amp;R 实跑 SA 写回计划时间轴。</p></section>
+        <div class="chapter-head"><span>02</span><div><h3>R&amp;R 记录与同窗计算</h3><p>样本窗口与工站独立标识；验证证据不冒充量产整周实绩。</p></div></div>
+        <div id="combined-rnr"></div>
+        <div class="chapter-head"><span>03</span><div><h3>路线能力评价</h3><p>工序能力、瓶颈、需求余量与正式签发状态在此汇合。</p></div></div>
+        <div id="combined-assessment"></div>
+      </article>
+
+      <article class="report-view" id="view-rnr" aria-labelledby="title-rnr" hidden>
+        <div class="view-top"><div><p class="kicker">02 / RUN & RATE EVIDENCE</p><h2 id="title-rnr">R&amp;R 记录与同窗计算</h2><p class="view-sub">计划与实跑按同一工站、同一时间窗口对照；样本用于验证，不等于量产整周 Actual。</p></div><div class="view-meta"><span class="tag">时间账完整</span><span class="tag amber">外推资格待审</span></div></div>
+        <div class="context"><div class="context-item"><span class="label">样本窗口</span><strong>2026-10-22 08:30 → 10-23 08:30</strong></div><div class="context-item"><span class="label">产品</span><strong>A-Housing</strong></div><div class="context-item"><span class="label">工站 / 设备</span><strong>OP20A / 机加工01</strong></div><div class="context-item"><span class="label">证据身份</span><strong>RR-01 · 演示</strong></div></div>
+        <section class="section"><div class="section-title"><h3>同窗结果</h3></div><div class="metrics"><div class="metric"><span class="label">计划生产分钟</span><strong>1,230</strong><span>源于冻结 SA</span></div><div class="metric blue"><span class="label">实际生产分钟</span><strong>1,225</strong><span>实际状态逐段记录</span></div><div class="metric amber"><span class="label">显式异常分钟</span><strong>110</strong><span>停机 / 等待有事件来源</span></div><div class="metric green"><span class="label">实跑 OK / NOK</span><strong>2,429 / 23</strong><span>仅该样本窗口</span></div></div><p class="detail-line">示例中的产出、分钟和 CT 仅演示各字段的位置，非同一工站的可校核真实记录；正式报告须由同一事件账重算并通过数量一致性检查。</p></section>
+        <section class="section"><div class="section-title"><h3>差异时间段</h3><p class="muted">异常保留工站、起止和原因，可回到原始记录。</p></div><div class="table-wrap"><table><thead><tr><th>工站</th><th>开始</th><th>结束</th><th>计划状态</th><th>实际状态</th><th class="num">分钟</th><th>差异</th></tr></thead><tbody>
+          <tr><td>OP20A</td><td>10-22 11:00</td><td>10-22 11:30</td><td>休息</td><td>生产</td><td class="num">30</td><td>状态不同</td></tr>
+          <tr><td>OP20A</td><td>10-22 19:30</td><td>10-22 20:30</td><td>生产</td><td>换型 / 设备故障</td><td class="num">60</td><td>计划外损失待归因</td></tr>
+          <tr><td>OP20A</td><td>10-23 01:30</td><td>10-23 02:00</td><td>生产</td><td>休息</td><td class="num">30</td><td>状态不同</td></tr>
+        </tbody></table></div></section>
+        <section class="section"><div class="section-title"><h3>SA / CT / P / Q 诊断</h3></div><div class="table-wrap"><table><thead><tr><th>指标</th><th class="num">计划基准</th><th class="num">R&amp;R 观察</th><th>处理</th></tr></thead><tbody><tr><td>SA · 同窗</td><td class="num">85.4%</td><td class="num">85.1%</td><td>实跑时间账，不覆写标准 SA</td></tr><tr><td>CT · 秒/循环</td><td class="num">30.0</td><td class="num">30.1</td><td>先对照周期样本和产出</td></tr><tr><td>P · 节拍达成</td><td class="num">100.0%</td><td class="num">99.7%</td><td>独立校准，不重复扣时间损失</td></tr><tr><td>Q · 良品率</td><td class="num">100.0%</td><td class="num">99.1%</td><td>来自 OK / NOK</td></tr></tbody></table></div><p class="detail-line">需要样本适用产品、设备、班次及代表性规则通过后，才可进入“验证周能力”；录全 24 小时本身不等于正式合格样本。</p></section>
+      </article>
+
+      <article class="report-view" id="view-future" aria-labelledby="title-future" hidden>
+        <div class="view-top"><div><p class="kicker">02 / HISTORY TO FUTURE</p><h2 id="title-future">历史 → 未来模拟产能</h2><p class="view-sub">未来排产提供时间轴；已确认的同类量产历史提供损失结构和有效 CT/P/Q，不复制历史停机时刻。</p></div><div class="view-meta"><span class="tag amber">预测 · 非承诺</span><span class="tag gray">历史来源待接入</span></div></div>
+        <div class="context"><div class="context-item"><span class="label">预测对象</span><strong>A-Housing / V1</strong></div><div class="context-item"><span class="label">历史样本</span><strong>前 4 个可比生产周</strong></div><div class="context-item"><span class="label">未来方案</span><strong>排产方案 S-01</strong></div><div class="context-item"><span class="label">参数状态</span><strong>已确认版本 · 演示</strong></div></div>
+        <section class="section"><div class="section-title"><h3>预测时段与需求</h3><div class="segment" role="group" aria-label="预测时段"><button type="button" data-horizon="day" aria-pressed="false">日</button><button type="button" data-horizon="week" aria-pressed="true">周</button><button type="button" data-horizon="month" aria-pressed="false">四周</button></div></div><div class="metrics"><div class="metric"><span class="label" id="future-demand-label">客户需求 / 周</span><strong id="future-demand">1,800</strong><span>逐日需求汇总</span></div><div class="metric blue"><span class="label" id="future-plan-label">计划 Most likely / 周</span><strong id="future-plan">1,862</strong><span>标准 SA + 已发布参数</span></div><div class="metric red"><span class="label" id="future-history-label">历史校准预测 / 周</span><strong id="future-history">1,784</strong><span>未来排产 × 历史确认参数</span></div><div class="metric amber"><span class="label">预测需求差额</span><strong id="future-gap">-16</strong><span>历史校准预测 − 需求</span></div></div><div class="decision bad" id="future-decision"><div><strong id="future-decision-title">按历史表现预测，需求存在 16 件缺口</strong><p>此差额属于未来方案评估，不是已发生的 Actual，也不覆盖 R&amp;R 验收结论。</p></div><span class="decision-number" id="future-decision-value">-16 件</span></div></section>
+        <section class="section"><div class="section-title"><h3>未来方案对比</h3><p class="muted">三种视角分别留痕，不把历史停机分钟重复扣减。</p></div><div class="chart-panel"><div class="chart-head"><strong id="future-chart-title">每周路线等效成品件</strong><div class="legend"><span><i class="swatch best"></i>Best case</span><span><i class="swatch likely"></i>Most likely</span><span><i class="swatch history"></i>历史校准预测</span></div></div><div id="future-bars"></div><p class="detail-line">虚线为当前时段需求。路线取最小工序能力；工站历史参数仅在匹配产品、设备、班次与有效期时使用。</p></div></section>
+        <section class="section"><div class="section-title"><h3>参数从哪里来</h3></div><div class="two-col"><div class="plain-panel"><h4>未来已知</h4><div class="step-list"><div class="step"><span>排产时间轴</span><strong>班次、休息、换型、保养与任务</strong></div><div class="step"><span>客户需求</span><strong>按交付日汇总到所选时段</strong></div><div class="step"><span>路线关系</span><strong>工序用量、并行工站份额与瓶颈</strong></div></div></div><div class="plain-panel"><h4>历史确认</h4><div class="step-list"><div class="step"><span>时间损失</span><strong>同类生产的非计划损失预留</strong></div><div class="step"><span>CT / P / Q</span><strong>有效版本与历史偏差校准</strong></div><div class="step"><span>样本范围</span><strong>可比周、设备、班次和证据</strong></div></div></div></div><p class="detail-line">未排到具体时段的远期工作日可按 Most likely 形成日/周总量预测；没有时间模板时，不画虚假的逐分钟计划 SA 曲线。</p></section>
+      </article>
+
+      <article class="report-view" id="view-board" aria-labelledby="title-board" hidden>
+        <div class="board-top">
+          <div class="board-identity"><p>CAPA × A-HOUSING · 联合生产态势</p><h2 id="title-board">产品 A 壳体｜本班交付与生产态势</h2></div>
+          <div class="board-actions"><span class="board-demo">10秒模拟回放 · 非现场数据</span><span class="board-shift">当前白班 08:30–20:30</span><strong>班内时点 <span id="board-asof-tag">14:30</span></strong><button type="button" id="board-play">播放演示</button><button type="button" id="board-fullscreen">全屏预览</button><button type="button" id="board-back">返回报告</button></div>
+        </div>
+        <div class="board-kpis">
+          <div class="board-kpi blue"><span>本班计划生产 · 良品</span><strong>600<small> 件</small></strong><p>按本班排程目标</p></div>
+          <div class="board-kpi blue"><span>本班预计可生产 · 良品</span><strong id="board-forecast">580</strong><p>已发生实绩 + 剩余时段预测</p></div>
+          <div class="board-kpi red"><span>本班预计欠产</span><strong id="board-shortfall">20</strong><p>计划 600 − 预计良品</p></div>
+          <div class="board-kpi green"><span>本班预计可交付</span><strong id="board-deliverable">680</strong><p>班初可用 100 + 预计放行 580</p></div>
+          <div class="board-kpi green"><span>交付完毕后预计余量</span><strong id="board-delivery-gap">+30</strong><p>预计可交付 − 应交 650</p></div>
+        </div>
+        <div class="board-core">
+          <section class="board-panel board-chart-panel" aria-labelledby="board-chart-title">
+            <div class="board-panel-head"><h3 id="board-chart-title">累计良品｜当前计划 <span id="board-plan-to-now">300</span> · 实际 <span id="board-actual-to-now">320</span> · 班末预测 <span id="board-bridge-forecast">580</span></h3><div class="board-legend"><span class="plan-key">累计计划</span><span class="actual-key">累计实际</span><span class="forecast-key">剩余预测</span></div></div>
+            <svg class="curve" id="board-curve" viewBox="0 0 680 220" role="img" aria-label="本班累计计划、实际和剩余预测曲线"></svg>
+            <div class="board-slider"><span>08:30</span><input id="board-time" type="range" min="1" max="4" step="1" value="2" aria-label="模拟回放时间点"><strong id="board-time-value">14:30</strong></div>
+          </section>
+          <section class="board-panel board-delivery-panel" aria-labelledby="board-delivery-title">
+            <div class="board-panel-head"><h3 id="board-delivery-title">生产欠产 ≠ 交付缺口</h3><span>白班 08:30–20:30</span></div>
+            <div class="board-equation"><span>需求扣库存</span><strong>应交 650 − 班初可用 100</strong><b>550</b></div>
+            <div class="board-equation"><span>生产欠产</span><strong>计划良品 600 − 班末预测 <em id="board-equation-forecast">580</em></strong><b class="warn" id="board-equation-shortfall">20</b></div>
+            <div class="board-equation"><span>合计可交付</span><strong>班初可用 100 + 预测放行 <em id="board-equation-deliverable">580</em></strong><b id="board-equation-total">680</b></div>
+            <p>客户本班应交 650；生产欠产与交付余量分别判断。演示假设预计良品在交付前完成质检放行。</p>
+          </section>
+        </div>
+        <div class="board-gauges">
+          <section class="board-panel board-gauge"><div class="board-panel-head"><h3>S · 时间开动率</h3><span id="board-gauge-time">本班累计至 14:30</span></div><strong class="amber" id="board-s">70%</strong><span>已停机计入 S</span><div class="board-progress"><i id="board-s-bar" style="width:70%;background:#ffc070"></i></div><p>实际轨道与计划轨道按同一起点累计。</p></section>
+          <section class="board-panel board-gauge"><div class="board-panel-head"><h3>P · 节拍达成率</h3><span id="board-gauge-time-p">本班累计至 14:30</span></div><strong id="board-p">97%</strong><span>相对已确认标准节拍</span><div class="board-progress"><i id="board-p-bar" style="width:97%"></i></div><p>节拍差不重复扣已计入 S 的停机。</p></section>
+          <section class="board-panel board-gauge"><div class="board-panel-head"><h3>Q · 良品率</h3><span id="board-gauge-time-q">本班累计至 14:30</span></div><strong id="board-q">92%</strong><span>演示报废约 8%</span><div class="board-progress"><i id="board-q-bar" style="width:92%"></i></div><p>已记录 OK / NOK，待核实质量归属。</p></section>
+          <section class="board-panel board-gauge"><div class="board-panel-head"><h3>人员 · 有效岗位覆盖</h3><span>独立预警</span></div><strong class="amber">86/90</strong><span>95.6% · 演示班次</span><div class="board-progress"><i style="width:95.6%;background:#ffc070"></i></div><p>缺员须核实影响；未经确认不自动计入 S。</p></section>
+        </div>
+        <section class="board-panel board-events" aria-labelledby="board-events-title">
+          <div class="board-panel-head"><h3 id="board-events-title">本班异常 → 指标 → 决策</h3><span>同一事件只归因一次；质量与人员状态各自留证</span></div>
+          <div class="board-table-wrap"><table><thead><tr><th>状态</th><th>事件 / 风险</th><th>下一动作</th><th>责任接口</th><th>归属</th></tr></thead><tbody>
+            <tr data-first-step="2"><td><span class="event-pill urgent">紧急</span></td><td><strong>设备异常停机</strong> · 本班已停 42 分钟</td><td>维修确认恢复时间</td><td>设备负责人</td><td>计入 S</td></tr>
+            <tr data-first-step="2"><td><span class="event-pill quality">质量</span></td><td><strong>本班确认 NOK 28 件</strong> · 影响良品预测</td><td>识别缺陷与责任工序</td><td>质量负责人</td><td>计入 Q</td></tr>
+            <tr data-first-step="1"><td><span class="event-pill pending">待接入</span></td><td><strong>实际已交付与在途数量</strong> · 演示未计入执行进度</td><td>核实交付执行流水</td><td>物流 / 驻场</td><td>交付执行</td></tr>
+            <tr data-first-step="1"><td><span class="event-pill pending">预警</span></td><td><strong>本班有效岗位 86/90</strong> · 实际损失未确认</td><td>核实是否造成停等</td><td>生产负责人</td><td>暂不计入</td></tr>
+            <tr id="board-no-events" hidden><td colspan="5">当前时点暂无已发生的演示事件。</td></tr>
+          </tbody></table></div>
+        </section>
+        <div class="board-bottom"><span>白班 08:30–20:30 ｜ 夜班 20:30–次日 08:30；下一班班初库存承接上一班结存，全部指标按班重算。</span><strong>模拟演示</strong><span>班理论能力与其他黄色示例不计入当前排程，待现场核实</span></div>
+      </article>
+      <p class="footnote">报告结构预览 · 所有数值为示意；真实报告必须展示输入版本、计算口径、完整度及正式发布状态。</p>
+    </main>
+  </div>
+  <script>
+    for (const [sourceId, targetId] of [["view-rnr", "combined-rnr"], ["view-assessment", "combined-assessment"]]) {
+      const source = document.getElementById(sourceId);
+      const target = document.getElementById(targetId);
+      target.append(...source.querySelectorAll(":scope > .section"));
+      source.remove();
+    }
+    const planTimelineTrack = document.querySelector(".timeline-track");
+    const planTimelineAxis = document.getElementById("plan-timeline-axis");
+    let planTimelineStep = 0;
+    function renderPlanTimelineTicks() {
+      const step = planTimelineTrack.clientWidth >= 900 ? 1 : 2;
+      if (step === planTimelineStep) return;
+      planTimelineStep = step;
+      document.querySelectorAll(".timeline-track").forEach(track => track.style.setProperty("--tick-count", 24 / step));
+      planTimelineAxis.replaceChildren();
+      for (let hour = 0; hour <= 24; hour += step) {
+        const absoluteHour = 8 + hour;
+        const day = absoluteHour >= 24 ? 27 : 26;
+        const label = document.createElement("span");
+        label.style.left = `${hour / 24 * 100}%`;
+        label.textContent = `${String(absoluteHour % 24).padStart(2, "0")}:30`;
+        label.title = `2026-10-${day} ${label.textContent}`;
+        planTimelineAxis.append(label);
+      }
+    }
+    renderPlanTimelineTicks();
+    if (window.ResizeObserver) new ResizeObserver(renderPlanTimelineTicks).observe(planTimelineTrack);
+    else window.addEventListener("resize", renderPlanTimelineTicks);
+    const views = ["sa", "future", "board"];
+    let boardTimer = null;
+    function stopBoardPlayback() {
+      if (boardTimer !== null) clearInterval(boardTimer);
+      boardTimer = null;
+      document.getElementById("board-play").textContent = "播放演示";
+    }
+    function activateView(view) {
+      const requested = view === "rnr" || view === "assessment" ? "sa" : view;
+      const selected = views.includes(requested) ? requested : "sa";
+      if (selected !== "board") stopBoardPlayback();
+      for (const name of views) {
+        document.getElementById(`view-${name}`).hidden = name !== selected;
+        const button = document.querySelector(`[data-view="${name}"]`);
+        if (name === selected) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      }
+      document.body.classList.toggle("board-mode", selected === "board");
+      history.replaceState(null, "", `#${selected}`);
+      document.title = `${document.querySelector(`#view-${selected} h2`).textContent} · 产能报告中心`;
+    }
+    document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => activateView(button.dataset.view)));
+    window.addEventListener("hashchange", () => activateView(location.hash.slice(1)));
+    document.getElementById("print-report").addEventListener("click", () => window.print());
+    document.getElementById("board-back").addEventListener("click", () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      activateView("sa");
+    });
+    document.getElementById("board-fullscreen").addEventListener("click", async () => {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (document.getElementById("view-board").requestFullscreen) await document.getElementById("view-board").requestFullscreen();
+    });
+    document.addEventListener("fullscreenchange", () => {
+      document.getElementById("board-fullscreen").textContent = document.fullscreenElement ? "退出全屏" : "全屏预览";
+    });
+    document.getElementById("board-play").addEventListener("click", () => {
+      if (boardTimer !== null) { stopBoardPlayback(); return; }
+      const slider = document.getElementById("board-time");
+      slider.value = "1";
+      renderBoard(1);
+      document.getElementById("board-play").textContent = "暂停演示";
+      boardTimer = setInterval(() => {
+        const next = Number(slider.value) + 1;
+        if (next > 4) { stopBoardPlayback(); return; }
+        slider.value = String(next);
+        renderBoard(next);
+      }, 2500);
+    });
+
+    const horizons = {
+      day: { label: "日", demand: 300, best: 320, plan: 310, history: 297, scale: 360 },
+      week: { label: "周", demand: 1800, best: 1920, plan: 1862, history: 1784, scale: 2200 },
+      month: { label: "四周", demand: 7200, best: 7680, plan: 7448, history: 7136, scale: 8800 }
+    };
+    function formatNumber(value) { return new Intl.NumberFormat("zh-CN").format(value); }
+    function renderFuture(horizon) {
+      const item = horizons[horizon];
+      document.querySelectorAll("[data-horizon]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.horizon === horizon)));
+      for (const [id, value] of [["future-demand", item.demand], ["future-plan", item.plan], ["future-history", item.history]]) document.getElementById(id).textContent = formatNumber(value);
+      for (const id of ["future-demand-label", "future-plan-label", "future-history-label"]) document.getElementById(id).textContent = document.getElementById(id).textContent.replace(/\s\/\s(日|周|四周)$/, ` / ${item.label}`);
+      const gap = item.history - item.demand;
+      document.getElementById("future-gap").textContent = `${gap > 0 ? "+" : ""}${formatNumber(gap)}`;
+      document.getElementById("future-decision-title").textContent = gap < 0 ? `按历史表现预测，需求存在 ${formatNumber(-gap)} 件缺口` : `按历史表现预测，需求可覆盖 ${formatNumber(gap)} 件`;
+      document.getElementById("future-decision-value").textContent = `${gap > 0 ? "+" : ""}${formatNumber(gap)} 件`;
+      document.getElementById("future-decision").className = `decision ${gap < 0 ? "bad" : "good"}`;
+      document.getElementById("future-chart-title").textContent = `每${item.label === "四周" ? "四周" : item.label}路线等效成品件`;
+      document.getElementById("future-bars").innerHTML = [["Best case", item.best, "#1f6d70"], ["Most likely", item.plan, "#296ba3"], ["历史校准", item.history, "#bc4941"]].map(([label, value, color]) => `<div class="bar-row"><span>${label}</span><div class="bar-track" style="--demand-position:${item.demand / item.scale * 100}%"><i class="bar-fill" style="--width:${value / item.scale * 100}%;--color:${color}"></i></div><b>${formatNumber(value)}</b></div>`).join("");
+    }
+    document.querySelectorAll("[data-horizon]").forEach(button => button.addEventListener("click", () => renderFuture(button.dataset.horizon)));
+
+    const boardStates = [
+      { time: "08:30", plan: 0, actual: 0, forecast: 600, sa: "—", p: "—", q: "—" },
+      { time: "11:30", plan: 150, actual: 145, forecast: 590, sa: "78%", p: "99%", q: "96%" },
+      { time: "14:30", plan: 300, actual: 320, forecast: 580, sa: "70%", p: "97%", q: "92%" },
+      { time: "17:30", plan: 450, actual: 430, forecast: 575, sa: "74%", p: "96%", q: "93%" },
+      { time: "20:30", plan: 600, actual: 572, forecast: 572, sa: "76%", p: "96%", q: "94%" }
+    ];
+    function renderBoard(index) {
+      const state = boardStates[index];
+      const deliverable = 100 + state.forecast;
+      const deliveryGap = deliverable - 650;
+      document.getElementById("board-asof-tag").textContent = state.time;
+      document.getElementById("board-time-value").textContent = state.time;
+      document.getElementById("board-forecast").textContent = formatNumber(state.forecast);
+      document.getElementById("board-shortfall").textContent = formatNumber(Math.max(0, 600 - state.forecast));
+      document.getElementById("board-deliverable").textContent = formatNumber(deliverable);
+      document.getElementById("board-delivery-gap").textContent = `${deliveryGap > 0 ? "+" : ""}${formatNumber(deliveryGap)}`;
+      document.getElementById("board-bridge-forecast").textContent = formatNumber(state.forecast);
+      document.getElementById("board-plan-to-now").textContent = formatNumber(state.plan);
+      document.getElementById("board-actual-to-now").textContent = formatNumber(state.actual);
+      document.getElementById("board-equation-forecast").textContent = formatNumber(state.forecast);
+      document.getElementById("board-equation-shortfall").textContent = formatNumber(Math.max(0, 600 - state.forecast));
+      document.getElementById("board-equation-deliverable").textContent = formatNumber(state.forecast);
+      document.getElementById("board-equation-total").textContent = formatNumber(deliverable);
+      for (const [key, value] of [["s", state.sa], ["p", state.p], ["q", state.q]]) {
+        document.getElementById(`board-${key}`).textContent = value;
+        document.getElementById(`board-${key}-bar`).style.width = `${parseInt(value, 10) || 0}%`;
+      }
+      for (const id of ["board-gauge-time", "board-gauge-time-p", "board-gauge-time-q"]) document.getElementById(id).textContent = `本班累计至 ${state.time}`;
+      const rows = document.querySelectorAll("#view-board [data-first-step]");
+      rows.forEach(row => { row.hidden = index < Number(row.dataset.firstStep); });
+      document.getElementById("board-no-events").hidden = [...rows].some(row => !row.hidden);
+      const x = n => 44 + 148 * n;
+      const y = n => 183 - n / 650 * 145;
+      const plan = boardStates.map((item, i) => `${x(i)},${y(item.plan)}`).join(" ");
+      const actual = boardStates.slice(0, index + 1).map((item, i) => `${x(i)},${y(item.actual)}`).join(" ");
+      const projection = boardStates.slice(index).map((_, relativeIndex) => {
+        const i = index + relativeIndex;
+        const value = state.actual + (state.forecast - state.actual) * (i - index) / (4 - index || 1);
+        return `${x(i)},${y(value)}`;
+      }).join(" ");
+      document.getElementById("board-curve").innerHTML = `
+        <line class="grid" x1="44" y1="183" x2="636" y2="183"/><line class="grid" x1="44" y1="110" x2="636" y2="110"/><line class="grid" x1="44" y1="38" x2="636" y2="38"/>
+        <text x="5" y="187">0</text><text x="2" y="114">325</text><text x="2" y="42">650</text>
+        <polyline class="planned" points="${plan}"/><polyline class="actual" points="${actual}"/><polyline class="forecast" points="${projection}"/>
+        <line class="cursor" x1="${x(index)}" y1="26" x2="${x(index)}" y2="183"/><circle cx="${x(index)}" cy="${y(state.actual)}" r="6" fill="#fff" stroke="#2d9ac1" stroke-width="3"/>
+        ${boardStates.map((item, i) => `<text x="${x(i)}" y="207" text-anchor="middle">${item.time}</text>`).join("")}
+      `;
+      document.getElementById("board-curve").setAttribute("aria-label", `截至 ${state.time}，累计计划 ${state.plan} 件，累计实际 ${state.actual} 件，预测本班良品 ${state.forecast} 件`);
+    }
+    document.getElementById("board-time").addEventListener("input", event => {
+      stopBoardPlayback();
+      renderBoard(Number(event.target.value));
+    });
+    renderFuture("week");
+    renderBoard(2);
+    activateView(location.hash.slice(1));
+  </script>
+</body>
+</html>

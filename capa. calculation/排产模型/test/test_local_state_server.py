@@ -36,6 +36,11 @@ class LocalStateServerTest(unittest.TestCase):
             method="PUT",
         ))
 
+    def test_static_assets_are_not_cached_across_builds(self):
+        with urlopen(self.base + "/") as response:
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.headers.get("Cache-Control"), "no-store")
+
     def test_state_survives_restart_and_route_history_is_immutable(self):
         first = json.dumps({"schemaVersion": 2, "routes": [{"routeId": "local-route-1"}]})
         second = json.dumps({"schemaVersion": 2, "routes": [{"routeId": "local-route-2"}]})

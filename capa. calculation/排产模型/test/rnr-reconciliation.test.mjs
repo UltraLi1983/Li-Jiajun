@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { calculateRnrPaceSummary, reconcileRnrSpeedLoss } from "../dist/engine/rnr-reconciliation.js";
 
 const observation = (id, duration, piecesPerCycle = 1) => ({
-  id, productId: "A", operationId: "op-a-10", stationId: "OP10",
+  id, productId: "A", operationId: "op-a-10", stationId: "OP20A",
   startMinute: 0, endMinute: duration, okQty: 100, nokQty: 0,
   piecesPerCycle,
 });

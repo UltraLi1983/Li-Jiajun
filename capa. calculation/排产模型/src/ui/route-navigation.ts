@@ -31,6 +31,8 @@ export interface RouteCapacityStationRow {
   actualGoodOutput?: number;
   blockers: string[];
   standardWindow?: MinuteWindow;
+  unrecordedIntervals?: MinuteWindow[];
+  plannedGapIntervals?: MinuteWindow[];
 }
 
 export interface RouteWindowCapacityView {
@@ -209,6 +211,8 @@ export function buildRouteWindowCapacityView(input: RouteWindowCapacityViewInput
         ...(engineRow.actualSa === undefined ? {} : { actualSa: engineRow.actualSa }),
         ...(engineRow.bestGoodCapacity === undefined ? {} : { bestGoodCapacity: engineRow.bestGoodCapacity }),
         ...(engineRow.actualGoodOutput === undefined ? {} : { actualGoodOutput: engineRow.actualGoodOutput }),
+        ...(engineRow.unrecordedIntervals ? { unrecordedIntervals: engineRow.unrecordedIntervals } : {}),
+        ...(engineRow.plannedGapIntervals ? { plannedGapIntervals: engineRow.plannedGapIntervals } : {}),
       };
     });
     view.operations = result.operations;

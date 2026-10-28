@@ -29,7 +29,7 @@ describe("operation output units per finished product", () => {
     assert.equal(result.outputItem, "A-machined-wip");
     assert.equal(result.source, "localValidation");
     assert.equal(result.version, "sample-v1");
-    assert.equal(data.operationStationParameters.find(item => item.stationId === "OP10B").piecesPerCycle, 1);
+    assert.equal(data.operationStationParameters.find(item => item.stationId === "OP20B").piecesPerCycle, 1);
   });
 
   it("uses the effective upstream Stage BOM quantity instead of a local fallback", () => {

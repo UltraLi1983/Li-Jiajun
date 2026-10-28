@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 import { freezeStandardWindow, isFrozenStandardWindowCurrent } from "../dist/engine/standard-window.js";
 
 const event = (id, kind, startMinute, endMinute) => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "manual", productId: "A-Housing",
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "manual", productId: "A-Housing",
 });
-const input = events => ({ sourceId: "A-Housing::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-08", events });
+const input = events => ({ sourceId: "A-Housing::OP10", version: 1, stationId: "OP20A", baseDate: "2026-10-08", events });
 
 describe("standard window freeze", () => {
   it("freezes an explicit complete plan and keeps an independent snapshot", () => {
@@ -20,10 +20,18 @@ describe("standard window freeze", () => {
     assert.equal(isFrozenStandardWindowCurrent(result.snapshot, events), false);
   });
 
+  it("keeps the freeze current when only manual descriptions change", () => {
+    const events = [event("p1", "production", 0, 60)];
+    const frozen = freezeStandardWindow(input(events)).snapshot;
+    assert.ok(frozen);
+    assert.equal(isFrozenStandardWindowCurrent(frozen, [{ ...events[0], label: "revised", note: "" }]), true);
+    assert.equal(isFrozenStandardWindowCurrent(frozen, [{ ...events[0], endMinute: 61 }]), false);
+  });
+
   it("rejects gaps, overlap, mixed stations and duplicate ids", () => {
     assert.ok(freezeStandardWindow(input([event("a", "production", 0, 60), event("b", "break", 70, 90)])).issues.includes("gap"));
     assert.ok(freezeStandardWindow(input([event("a", "production", 0, 60), event("b", "break", 50, 90)])).issues.includes("overlap"));
-    assert.ok(freezeStandardWindow(input([event("a", "production", 0, 60), { ...event("b", "break", 60, 90), stationId: "OP20" }])).issues.includes("mixed_station"));
+    assert.ok(freezeStandardWindow(input([event("a", "production", 0, 60), { ...event("b", "break", 60, 90), stationId: "OP30" }])).issues.includes("mixed_station"));
     assert.ok(freezeStandardWindow(input([event("a", "production", 0, 60), event("a", "break", 60, 90)])).issues.includes("duplicate_id"));
   });
 

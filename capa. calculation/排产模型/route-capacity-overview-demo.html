@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>路线产能总览 · 第 5 阶段示意</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --bg:#f4f7f8; --side:#eef4f5; --paper:#fff; --line:#d8e1e6; --text:#17212b; --muted:#637281; --teal:#226b70; --blue:#2367a8; --green:#177245; --amber:#9a620d; --red:#b23b3b; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--text); background:var(--bg); }
+    button { font:inherit; cursor:pointer; }
+    .shell { min-height:100vh; display:grid; grid-template-columns:300px minmax(0,1fr); }
+    aside { padding:22px 18px; background:var(--side); border-right:1px solid var(--line); }
+    .brand { margin:0; font-size:22px; line-height:1.2; }
+    .brand-sub { margin:7px 0 24px; color:var(--muted); font-size:13px; line-height:1.5; }
+    .nav { display:grid; gap:2px; }
+    .nav-item { display:flex; align-items:center; gap:12px; min-height:47px; padding:8px 10px; border-radius:8px; color:#364653; font-size:14px; font-weight:650; }
+    .nav-item .index { display:grid; place-items:center; width:27px; height:27px; flex:none; border-radius:50%; background:#fff; font-size:12px; }
+    .nav-item.active { background:#dcebed; outline:2px solid #b8d1d5; color:var(--teal); }
+    .side-meta { display:grid; gap:16px; margin-top:24px; }
+    .side-field { padding:13px; border:1px solid var(--line); border-radius:7px; background:#fff; }
+    .side-field small { display:block; margin-bottom:8px; color:var(--muted); font-size:12px; font-weight:700; }
+    .side-field strong { display:block; font-size:14px; overflow-wrap:anywhere; }
+    .side-foot { margin:18px 3px 0; color:var(--muted); font-size:12px; line-height:1.5; }
+    main { min-width:0; padding:22px 24px 42px; }
+    .page-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:15px; }
+    .page-head h1 { margin:0; font-size:24px; line-height:1.2; }
+    .page-head p { margin:7px 0 0; color:var(--muted); font-size:14px; }
+    .demo-badge { align-self:flex-start; padding:7px 10px; border:1px solid #e6c887; border-radius:6px; background:#fff8e8; color:var(--amber); font-size:12px; font-weight:800; }
+    .scope { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .scope span { padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--paper); font-size:13px; font-weight:700; }
+    .scope small { margin-right:7px; color:var(--muted); font-size:11px; }
+    .section { margin-top:22px; }
+    .section-head { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+    .section-head h2 { margin:0; font-size:17px; }
+    .section-head p { margin:0; color:var(--muted); font-size:12px; }
+    .metrics { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+    .metric { min-width:0; min-height:112px; padding:13px; border:1px solid var(--line); border-left:4px solid #9db0bb; border-radius:7px; background:var(--paper); }
+    .metric.blue { border-left-color:var(--blue); }
+    .metric.green { border-left-color:var(--green); }
+    .metric.teal { border-left-color:var(--teal); }
+    .metric.amber { border-left-color:var(--amber); }
+    .metric small { display:block; min-height:31px; color:var(--muted); font-size:12px; font-weight:750; }
+    .metric strong { display:block; font-size:25px; line-height:1.1; font-variant-numeric:tabular-nums; }
+    .metric em { display:block; margin-top:8px; color:var(--muted); font-size:11px; font-style:normal; line-height:1.3; }
+    .metric .positive { color:var(--green); }
+    .route-line { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0; padding:14px 2px 0; border-top:1px solid var(--line); }
+    .route-step { position:relative; min-width:0; padding:0 20px 0 0; }
+    .route-step:not(:last-child)::after { content:"→"; position:absolute; top:16px; right:5px; color:var(--teal); font-size:20px; }
+    .route-step small { display:block; color:var(--teal); font-size:11px; font-weight:800; }
+    .route-step strong { display:block; margin:3px 0; font-size:14px; }
+    .route-step span { display:block; color:var(--muted); font-size:12px; }
+    .route-step.bottleneck strong { color:var(--red); }
+    .route-band { margin-top:17px; padding:13px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .route-band strong { margin-right:12px; color:var(--red); font-size:14px; }
+    .route-band span { color:#445462; font-size:13px; }
+    .chart-key { display:flex; flex-wrap:wrap; gap:16px; margin:0 0 9px; color:#445462; font-size:12px; font-weight:700; }
+    .chart-key span { display:inline-flex; align-items:center; gap:7px; }
+    .chart-key i { width:18px; height:9px; display:inline-block; background:var(--teal); }
+    .chart-key .line { height:0; border-top:3px solid var(--blue); background:none; }
+    .chart-key .demand { height:0; border-top:2px dashed var(--amber); background:none; }
+    .chart-wrap { overflow-x:auto; padding:10px 12px 2px; border:1px solid var(--line); border-radius:7px; background:var(--paper); }
+    .capacity-chart { display:block; width:100%; min-width:640px; height:auto; }
+    .capacity-chart text { fill:#526371; font-family:inherit; font-size:13px; }
+    .capacity-chart .axis-label { font-size:11px; }
+    .capacity-chart .group-label { fill:var(--text); font-weight:750; }
+    .capacity-chart .best-value { fill:#fff; font-size:17px; font-weight:800; }
+    .capacity-chart .ml-value { fill:var(--blue); font-size:16px; font-weight:800; paint-order:stroke; stroke:#fff; stroke-width:5px; stroke-linejoin:round; }
+    .capacity-chart .ml-detail { fill:#526371; font-size:11px; font-weight:650; }
+    .capacity-chart .grid { stroke:#e1e9ed; stroke-width:1; }
+    .capacity-chart .best-bar { fill:var(--teal); }
+    .capacity-chart .ml-line { fill:none; stroke:var(--blue); stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
+    .capacity-chart .ml-dot { fill:var(--paper); stroke:var(--blue); stroke-width:4; }
+    .capacity-chart .demand-line { stroke:var(--amber); stroke-width:2; stroke-dasharray:6 5; }
+    .subtotal { background:#eef5f6; font-weight:800; }
+    .subtotal td { border-top:1px solid #b8d1d5; }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:7px; background:var(--paper); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { padding:11px 12px; border-bottom:1px solid #e2e9ed; text-align:left; vertical-align:middle; }
+    th { background:#f8fbfc; color:#536373; font-size:12px; font-weight:800; white-space:nowrap; }
+    tbody tr:last-child td { border-bottom:0; }
+    td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    td:first-child { min-width:120px; }
+    .op-name strong { display:block; }
+    .op-name small { color:var(--muted); }
+    .focus-row { background:#f5fbf8; }
+    .status { display:inline-flex; padding:4px 7px; border:1px solid #abd9c1; border-radius:5px; background:#eefaf3; color:var(--green); font-size:11px; font-weight:800; white-space:nowrap; }
+    .status.bottleneck { border-color:#e4b0b0; background:#fff2f2; color:var(--red); }
+    .empty { color:#8797a2; }
+    .selector { display:flex; flex-wrap:wrap; gap:5px; }
+    .selector button { min-height:33px; padding:6px 10px; border:1px solid var(--line); border-radius:5px; background:#fff; color:#445462; font-size:12px; font-weight:750; }
+    .selector button[aria-pressed="true"] { border-color:var(--teal); background:#e8f3f3; color:var(--teal); }
+    .selector button:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+    .note { margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.5; }
+    .foot { display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:23px; padding-top:13px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+    .foot a { color:var(--teal); font-weight:700; text-decoration:none; }
+    [hidden] { display:none !important; }
+    @media (max-width:1150px) { .metrics { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media (max-width:900px) { .shell { grid-template-columns:1fr; } aside { padding:13px 16px; border-right:0; border-bottom:1px solid var(--line); } .brand { font-size:18px; } .brand-sub,.side-meta,.side-foot { display:none; } .nav { display:flex; overflow-x:auto; } .nav-item { min-width:max-content; min-height:38px; } main { padding:17px 16px 35px; } }
+    @media (max-width:580px) { .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { min-height:105px; } .metric strong { font-size:22px; } .route-line { grid-template-columns:1fr; gap:10px; } .route-step { padding:0 0 0 12px; border-left:2px solid #b8d1d5; } .route-step:not(:last-child)::after { display:none; } .route-band strong { display:block; margin:0 0 3px; } }
+    @media print { aside,.selector,.demo-badge,.foot a { display:none; } .shell { display:block; } main { padding:0; } .section { break-inside:avoid; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <h2 class="brand">排产产能参数工具</h2>
+      <p class="brand-sub">产品路线、工站分配、参数检查、计划 SA 和产能预检。</p>
+      <nav class="nav" aria-label="工作流">
+        <div class="nav-item"><span class="index">1</span>工艺路线与工站</div>
+        <div class="nav-item"><span class="index">2</span>标准 SA 设定</div>
+        <div class="nav-item"><span class="index">3</span>现场 R&amp;R 跟踪</div>
+        <div class="nav-item"><span class="index">4</span>参数校准与验证</div>
+        <div class="nav-item active" aria-current="page"><span class="index">5</span>路线产能总览</div>
+      </nav>
+      <div class="side-meta">
+        <div class="side-field"><small>当前产品</small><strong>产品A壳体 / A-Housing</strong></div>
+        <div class="side-field"><small>当前路线</small><strong>local-route-a-housing-v1-3</strong></div>
+        <div class="side-field"><small>观察周</small><strong>2026-10-19 至 2026-10-25</strong></div>
+      </div>
+      <p class="side-foot">此页是独立版式示意，不连接正式数据，也不会写入任何记录。</p>
+    </aside>
+    <main>
+      <header class="page-head"><div><h1>路线产能总览</h1><p>产品A壳体 · 压铸 → 机加工 → 装配</p></div><span class="demo-badge">模拟 Demo · 所有数字均为示例</span></header>
+      <div class="scope"><span><small>路线版本</small>local-route-a-housing-v1-3 · 本地验证草稿</span><span><small>观察周</small>2026-10-19 至 2026-10-25</span><span><small>范围</small>3 道工序 / 4 个工站</span></div>
+
+      <section class="section" aria-labelledby="summaryTitle">
+        <div class="section-head"><h2 id="summaryTitle">路线结论</h2><p>同一周、同一产品口径</p></div>
+        <div class="metrics">
+          <div class="metric"><small>周需求</small><strong>1,800</strong><em>件成品 / 周</em></div>
+          <div class="metric blue"><small>计划 · Most likely</small><strong>1,862</strong><em>默认排产参考</em></div>
+          <div class="metric teal"><small>挑战 · Best case</small><strong>1,920</strong><em>不作为默认承诺</em></div>
+          <div class="metric"><small>结果 · Actual</small><strong class="empty">—</strong><em>尚无完整同周实绩</em></div>
+          <div class="metric green"><small>计划余量 · ML − 需求</small><strong class="positive">+62</strong><em>1,862 − 1,800 件</em></div>
+        </div>
+        <div class="route-band"><strong>计划瓶颈 · OP30 装配</strong><span>OP10、OP20 的 Most likely 均高于 OP30；路线结果取受约束的可交付成品件数。</span></div>
+      </section>
+
+      <section class="section" aria-labelledby="routeTitle">
+        <div class="section-head"><h2 id="routeTitle">工艺路线</h2><p>工站为当前路线内的分配，不等于物理设备 UID</p></div>
+        <div class="route-line">
+          <div class="route-step"><small>OP10 · 压铸</small><strong>压铸</strong><span>压铸01 · 1 个工站</span></div>
+          <div class="route-step"><small>OP20 · 机加工</small><strong>机加工</strong><span>机加工01 / 机加工02 · 2 个工站</span></div>
+          <div class="route-step bottleneck"><small>OP30 · 装配</small><strong>装配</strong><span>装配01 · 1 个工站 · 计划瓶颈</span></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="chartTitle">
+        <div class="section-head"><h2 id="chartTitle">工序产能对比</h2><p>每道工序先汇总已分配工站，再折算为成品件 / 周</p></div>
+        <div class="chart-key" aria-hidden="true"><span><i></i>挑战 · Best case</span><span><i class="line"></i>计划 · Most likely</span><span><i class="demand"></i>周需求 1,800</span></div>
+        <div class="chart-wrap">
+          <svg class="capacity-chart" viewBox="0 0 960 395" role="img" aria-labelledby="capacityChartTitle capacityChartDesc">
+            <title id="capacityChartTitle">三道工序的周产能与需求对比</title>
+            <desc id="capacityChartDesc">Best 柱状图：压铸 2070、机加工 2070、装配 1920 件。Most likely 折线：压铸 2008、机加工 2070、装配 1862 件。周需求为 1800 件。机加工合计包含两台设备按份额折算的 1449 加 621 件。</desc>
+            <text x="8" y="21" class="axis-label">件 / 周</text>
+            <line x1="72" y1="85" x2="905" y2="85" class="grid"/><text x="25" y="89" class="axis-label">2,400</text>
+            <line x1="72" y1="130" x2="905" y2="130" class="grid"/><text x="25" y="134" class="axis-label">1,800</text>
+            <line x1="72" y1="175" x2="905" y2="175" class="grid"/><text x="25" y="179" class="axis-label">1,200</text>
+            <line x1="72" y1="220" x2="905" y2="220" class="grid"/><text x="32" y="224" class="axis-label">600</text>
+            <line x1="72" y1="265" x2="905" y2="265" class="grid"/><text x="50" y="269" class="axis-label">0</text>
+            <line x1="72" y1="130" x2="905" y2="130" class="demand-line"/>
+            <rect x="164" y="109.8" width="92" height="155.2" class="best-bar"/><text x="210" y="201" text-anchor="middle" class="best-value">2,070</text>
+            <rect x="434" y="109.8" width="92" height="155.2" class="best-bar"/><text x="480" y="201" text-anchor="middle" class="best-value">2,070</text>
+            <rect x="704" y="121" width="92" height="144" class="best-bar"/><text x="750" y="201" text-anchor="middle" class="best-value">1,920</text>
+            <polyline points="210,114.4 480,109.8 750,125.4" class="ml-line"/>
+            <circle cx="210" cy="114.4" r="6" class="ml-dot"/><circle cx="480" cy="109.8" r="6" class="ml-dot"/><circle cx="750" cy="125.4" r="6" class="ml-dot"/>
+            <text x="210" y="97" text-anchor="middle" class="ml-value">2,008</text>
+            <text x="480" y="73" text-anchor="middle" class="ml-value">2,070</text>
+            <text x="750" y="108" text-anchor="middle" class="ml-value">1,862</text>
+            <rect x="410" y="78" width="140" height="20" rx="3" fill="#fff"/>
+            <text x="480" y="92" text-anchor="middle" class="ml-detail">01 1,449 + 02 621</text>
+            <text x="210" y="293" text-anchor="middle" class="group-label">OP10 压铸</text>
+            <text x="480" y="293" text-anchor="middle" class="group-label">OP20 机加工</text>
+            <text x="750" y="293" text-anchor="middle" class="group-label">OP30 装配</text>
+          </svg>
+        </div>
+        <p class="note">柱与线展示的是各工序合计，不是单台设备；整条路线取受上下游约束的能力，不把不同工序相加。</p>
+      </section>
+
+      <section class="section" aria-labelledby="operationTitle">
+        <div class="section-head"><h2 id="operationTitle">工序能力对照</h2><p>统一折算为成品件 / 周</p></div>
+        <div class="table-wrap"><table><thead><tr><th>工序</th><th class="num">每件成品所需本工序产出</th><th class="num">计划 · ML</th><th class="num">挑战 · Best</th><th class="num">结果 · Actual</th><th>状态</th></tr></thead><tbody>
+          <tr><td class="op-name"><strong>OP10 压铸</strong><small>1 台压铸机</small></td><td class="num">1 件</td><td class="num">2,008</td><td class="num">2,070</td><td class="num empty">—</td><td><span class="status">能力高于需求</span></td></tr>
+          <tr><td class="op-name"><strong>OP20 机加工</strong><small>2 台并行机加工设备</small></td><td class="num">1 件</td><td class="num">2,070</td><td class="num">2,070</td><td class="num empty">—</td><td><span class="status">能力高于需求</span></td></tr>
+          <tr class="focus-row"><td class="op-name"><strong>OP30 装配</strong><small>1 个装配中心</small></td><td class="num">1 件</td><td class="num">1,862</td><td class="num">1,920</td><td class="num empty">—</td><td><span class="status bottleneck">计划瓶颈</span></td></tr>
+        </tbody></table></div>
+        <p class="note">表中工序件数是各工序的成品等效能力。整条路线的结果并非把三行相加；有定向工站流转时还要检验连接关系。</p>
+      </section>
+
+      <section class="section" aria-labelledby="stationTitle">
+        <div class="section-head"><h2 id="stationTitle">工站计算依据</h2><div class="selector" role="group" aria-label="筛选工序"><button type="button" data-filter="all" aria-pressed="true">全部</button><button type="button" data-filter="op10" aria-pressed="false">OP10</button><button type="button" data-filter="op20" aria-pressed="false">OP20</button><button type="button" data-filter="op30" aria-pressed="false">OP30</button></div></div>
+        <div class="table-wrap"><table><thead><tr><th>工序 / 工站</th><th>标准 SA</th><th class="num">CT</th><th class="num">每循环件数</th><th class="num">P / Q</th><th class="num">项目份额</th><th class="num">计划生产分钟</th><th class="num">计入路线 ML</th><th>参数状态</th></tr></thead><tbody>
+          <tr data-operation="op10"><td class="op-name"><strong>OP10 · 压铸01</strong><small>压铸-001 / OP10A</small></td><td>86.3% · 已冻结</td><td class="num">480 s</td><td class="num">4</td><td class="num">98% / 99%</td><td class="num">100%</td><td class="num">4,140</td><td class="num">2,008</td><td><span class="status">已发布参数</span></td></tr>
+          <tr data-operation="op20"><td class="op-name"><strong>OP20 · 机加工01</strong><small>机加工-001 / OP20A</small></td><td>86.3% · 已冻结</td><td class="num">120 s</td><td class="num">1</td><td class="num">100% / 100%</td><td class="num">70%</td><td class="num">4,140</td><td class="num">1,449</td><td><span class="status">已发布参数</span></td></tr>
+          <tr data-operation="op20"><td class="op-name"><strong>OP20 · 机加工02</strong><small>机加工-002 / OP20B</small></td><td>86.3% · 已冻结</td><td class="num">120 s</td><td class="num">1</td><td class="num">100% / 100%</td><td class="num">30%</td><td class="num">4,140</td><td class="num">621</td><td><span class="status">已发布参数</span></td></tr>
+          <tr class="subtotal" data-operation="op20"><td>OP20 机加工合计</td><td colspan="6">机加工01 1,449 ＋ 机加工02 621</td><td class="num">2,070</td><td>工序总量</td></tr>
+          <tr data-operation="op30"><td class="op-name"><strong>OP30 · 装配01</strong><small>装配-001 / OP30A</small></td><td>80.0% · 已冻结</td><td class="num">120 s</td><td class="num">1</td><td class="num">98% / 99%</td><td class="num">100%</td><td class="num">3,840</td><td class="num">1,862</td><td><span class="status">已发布参数</span></td></tr>
+        </tbody></table></div>
+        <p class="note">OP20 两台工站采用固定份额 70% / 30%；“计入路线 ML”已乘份额，不等于工站原始周能力。正式系统中还会区分参数生效期和工站流转约束。</p>
+      </section>
+
+      <footer class="foot"><span>所有名称、分钟、件数与状态仅供版式讨论，不代表当前数据库或正式产能结论。</span><a href="formal.html">返回正式系统</a></footer>
+    </main>
+  </div>
+  <script>
+    const buttons = document.querySelectorAll("[data-filter]");
+    const rows = document.querySelectorAll("[data-operation]");
+    buttons.forEach(button => button.addEventListener("click", () => {
+      const value = button.getAttribute("data-filter");
+      buttons.forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      rows.forEach(row => { row.hidden = value !== "all" && row.getAttribute("data-operation") !== value; });
+    }));
+  </script>
+</body>
+</html>

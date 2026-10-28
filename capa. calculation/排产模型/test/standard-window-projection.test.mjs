@@ -6,10 +6,10 @@ import { copyStandardWindowToWeek, expandWeekToFourWeeks } from "../dist/engine/
 import { buildWeekMinuteLedger } from "../dist/engine/week-minute-ledger.js";
 
 const event = (id, kind, startMinute, endMinute, productId = "A") => ({
-  id, kind, startMinute, endMinute, stationId: "OP10", source: "manual", productId,
+  id, kind, startMinute, endMinute, stationId: "OP20A", source: "manual", productId,
 });
 const sourceEvents = [event("p1", "production", 480, 660), event("b1", "break", 660, 690), event("p2", "production", 690, 960)];
-const source = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-08", events: sourceEvents }).snapshot;
+const source = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP20A", baseDate: "2026-10-08", events: sourceEvents }).snapshot;
 const input = overrides => ({
   source, currentSourceEvents: sourceEvents, weekStartDate: "2026-10-12",
   repeatDates: ["2026-10-12", "2026-10-13"], ...overrides,
@@ -19,7 +19,7 @@ describe("standard window copy to a seven-day plan", () => {
   it("groups copied full days from the first-shift clock rather than midnight", () => {
     const dayConfig = { startMinute: 510, dayCount: 1, shiftMinutes: 480, shiftsPerDay: 3 };
     const events = [event("p1", "production", 510, 900), event("b1", "break", 900, 930), event("p2", "production", 930, 1950)];
-    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-08", events, dayConfig }).snapshot;
+    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP20A", baseDate: "2026-10-08", events, dayConfig }).snapshot;
     const result = copyStandardWindowToWeek(input({
       source: frozen, currentSourceEvents: events, currentDayConfig: dayConfig,
       repeatDates: ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"],
@@ -34,7 +34,7 @@ describe("standard window copy to a seven-day plan", () => {
   it("moves the week boundary with the first-shift time and accepts a full Sunday", () => {
     const dayConfig = { startMinute: 450, dayCount: 1, shiftMinutes: 480, shiftsPerDay: 3 };
     const events = [event("full-day", "production", 450, 1890)];
-    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-08", events, dayConfig }).snapshot;
+    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP20A", baseDate: "2026-10-08", events, dayConfig }).snapshot;
     const result = copyStandardWindowToWeek(input({
       source: frozen, currentSourceEvents: events, currentDayConfig: dayConfig, repeatDates: ["2026-10-18"],
     }));
@@ -75,14 +75,14 @@ describe("standard window copy to a seven-day plan", () => {
 
   it("rejects overlapping 48-hour copies and dates beyond the selected week", () => {
     const longEvents = [event("p", "production", 0, 48 * 60)];
-    const longSource = freezeStandardWindow({ sourceId: "A::OP10", version: 2, stationId: "OP10", baseDate: "2026-10-08", events: longEvents }).snapshot;
+    const longSource = freezeStandardWindow({ sourceId: "A::OP10", version: 2, stationId: "OP20A", baseDate: "2026-10-08", events: longEvents }).snapshot;
     assert.ok(copyStandardWindowToWeek(input({ source: longSource, currentSourceEvents: longEvents })).issues.some(item => item.code === "repeat_overlap"));
     assert.ok(copyStandardWindowToWeek(input({ repeatDates: ["2026-10-19"] })).issues.some(item => item.code === "outside_week"));
   });
 
   it("splits a cross-midnight source across calendar days", () => {
     const nightEvents = [event("night", "production", 22 * 60, 26 * 60)];
-    const nightSource = freezeStandardWindow({ sourceId: "A::OP10", version: 3, stationId: "OP10", baseDate: "2026-10-08", events: nightEvents }).snapshot;
+    const nightSource = freezeStandardWindow({ sourceId: "A::OP10", version: 3, stationId: "OP20A", baseDate: "2026-10-08", events: nightEvents }).snapshot;
     const result = copyStandardWindowToWeek(input({ source: nightSource, currentSourceEvents: nightEvents, repeatDates: ["2026-10-12"] }));
     assert.deepEqual(result.issues, []);
     assert.equal(result.days[0].productionMinutes, 120);
@@ -96,7 +96,7 @@ describe("standard window copy to a seven-day plan", () => {
       event("b", "production", 630, 690, "B"),
       { ...event("ba", "setup", 690, 735, "A"), changeoverKey: "B->A" },
     ];
-    const tagged = freezeStandardWindow({ sourceId: "A::OP10", version: 4, stationId: "OP10", baseDate: "2026-10-08", events }).snapshot;
+    const tagged = freezeStandardWindow({ sourceId: "A::OP10", version: 4, stationId: "OP20A", baseDate: "2026-10-08", events }).snapshot;
     const result = copyStandardWindowToWeek(input({ source: tagged, currentSourceEvents: events }));
     assert.deepEqual(result.issues, []);
     assert.equal(result.events.filter(item => item.kind === "setup").length, 4);
@@ -127,7 +127,7 @@ describe("standard window copy to a seven-day plan", () => {
   it("does not treat the next production day as occupied when the source date is before day zero", () => {
     const dayConfig = { startMinute: -930, dayCount: 1, shiftMinutes: 720, shiftsPerDay: 2 };
     const events = buildStandardSaSampleSlots(dayConfig).map((slot, index) => event(`slot-${index}`, slot.kind, slot.startMinute, slot.endMinute));
-    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP10", baseDate: "2026-10-13", events, dayConfig }).snapshot;
+    const frozen = freezeStandardWindow({ sourceId: "A::OP10", version: 1, stationId: "OP20A", baseDate: "2026-10-13", events, dayConfig }).snapshot;
     const copy = copyStandardWindowToWeek({
       source: frozen, currentSourceEvents: events, currentDayConfig: dayConfig,
       weekStartDate: "2026-10-19", repeatDates: ["2026-10-19", "2026-10-20"],

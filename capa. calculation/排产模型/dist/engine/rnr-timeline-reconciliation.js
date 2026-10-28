@@ -1,3 +1,46 @@
+export function mergeStatusIntervals(rows, status) {
+    const merged = [];
+    for (const row of rows) {
+        const matches = status === "unrecorded" ? row.actualKind === "unrecorded"
+            : status === "plannedGap" ? row.plannedKind === "unrecorded"
+                : row.status === status;
+        if (!matches)
+            continue;
+        const last = merged[merged.length - 1];
+        if (last && last.endMinute === row.startMinute)
+            last.endMinute = row.endMinute;
+        else
+            merged.push({ startMinute: row.startMinute, endMinute: row.endMinute });
+    }
+    return merged;
+}
+export function formatCoverageClock(minute) {
+    const minuteInDay = ((Math.trunc(minute) % 1440) + 1440) % 1440;
+    const hour = Math.floor(minuteInDay / 60);
+    const min = minuteInDay % 60;
+    return `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+export function formatCoverageSummary(intervals, locale, kind) {
+    const details = intervals.map(interval => {
+        const minutes = interval.endMinute - interval.startMinute;
+        const span = `${formatCoverageClock(interval.startMinute)}–${formatCoverageClock(interval.endMinute)}`;
+        if (kind === "unrecorded") {
+            return locale === "zh"
+                ? `实际未记录：${span}（${minutes} 分钟）`
+                : `Actual not recorded: ${span} (${minutes} min)`;
+        }
+        return locale === "zh"
+            ? `计划空档：${span}（${minutes} 分钟）`
+            : `Planned gap: ${span} (${minutes} min)`;
+    });
+    if (details.length <= 1)
+        return { summary: details[0] ?? "", details };
+    const total = intervals.reduce((sum, interval) => sum + interval.endMinute - interval.startMinute, 0);
+    const summary = kind === "unrecorded"
+        ? (locale === "zh" ? `实际未记录 ${intervals.length} 段，共 ${total} 分钟` : `Actual not recorded: ${intervals.length} gaps, ${total} min`)
+        : (locale === "zh" ? `计划空档 ${intervals.length} 段，共 ${total} 分钟` : `Planned gaps: ${intervals.length}, ${total} min`);
+    return { summary, details };
+}
 const abnormalKinds = new Set([
     "equipmentFailure", "toolingIssue", "logisticsWaiting", "qualityHold", "laborIssue",
 ]);

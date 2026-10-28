@@ -24,6 +24,7 @@ import {
   setLocalStationFlowPolicy,
   setLocalProcessStationGroups,
 } from "../dist/engine/local-validation-route.js";
+import { localRouteReviewState, submitLocalRouteForReview } from "../dist/engine/route-review.js";
 import { validateProductRoutingMasterData } from "../dist/engine/routing-master-data-engine.js";
 
 const clone = () => structuredClone(sampleScenario);
@@ -41,21 +42,48 @@ const addWash = scenario => {
 };
 
 describe("local validation process and route", () => {
+  it("submits a draft for local review without releasing it, and invalidates the request after edits", () => {
+    const scenario = clone();
+    const draft = createLocalRouteCopy(scenario, "route-a-housing-v1").route;
+    assert.equal(submitLocalRouteForReview(scenario, "route-a-housing-v1", "2026-10-24T00:00:00.000Z").issues[0].code, "not_local_draft");
+    assert.equal(submitLocalRouteForReview(scenario, draft.routeId, "2026-10-24T00:00:00.000Z").issues[0].code, "station_missing");
+    for (const operation of draft.operations) {
+      const stationId = operation.sequence === 10 ? "OP20A" : "OP30";
+      assignLocalStation(scenario, { routeId: draft.routeId, operationId: operation.operationId, stationId, role: "primary" });
+    }
+    const submitted = submitLocalRouteForReview(scenario, draft.routeId, "2026-10-24T00:00:00.000Z");
+    assert.equal(submitted.route.status, "draft");
+    assert.equal(localRouteReviewState(scenario, draft.routeId), "pending");
+    assert.equal(validateProductRoutingMasterData(scenario, draft.productId, draft.routeId).formalReady, false);
+    const restored = applyLocalValidation(clone(), extractLocalValidation(scenario));
+    assert.equal(localRouteReviewState(restored, draft.routeId), "pending");
+    renameLocalOperation(restored, { routeId: draft.routeId, operationId: draft.operations[0].operationId, name: "Reviewed name changed" });
+    assert.equal(localRouteReviewState(restored, draft.routeId), "stale");
+    submitLocalRouteForReview(restored, draft.routeId, "2026-10-24T01:00:00.000Z");
+    assert.equal(localRouteReviewState(restored, draft.routeId), "pending");
+    assert.equal(restored.routes.find(item => item.routeId === draft.routeId).reviewRequest.submittedAt, "2026-10-24T01:00:00.000Z");
+    restored.operationStationAssignments.find(item => item.routeId === draft.routeId).plannedShare = 0.5;
+    assert.equal(localRouteReviewState(restored, draft.routeId), "stale");
+    submitLocalRouteForReview(restored, draft.routeId, "2026-10-24T02:00:00.000Z");
+    restored.processMasters.find(item => item.processId === draft.operations[0].processId).name = "Changed process name";
+    assert.equal(localRouteReviewState(restored, draft.routeId), "stale");
+  });
+
   it("stores station transfer pairs on a draft route and can clear stale pairs after reordering", () => {
     const scenario = clone();
     const draft = createLocalRouteCopy(scenario, "route-a-housing-v1").route;
     const [from, to] = [...draft.operations].sort((a, b) => a.sequence - b.sequence);
-    for (const stationId of ["OP10", "OP10B"]) {
+    for (const stationId of ["OP20A", "OP20B"]) {
       assert.equal(assignLocalStation(scenario, { routeId: draft.routeId, operationId: from.operationId,
         stationId, role: "parallel" }).assignment.planningAllowed, true);
     }
     assert.equal(assignLocalStation(scenario, { routeId: draft.routeId, operationId: to.operationId,
-      stationId: "OP20", role: "primary" }).assignment.planningAllowed, true);
-    const link = { fromStationId: "OP10", toStationId: "OP20" };
+      stationId: "OP30", role: "primary" }).assignment.planningAllowed, true);
+    const link = { fromStationId: "OP20A", toStationId: "OP30" };
     assert.equal(setLocalStationFlowPolicy(scenario, { routeId: "route-a-housing-v1", fromOperationId: from.operationId,
       toOperationId: to.operationId, allowedPairs: [link] }).issues[0].code, "not_local_draft");
     assert.equal(setLocalStationFlowPolicy(scenario, { routeId: draft.routeId, fromOperationId: from.operationId,
-      toOperationId: to.operationId, allowedPairs: [{ fromStationId: "OP10C", toStationId: "OP20" }] }).issues[0].code, "invalid_station_flow");
+      toOperationId: to.operationId, allowedPairs: [{ fromStationId: "OP22", toStationId: "OP30" }] }).issues[0].code, "invalid_station_flow");
     assert.equal(setLocalStationFlowPolicy(scenario, { routeId: draft.routeId, fromOperationId: from.operationId,
       toOperationId: to.operationId, allowedPairs: [link] }).route.stationFlowPolicies.length, 1);
     const saved = extractLocalValidation(scenario);
@@ -153,7 +181,7 @@ describe("local validation process and route", () => {
     const process = createLocalProcess(scenario, { name: "Die casting", processTypeId: type.processType.processTypeId });
     const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
     const inserted = insertLocalOperationAt(scenario, { routeId: copy.route.routeId, processId: process.process.processId, index: 1 });
-    const input = { routeId: copy.route.routeId, operationId: inserted.operation.operationId, stationId: "OP10", role: "primary" };
+    const input = { routeId: copy.route.routeId, operationId: inserted.operation.operationId, stationId: "OP20A", role: "primary" };
     assert.equal(assignLocalStation(scenario, input).issues[0].code, "station_incompatible");
     assert.equal(createLocalStation(scenario, { stationId: "CAST-01", name: "Casting 01" }).issues[0].field, "qualifiedProcessTypeIds");
     assert.equal(createLocalStation(scenario, { stationId: "CAST-01", name: "Casting 01", qualifiedProcessTypeIds: ["missing"] }).issues[0].code, "missing_process_type");
@@ -167,7 +195,7 @@ describe("local validation process and route", () => {
     const restored = clone();
     applyLocalValidation(restored, extractLocalValidation(scenario));
     assert.deepEqual(restored.stations.find(item => item.stationId === "CAST-01").qualifiedProcessTypeIds, [type.processType.processTypeId, "machining"]);
-    assert.deepEqual(restored.stationGroups.find(item => item.stationGroupId === "grp-machining").stationIds, ["OP10", "OP10B", "OP10C"]);
+    assert.deepEqual(restored.stationGroups.find(item => item.stationGroupId === "grp-machining").stationIds, ["OP20A", "OP20B", "OP22"]);
   });
   it("files a draft process without a route and keeps generated identity separate from business codes", () => {
     const scenario = clone();
@@ -271,7 +299,7 @@ describe("local validation process and route", () => {
     const scenario = clone();
     const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
     insertLocalOperation(scenario, { routeId: copy.route.routeId, processId: "process-machining", operationId: "op-a-extra", sequence: 15, name: "Extra" });
-    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-extra", stationId: "OP10", role: "primary" });
+    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-extra", stationId: "OP20A", role: "primary" });
     removeLocalOperation(scenario, copy.route.routeId, "op-a-extra");
     assert.equal(copy.route.operations.some(operation => operation.operationId === "op-a-extra"), false);
     assert.equal((scenario.operationStationAssignments ?? []).some(item => item.operationId === "op-a-extra"), false);
@@ -284,11 +312,11 @@ describe("local validation process and route", () => {
     const copy = createLocalRouteCopy(scenario, "route-a-housing-v1");
     const routeId = copy.route.routeId;
     const operationId = copy.route.operations[0].operationId;
-    const primary = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10", role: "primary" });
+    const primary = assignLocalStation(scenario, { routeId, operationId, stationId: "OP20A", role: "primary" });
     assert.equal(primary.assignment.planningAllowed, true);
     assert.equal(primary.assignment.allocationMode, "forecastCalculated");
     assert.equal(primary.assignment.plannedShare, undefined);
-    const backup = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10B", role: "backup", backupCondition: "after approval" });
+    const backup = assignLocalStation(scenario, { routeId, operationId, stationId: "OP20B", role: "backup", backupCondition: "after approval" });
     assert.equal(backup.assignment.planningAllowed, false);
     assert.equal(backup.assignment.customerApprovalRequired, true);
     const station = createLocalStation(scenario, { stationId: "OP10-FUTURE", name: "Future machining", qualifiedProcessTypeIds: ["machining"] });
@@ -296,12 +324,12 @@ describe("local validation process and route", () => {
     const future = assignLocalStation(scenario, { routeId, operationId, stationId: "OP10-FUTURE", role: "primary" });
     assert.equal(future.assignment.planningAllowed, false);
     const saved = saveLocalStationParameter(scenario, {
-      routeId, operationId, stationId: "OP10", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 0.9, qualityRate: 0.95, effectiveFrom: "2026-10-18",
+      routeId, operationId, stationId: "OP20A", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 0.9, qualityRate: 0.95, effectiveFrom: "2026-10-18",
     });
     assert.equal(saved.parameter.standardCycleSec, 30);
     assert.equal(saved.parameter.performanceRate, 0.9);
     assert.equal(saveLocalStationParameter(scenario, {
-      routeId, operationId, stationId: "OP10B", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, effectiveFrom: "2026-10-18",
+      routeId, operationId, stationId: "OP20B", standardCycleSec: 30, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, effectiveFrom: "2026-10-18",
     }).issues[0].code, "backup_not_plannable");
   });
 
@@ -317,9 +345,9 @@ describe("local validation process and route", () => {
     assert.equal(beforeParameter.formalIssues.some(issue => issue.code === "process_master_not_released"), true);
     assert.equal(beforeParameter.gaps.some(issue => issue.code === "stage_reference_missing"), true);
     assert.equal(validateProductRoutingMasterData(scenario, "A-Housing", "route-a-housing-v1").formalReady, true);
-    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP10", role: "primary" });
+    assignLocalStation(scenario, { routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP20A", role: "primary" });
     saveLocalStationParameter(scenario, {
-      routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP10",
+      routeId: copy.route.routeId, operationId: "op-a-wash", stationId: "OP20A",
       standardCycleSec: 22, piecesPerCycle: 1, performanceRate: 1, qualityRate: 1, effectiveFrom: "2026-10-18",
     });
     const after = assessLocalTrial(scenario, "A-Housing", copy.route.routeId);
