@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3920" height="2240" viewBox="0 0 3920 2240">
+<rect width="100%" height="100%" fill="#f3f6fa"/>
+<rect width="100%" height="170" fill="#132338"/>
+<text x="196" y="105" fill="white" font-family="sans-serif" font-size="65" font-weight="700">Demo2 汽车座椅骨架工厂 Layout</text>
+<text x="200" y="230" fill="#45566f" font-family="sans-serif" font-size="31">120m × 60m · 根据原始坐标记录重建 · 原始 PNG 与障碍物坐标未找回</text>
+<rect x="196" y="280" width="3360" height="1680" fill="white" stroke="#1d3048" stroke-width="7"/>
+<line x1="336" y1="280" x2="336" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="476" y1="280" x2="476" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="616" y1="280" x2="616" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="756" y1="280" x2="756" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="896" y1="280" x2="896" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1036" y1="280" x2="1036" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1176" y1="280" x2="1176" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1316" y1="280" x2="1316" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1456" y1="280" x2="1456" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1596" y1="280" x2="1596" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1736" y1="280" x2="1736" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="1876" y1="280" x2="1876" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2016" y1="280" x2="2016" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2156" y1="280" x2="2156" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2296" y1="280" x2="2296" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2436" y1="280" x2="2436" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2576" y1="280" x2="2576" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2716" y1="280" x2="2716" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2856" y1="280" x2="2856" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="2996" y1="280" x2="2996" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="3136" y1="280" x2="3136" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="3276" y1="280" x2="3276" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="3416" y1="280" x2="3416" y2="1960" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="420" x2="3556" y2="420" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="560" x2="3556" y2="560" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="700" x2="3556" y2="700" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="840" x2="3556" y2="840" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="980" x2="3556" y2="980" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1120" x2="3556" y2="1120" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1260" x2="3556" y2="1260" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1400" x2="3556" y2="1400" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1540" x2="3556" y2="1540" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1680" x2="3556" y2="1680" stroke="#e8eef5" stroke-width="2"/>
+<line x1="196" y1="1820" x2="3556" y2="1820" stroke="#e8eef5" stroke-width="2"/>
+<rect x="224" y="1050.0" width="3304" height="117.60000000000001" fill="#edf2f6"/>
+<rect x="224" y="1649.2" width="3304" height="117.60000000000001" fill="#edf2f6"/>
+<rect x="224" y="308" width="476" height="196" rx="15" fill="#d9eaff" stroke="#4a7fbd" stroke-width="4"/>
+<text x="462.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">收货</text>
+<rect x="728" y="308" width="308" height="196" rx="15" fill="#dfe7f6" stroke="#65799a" stroke-width="4"/>
+<text x="882.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">IQC 来料检验</text>
+<rect x="1064" y="308" width="280" height="196" rx="15" fill="#f4dbe5" stroke="#ae6285" stroke-width="4"/>
+<text x="1204.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">质量隔离</text>
+<rect x="1372" y="308" width="420" height="196" rx="15" fill="#e7e9ef" stroke="#818a9e" stroke-width="4"/>
+<text x="1582.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">工装</text>
+<rect x="1820" y="308" width="336" height="196" rx="15" fill="#dfe7f6" stroke="#65799a" stroke-width="4"/>
+<text x="1988.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">测量室</text>
+<rect x="2184" y="308" width="364" height="196" rx="15" fill="#e7e9ef" stroke="#818a9e" stroke-width="4"/>
+<text x="2366.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">公用工程</text>
+<rect x="2576" y="308" width="952" height="196" rx="15" fill="#ead7e7" stroke="#a15b91" stroke-width="4"/>
+<text x="3052.0" y="417.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">成品待发</text>
+<rect x="224" y="616" width="756" height="364" rx="15" fill="#cfe0ff" stroke="#2d5fa8" stroke-width="4"/>
+<text x="602.0" y="809.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">主仓</text>
+<rect x="224" y="1260" width="756" height="364" rx="15" fill="#e8d6fb" stroke="#8253af" stroke-width="4"/>
+<text x="602.0" y="1453.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">高位货架区</text>
+<rect x="1176" y="1260" width="336" height="336" rx="15" fill="#d2f2eb" stroke="#278a7a" stroke-width="4"/>
+<text x="1344.0" y="1439.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">超市</text>
+<rect x="1176" y="616" width="336" height="308" rx="15" fill="#e8f5d9" stroke="#659044" stroke-width="4"/>
+<text x="1344.0" y="781.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">空箱分拣</text>
+<rect x="1176" y="1792" width="336" height="84" rx="15" fill="#e7e9ef" stroke="#818a9e" stroke-width="4"/>
+<text x="1344.0" y="1845.0" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">牵引车充电</text>
+<rect x="1652" y="616" width="1344" height="336" rx="15" fill="#f8e0d0" stroke="#b46537" stroke-width="4"/>
+<text x="1674" y="669" text-anchor="start" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">A 线 / 骨架与滑轨分装</text>
+<rect x="1708" y="960.4" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="1806.0" y="988.7333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-A1</text>
+<rect x="2044" y="960.4" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2142.0" y="988.7333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-A2</text>
+<rect x="2380" y="960.4" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2478.0" y="988.7333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-A3</text>
+<rect x="2716" y="960.4" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2814.0" y="988.7333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-A4</text>
+<rect x="1652" y="1260" width="1344" height="336" rx="15" fill="#f8e0d0" stroke="#b46537" stroke-width="4"/>
+<text x="1674" y="1313" text-anchor="start" fill="#253953" font-family="sans-serif" font-size="33" font-weight="700">B 线 / 总成与终检</text>
+<rect x="1708" y="1604.3999999999999" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="1806.0" y="1632.7333333333331" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-B1</text>
+<rect x="2044" y="1604.3999999999999" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2142.0" y="1632.7333333333331" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-B2</text>
+<rect x="2380" y="1604.3999999999999" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2478.0" y="1632.7333333333331" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-B3</text>
+<rect x="2716" y="1604.3999999999999" width="196" height="42.0" rx="15" fill="#e4f5f8" stroke="#3f9aa6" stroke-width="4"/>
+<text x="2814.0" y="1632.7333333333331" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">LS-B4</text>
+<rect x="3024" y="1260" width="140" height="336" rx="15" fill="#fbe7cb" stroke="#b9863c" stroke-width="4"/>
+<text x="3094.0" y="1435.3333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">WIP</text>
+<rect x="3024" y="616" width="140" height="336" rx="15" fill="#fde3d8" stroke="#af6644" stroke-width="4"/>
+<text x="3094.0" y="791.3333333333334" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">返修</text>
+<rect x="3360" y="1260" width="168" height="336" rx="15" fill="#e9e4d8" stroke="#8f8062" stroke-width="4"/>
+<text x="3444.0" y="1435.3333333333333" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">包装辅料</text>
+<rect x="3360" y="616" width="168" height="336" rx="15" fill="#e7e9ef" stroke="#818a9e" stroke-width="4"/>
+<text x="3444.0" y="791.3333333333334" text-anchor="middle" fill="#253953" font-family="sans-serif" font-size="22" font-weight="700">废料暂存</text>
+<rect x="1773.0" y="740.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="1806.0" y="779.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">A1</text>
+<rect x="2109.0" y="740.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2142.0" y="779.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">A2</text>
+<rect x="2445.0" y="740.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2478.0" y="779.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">A3</text>
+<rect x="2781.0" y="740.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2814.0" y="779.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">A4</text>
+<rect x="1773.0" y="1384.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="1806.0" y="1423.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">B1</text>
+<rect x="2109.0" y="1384.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2142.0" y="1423.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">B2</text>
+<rect x="2445.0" y="1384.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2478.0" y="1423.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">B3</text>
+<rect x="2781.0" y="1384.0" width="66" height="60" rx="10" fill="#d16b36" stroke="white" stroke-width="3"/><text x="2814.0" y="1423.0" text-anchor="middle" fill="white" font-family="sans-serif" font-size="23" font-weight="700">B4</text>
+<text x="196" y="2090" fill="#52667d" font-family="sans-serif" font-size="28">RECOVERED REFERENCE · 26 areas · 8 stations · 8 delivery points · 26 route segments · original 55 obstacle outlines unavailable</text>
+</svg>
