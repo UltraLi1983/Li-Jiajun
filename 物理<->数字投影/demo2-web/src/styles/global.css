@@ -444,3 +444,31 @@ button {
 .operational-map-reconstructed .operational-area span { display:none; }
 .operational-map-reconstructed .operational-area:hover,
 .operational-map-reconstructed .operational-area:focus-visible { border-color:#22d3ee; background:rgba(34,211,238,.12); }
+
+/* T3 导入草稿与标尺工作区。图像草稿暂不进入现有样板计算。 */
+.imported-layout-section { display:grid; gap:14px; }
+.imported-layout-heading { display:flex; align-items:start; justify-content:space-between; gap:18px; }
+.imported-layout-heading h3 { margin:6px 0 0; }
+.imported-layout-status { color:#67e8f9; font-size:12px; text-align:right; }
+.imported-layout-note { margin:0; color:#a9bed5; font-size:13px; line-height:1.5; }
+.imported-layout-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.imported-layout-toolbar button,.imported-layout-upload { min-height:38px; padding:8px 11px; border:1px solid rgba(148,163,184,.35); border-radius:9px; color:#dce9f9; background:#14243a; cursor:pointer; font-size:12px; }
+.imported-layout-toolbar button.active { color:#061827; background:#67e8f9; border-color:#67e8f9; }
+.imported-layout-toolbar button:disabled { opacity:.4; cursor:not-allowed; }
+.imported-layout-upload input { display:none; }
+.imported-layout-zoom { color:#a9bed5; font-size:12px; }
+.imported-layout-viewport { position:relative; overflow:hidden; min-height:260px; max-height:640px; aspect-ratio:16/9; border:1px solid rgba(103,232,249,.24); border-radius:14px; background:#07111f; touch-action:none; }
+.imported-layout-viewport.is-pannable { cursor:grab; }
+.imported-layout-viewport.is-pannable:active { cursor:grabbing; }
+.imported-layout-viewport.is-measuring { cursor:crosshair; }
+.imported-layout-image-wrap { position:relative; width:100%; transform-origin:center center; user-select:none; }
+.imported-layout-image-wrap img { display:block; width:100%; height:auto; user-select:none; pointer-events:auto; }
+.imported-layout-measure-point { position:absolute; display:grid; place-items:center; width:26px; height:26px; border:2px solid #fff; border-radius:50%; color:#062132; background:#67e8f9; font-size:12px; font-weight:800; transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 0 0 5px rgba(34,211,238,.22); }
+.imported-layout-calibration { display:flex; flex-wrap:wrap; align-items:center; gap:12px 18px; color:#a9bed5; font-size:12px; }
+.imported-layout-calibration label { display:flex; align-items:center; gap:7px; }
+.imported-layout-calibration input { width:90px; padding:7px 9px; border:1px solid rgba(148,163,184,.4); border-radius:8px; color:#fff; background:#0b1424; }
+.imported-layout-calibration strong { color:#67e8f9; }
+.imported-layout-empty { display:grid; place-items:center; min-height:220px; border:1px dashed rgba(148,163,184,.4); border-radius:14px; color:#9fb0c8; font-size:13px; }
+
+.imported-layout-measure-line { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.imported-layout-measure-line line { stroke:#22d3ee; stroke-width:7; stroke-dasharray:18 10; vector-effect:non-scaling-stroke; }
