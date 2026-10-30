@@ -1,0 +1,479 @@
+[
+  {
+    "path": "VDA6.8/scripts/audit_fuzzy_inputs.py",
+    "snapshot_time_utc": "2026-08-09T03:52:19.703Z",
+    "source_thread_id": "019fe166-7091-7c43-98ca-27df70f8c9c6",
+    "snapshot_event": "add",
+    "bytes": 6394,
+    "sha256": "eb9bfb41d034f431c83ffd7d26683f8522c52f2c0f46d861eb658733f3c5a4d5",
+    "later_filechange_events": 1
+  },
+  {
+    "path": "VDA6.8/scripts/执行卡图谱生成说明.md",
+    "snapshot_time_utc": "2026-08-09T03:04:39.515Z",
+    "source_thread_id": "019fe166-7091-7c43-98ca-27df70f8c9c6",
+    "snapshot_event": "add",
+    "bytes": 1601,
+    "sha256": "1532c709b01a3ca037d9be57eb8e7d5c08f9cb7c43df8646af21ab4edc257976",
+    "later_filechange_events": 3
+  },
+  {
+    "path": "demo2-web/.gitignore",
+    "snapshot_time_utc": "2026-08-30T17:23:45.425Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 30,
+    "sha256": "3a3bcf768c25d0483b1e4b81f5a2879def4f8160c994929ae3a997511dbd84ae",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/README.md",
+    "snapshot_time_utc": "2026-08-30T17:01:19.938Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 700,
+    "sha256": "588bf312e7ffc831837ec55bc69442a3b5714672e3f7cb05442bfe746d595610",
+    "later_filechange_events": 11
+  },
+  {
+    "path": "demo2-web/index.html",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 74,
+    "sha256": "266072ab60c09f594991b80dad22272603e501556195d210d51bc748a9be79f2",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/package.json",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 610,
+    "sha256": "2c249632282b8754074908e0ab4a9cb3dabfb3e102d744569ef9fe914cc233e4",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/src/app/App.tsx",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 3729,
+    "sha256": "202635a7980cd6c9526aca6cb72076fac8e8d11185ff72b5b59e0b4943db0934",
+    "later_filechange_events": 2
+  },
+  {
+    "path": "demo2-web/src/app/scenarioStore.ts",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 781,
+    "sha256": "aedfa52eb22a9ec1817862409ba5bf00d946e953d5ac7246dfc4f59ec3b6070b",
+    "later_filechange_events": 4
+  },
+  {
+    "path": "demo2-web/src/data/factory-layout-demo-scenario.ts",
+    "snapshot_time_utc": "2026-09-05T05:21:15.311Z",
+    "source_thread_id": "01a06fd2-b712-7822-98b6-35c2920b9ef7",
+    "snapshot_event": "add",
+    "bytes": 4971,
+    "sha256": "55bd5f4fdd96b335e2b0057fbfb0d5ad2a2fa964e91f779a61e6d96d1d23ca97",
+    "later_filechange_events": 2
+  },
+  {
+    "path": "demo2-web/src/data/standard-demo-scenario.json",
+    "snapshot_time_utc": "2026-08-30T16:59:25.930Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 12331,
+    "sha256": "e0e7fae2864131526e1de040996cd5d6ce32c0d5e9fce50579f9b7f890d5184e",
+    "later_filechange_events": 1
+  },
+  {
+    "path": "demo2-web/src/features/rough-calculation/calculateRoughMetrics.ts",
+    "snapshot_time_utc": "2026-08-30T17:31:25.772Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 11553,
+    "sha256": "6a02121c246bc479c8bb429c6c99250c32b4be68c9861f9cca85b00b840289ae",
+    "later_filechange_events": 3
+  },
+  {
+    "path": "demo2-web/src/main.tsx",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 249,
+    "sha256": "0e6744820486f5496ecf8390f111e135ecb672d61f62f8739cdb9e6bb9eac436",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/src/pages/DashboardPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 2036,
+    "sha256": "42f57dd8346c44830d7448a5707894a744a5169affcaae61d9f77baf9f8eb0cc",
+    "later_filechange_events": 4
+  },
+  {
+    "path": "demo2-web/src/pages/ElevationViewPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 1447,
+    "sha256": "a17d6675b1a6733dcd654d937a5a98d8d8982736659b38d5207084a9d20da0cd",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/src/pages/LayoutAnnotationPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 601,
+    "sha256": "559c67416b6393d543eb0c1b398ee22443e67575c406a6c72b200a9039178e21",
+    "later_filechange_events": 35
+  },
+  {
+    "path": "demo2-web/src/pages/ParametersPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 1415,
+    "sha256": "5063e887914287b465e1f061a330e5582904e67735ab67153bc531ed02760d4e",
+    "later_filechange_events": 4
+  },
+  {
+    "path": "demo2-web/src/pages/PlaneViewPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 1387,
+    "sha256": "d5ae3c5ba44a40b8ade2e27efef96b011f5a6e3aab07885f9ee63169a84ac824",
+    "later_filechange_events": 1
+  },
+  {
+    "path": "demo2-web/src/pages/ReportPage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 773,
+    "sha256": "2401c526e7d2d0217269e2324296eb8071cf4648511426362cda6a76dff9c415",
+    "later_filechange_events": 1
+  },
+  {
+    "path": "demo2-web/src/pages/ScenarioComparePage.tsx",
+    "snapshot_time_utc": "2026-08-30T17:00:19.440Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 1163,
+    "sha256": "998420e19dbc1575f421580e49f5fed38b2c70a2adce2ed1f4e3a5cdabba297a",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/src/styles/global.css",
+    "snapshot_time_utc": "2026-08-30T17:01:19.938Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 6870,
+    "sha256": "fb62623db3f66777623310f5d5da1a1b547827bc28a126ad879c4acb6717f9fe",
+    "later_filechange_events": 18
+  },
+  {
+    "path": "demo2-web/src/types/demo2.ts",
+    "snapshot_time_utc": "2026-08-30T16:59:25.930Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 5207,
+    "sha256": "97626aa80c771f78644f1cbabbbf6bf150a2a67708da74afe1698dbb5caddea0",
+    "later_filechange_events": 7
+  },
+  {
+    "path": "demo2-web/src/vite-env.d.ts",
+    "snapshot_time_utc": "2026-09-05T05:21:40.851Z",
+    "source_thread_id": "01a06fd2-b712-7822-98b6-35c2920b9ef7",
+    "snapshot_event": "add",
+    "bytes": 38,
+    "sha256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/tsconfig.app.json",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 578,
+    "sha256": "18eef6f87ef638fb29585831d4c1898a1d06b725164f01d36be48120f6afa6d7",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/tsconfig.json",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 79,
+    "sha256": "63f8a635ab43c96a202135ba7f4c46a50338620adbfbdb0767d2ed3032cadfa3",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/vite.config.ts",
+    "snapshot_time_utc": "2026-08-30T16:57:26.278Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 190,
+    "sha256": "0a002b23d967a15f45d555d364f46ed576121cbd699c5c38020bf2f5018fa399",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "demo2-web/启动Demo2.command",
+    "snapshot_time_utc": "2026-08-30T17:28:26.981Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 604,
+    "sha256": "0a3c326c8a17187ba5de7358e13bb03a86ba0e6187cced714540f16e6e649382",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/Demo2-Cursor任务交接包.md",
+    "snapshot_time_utc": "2026-09-05T06:19:11.315Z",
+    "source_thread_id": "01a06fd2-b712-7822-98b6-35c2920b9ef7",
+    "snapshot_event": "add",
+    "bytes": 4408,
+    "sha256": "afa96316b96182b8e54b09c8475b1a39575e591c63269d0bc09de2143ae8209a",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/Demo2开发进度看板.md",
+    "snapshot_time_utc": "2026-09-05T06:15:44.203Z",
+    "source_thread_id": "01a06fd2-b712-7822-98b6-35c2920b9ef7",
+    "snapshot_event": "add",
+    "bytes": 4756,
+    "sha256": "74f45997e9dc2ec080da934fa0f25ad7ad20db8b8a7f51559de89d0ed1abe1d3",
+    "later_filechange_events": 11
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/Demo2界面布局设计说明.md",
+    "snapshot_time_utc": "2026-08-30T17:18:16.189Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 3906,
+    "sha256": "dd4907a6d2afc02b51a2b81e50bd1c10a419c869cf4d9593a4235d71b2436fba",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/01-industrial-command-center.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 427,
+    "sha256": "d21a1dcfb03c2c0a0e79eae658e2718b711f21776c27985f2da4807e3d1d78be",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/02-manufacturing-white-dashboard.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 436,
+    "sha256": "85bf66cfd556f99ea9e3ced9860dce02cf44739f68e41b7d2fa6ce3c3276996b",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/03-digital-twin-tech-blue.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 427,
+    "sha256": "5ac2e65fc0586653f1701003b439e75bd54b3c99de66d15f1d59b85452e6c676",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/04-german-industrial-minimal.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 424,
+    "sha256": "29b7f714b980f4cf669bf51d845498e401074d0add01047fddda57a0fa3e5bb5",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/05-black-gold-owner-view.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 430,
+    "sha256": "a8805ad67ca0cc62e0bd23baf2ef3c025b22e1839aeca556ca69296726279590",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/06-operations-control-tower.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 421,
+    "sha256": "09ea54e8839d879da113af2b5be0af627808a1f8d784a54d2a88592fa512b9db",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/07-engineering-cad.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 423,
+    "sha256": "06ad878eac3e0719846b5c71fb61d006da4a0bb07be88503560001cc2ccc3117",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/08-apple-spatial.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 424,
+    "sha256": "c5ae2f7c82494f05c5694e7ec42ddf2ff8f0c803ec3b176a5318fd061fda55a2",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/09-lean-consulting-report.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 430,
+    "sha256": "5f7051181c3fca2bd7ae0a23513e30fa71df585dbbf40edd20d0836cee9a92a7",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/10-holographic-factory.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 429,
+    "sha256": "53e686fdc956cb8132488e517d0677ddaf60570c5ba851045751a73ae93a896d",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/README.md",
+    "snapshot_time_utc": "2026-08-30T17:12:45.507Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 1211,
+    "sha256": "eddd48ece6777bec64ef164d7ca4ac3523b78a843f102813963e237cc7531637",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/index.html",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 2483,
+    "sha256": "cb4aec705131b402aee1627b14ca596f4c36c906bbac9dc2610ce9cc588ab43b",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/preview.css",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 11363,
+    "sha256": "7fc8c058a4752c49c429a6f1c17d14c8b005dbfe99a3437bebe8117b116bb44f",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/UI风格预览/preview.js",
+    "snapshot_time_utc": "2026-08-30T17:12:33.144Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 4244,
+    "sha256": "4133481e25e8f3582c8f61fdca81885f365a8f20173a18c9150ec84982cd7bbd",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo/README.md",
+    "snapshot_time_utc": "2026-08-30T16:54:02.130Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 840,
+    "sha256": "ba7fb4b8abd6efe5f6c5f127a0040498c604718d2977cec8761ed60191edf867",
+    "later_filechange_events": 2
+  },
+  {
+    "path": "全功能系统框架/Demo1-Demo2产品定义与开发指导.md",
+    "snapshot_time_utc": "2026-08-17T02:32:05.196Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 23788,
+    "sha256": "f9bb292f7efff76700afdcd98c0b03c959ca42ad6191ddbaf2033888c0d416e8",
+    "later_filechange_events": 1
+  },
+  {
+    "path": "全功能系统框架/Demo2-物理数字孪生与运营优化独立定义.md",
+    "snapshot_time_utc": "2026-08-24T04:33:25.120Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 25072,
+    "sha256": "ce664d6d6ce34f72012fd292c5d12ae8a95be7b9a2ff23eb58246ec55b5b6b1f",
+    "later_filechange_events": 4
+  },
+  {
+    "path": "全功能系统框架/Demo2标准样板场景说明.md",
+    "snapshot_time_utc": "2026-08-30T16:42:04.337Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 4576,
+    "sha256": "4914da8b4b89488765d8231cbec8661fe80981615f3f76a20bdf77d8d7bcef77",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo2第一版开发行动计划.md",
+    "snapshot_time_utc": "2026-08-30T16:42:04.337Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 6002,
+    "sha256": "63b36e50a55813adc3cdd65b58638fd07b52f09d5df1cc943920278fcd605df3",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo2计算口径与不承诺边界.md",
+    "snapshot_time_utc": "2026-08-30T16:42:04.337Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 4464,
+    "sha256": "f0fd227bc9383b986e1dd27acfbcab25bf989700cc85062fca583686756600de",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo2软件开发任务计划.md",
+    "snapshot_time_utc": "2026-08-30T16:52:20.439Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 17188,
+    "sha256": "7831a65a532a633cfb348ed64e02864b5a063bae50e3f57347003cf2c085e6f8",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Demo2输入数据字典.md",
+    "snapshot_time_utc": "2026-08-30T16:40:31.165Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 7315,
+    "sha256": "1889a869395d53b59ca61159717a367053f3cc3264e4e63d8d3b4d19ac4c8c75",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/Planned-System-Availability计算说明.md",
+    "snapshot_time_utc": "2026-08-30T16:40:31.165Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 7812,
+    "sha256": "afed0a321b3b736ee2eb354e9f08b2f08c46495a37e6436d48503a6f7f6a6731",
+    "later_filechange_events": 0
+  },
+  {
+    "path": "全功能系统框架/WIP水位与HU设定说明.md",
+    "snapshot_time_utc": "2026-08-30T16:40:31.165Z",
+    "source_thread_id": "019ff05c-2bda-7351-bce5-af85f3c55b80",
+    "snapshot_event": "add",
+    "bytes": 5856,
+    "sha256": "16dfa9d7aa783c9cc8648f6464f15f36a652b20585cbdf28be3735679f278fef",
+    "later_filechange_events": 0
+  }
+]

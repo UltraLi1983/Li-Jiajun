@@ -1,0 +1,74 @@
+[
+  {
+    "path": "demo2-web/src/app/scenarioCsvExport.ts",
+    "snapshot_time_utc": "2026-09-05T14:02:56.800Z",
+    "bytes": 4035,
+    "sha256": "3f6d11ff01d39753692462b5e2fa61ad6f8d2e2cbb24b35df9f69018cc065c0f"
+  },
+  {
+    "path": "demo2-web/src/app/scenarioCsvImportContract.ts",
+    "snapshot_time_utc": "2026-09-05T14:07:18.751Z",
+    "bytes": 2215,
+    "sha256": "16a12559505c9858335eae269f82a2a8e4b28f091d3c641843d6bf8fdbdc2fdf"
+  },
+  {
+    "path": "demo2-web/src/app/scenarioCsvImportPreview.ts",
+    "snapshot_time_utc": "2026-09-05T14:11:55.045Z",
+    "bytes": 15733,
+    "sha256": "2436e987ccf66008f83ab6319b5449e6861ec58212bb1f2a92273e9eb3377f0f"
+  },
+  {
+    "path": "demo2-web/src/app/scenarioJsonExport.ts",
+    "snapshot_time_utc": "2026-09-05T14:00:23.363Z",
+    "bytes": 7906,
+    "sha256": "f0e5aacf4341c8c0ea672a0f9a8862624fc1bc7463f223e3834cebc32e9fb002"
+  },
+  {
+    "path": "demo2-web/src/app/scenarioStore.ts",
+    "snapshot_time_utc": "2026-09-05T13:00:38.396Z",
+    "bytes": 4338,
+    "sha256": "e7f8aa45bd28ab1e71e4a145f2e3aa4dcd93da7e2302540d2a9232b163fe401c"
+  },
+  {
+    "path": "demo2-web/src/app/scenePersistence.ts",
+    "snapshot_time_utc": "2026-09-05T13:00:08.816Z",
+    "bytes": 1957,
+    "sha256": "80eb73dddbce57a819173883845bba4e80e6a0f3f7603e307b6859c4b5e4da36"
+  },
+  {
+    "path": "demo2-web/src/components/OperationalLayoutMap.tsx",
+    "snapshot_time_utc": "2026-09-06T13:48:23.264Z",
+    "bytes": 11754,
+    "sha256": "0319ec2b3e0d24b2781e14f3b7ac36b49a640707c42ee284698f2444009127ae"
+  },
+  {
+    "path": "demo2-web/src/features/rough-calculation/routeAccess.ts",
+    "snapshot_time_utc": "2026-09-06T02:42:49.664Z",
+    "bytes": 1754,
+    "sha256": "4f040acd3899c202d55a3f2a69c26311e3454f9abd044b034cdc2e35c71729d1"
+  },
+  {
+    "path": "demo2-web/src/features/rough-calculation/routeDistance.ts",
+    "snapshot_time_utc": "2026-09-06T02:30:34.369Z",
+    "bytes": 7861,
+    "sha256": "d6b24ec86a3231eb9fe6a05fbd93b1e011ab836d723cdb1ac0363101103f2fa4"
+  },
+  {
+    "path": "demo2-web/src/features/rough-calculation/transportPlan.ts",
+    "snapshot_time_utc": "2026-09-06T03:13:28.371Z",
+    "bytes": 8371,
+    "sha256": "8db20a9bd864793b4d48c167824b605ac11924acf7797b093b3b3a518e957ee4"
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/Demo2-T10.3服务端版本库设计.md",
+    "snapshot_time_utc": "2026-09-05T13:16:45.918Z",
+    "bytes": 8038,
+    "sha256": "b2b6e38e576e504ceef90781f332c200756d1ee94617664830cc74a78329fd0c"
+  },
+  {
+    "path": "全功能系统框架/Demo/Demo2/Demo2本地运行与烟测入口.md",
+    "snapshot_time_utc": "2026-09-07T15:33:41.721Z",
+    "bytes": 1692,
+    "sha256": "cc2125b5f05c3cade811ae1d5c72fe0856e35dc03072751a5710a58328edde8a"
+  }
+]

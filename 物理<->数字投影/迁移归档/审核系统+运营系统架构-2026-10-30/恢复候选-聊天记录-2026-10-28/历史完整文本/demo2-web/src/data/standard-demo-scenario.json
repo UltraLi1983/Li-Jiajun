@@ -1,0 +1,213 @@
+{
+  "id": "standard-demo-scenario",
+  "name": "标准样板客户场景",
+  "layout": {
+    "layoutId": "layout-standard",
+    "name": "Two-line plant with warehouse and supermarket",
+    "sourceType": "sample",
+    "width": 1200,
+    "height": 760,
+    "scaleMetersPerPixel": 0.08
+  },
+  "settings": {
+    "supermarketModeEnabled": true,
+    "highBayRackEnabled": true
+  },
+  "productionCalendar": {
+    "weeklyDemandQty": 6000,
+    "productionDaysPerWeek": 5,
+    "shiftsPerDay": 2,
+    "hoursPerShift": 8,
+    "effectiveHoursPerShift": 7,
+    "performanceRate": 0.92,
+    "qualityRate": 0.98
+  },
+  "storageAreas": [
+    {
+      "id": "sa-main-warehouse",
+      "name": "主仓库",
+      "type": "main_warehouse",
+      "boundary": [{ "x": 70, "y": 90 }, { "x": 360, "y": 90 }, { "x": 360, "y": 320 }, { "x": 70, "y": 320 }],
+      "calculatedAreaM2": 427.5
+    },
+    {
+      "id": "sa-supermarket",
+      "name": "超市区",
+      "type": "supermarket",
+      "boundary": [{ "x": 430, "y": 150 }, { "x": 590, "y": 150 }, { "x": 590, "y": 330 }, { "x": 430, "y": 330 }],
+      "calculatedAreaM2": 184.3
+    },
+    {
+      "id": "sa-line-side",
+      "name": "线边区",
+      "type": "line_side",
+      "boundary": [{ "x": 690, "y": 90 }, { "x": 1080, "y": 90 }, { "x": 1080, "y": 340 }, { "x": 690, "y": 340 }],
+      "calculatedAreaM2": 624
+    },
+    {
+      "id": "sa-wip",
+      "name": "WIP 暂存区",
+      "type": "wip",
+      "boundary": [{ "x": 690, "y": 430 }, { "x": 1080, "y": 430 }, { "x": 1080, "y": 610 }, { "x": 690, "y": 610 }],
+      "calculatedAreaM2": 449.2
+    },
+    {
+      "id": "sa-high-bay",
+      "name": "高位货架建议区",
+      "type": "high_bay",
+      "boundary": [{ "x": 90, "y": 390 }, { "x": 360, "y": 390 }, { "x": 360, "y": 610 }, { "x": 90, "y": 610 }],
+      "calculatedAreaM2": 380.2
+    }
+  ],
+  "productionLines": [
+    {
+      "id": "pl-a",
+      "name": "产线 A",
+      "boundary": [{ "x": 720, "y": 120 }, { "x": 1060, "y": 120 }, { "x": 1060, "y": 190 }, { "x": 720, "y": 190 }]
+    },
+    {
+      "id": "pl-b",
+      "name": "产线 B",
+      "boundary": [{ "x": 720, "y": 240 }, { "x": 1060, "y": 240 }, { "x": 1060, "y": 310 }, { "x": 720, "y": 310 }]
+    }
+  ],
+  "productionStations": [
+    { "id": "ps-a1", "name": "A-工站 1", "productionLineId": "pl-a", "operationStepId": "op-a1", "position": { "x": 760, "y": 155 }, "cycleTimeSec": 60 },
+    { "id": "ps-a2", "name": "A-工站 2", "productionLineId": "pl-a", "operationStepId": "op-a2", "position": { "x": 890, "y": 155 }, "cycleTimeSec": 64 },
+    { "id": "ps-a3", "name": "A-工站 3", "productionLineId": "pl-a", "operationStepId": "op-a3", "position": { "x": 1020, "y": 155 }, "cycleTimeSec": 58 },
+    { "id": "ps-b1", "name": "B-工站 1", "productionLineId": "pl-b", "operationStepId": "op-b1", "position": { "x": 760, "y": 275 }, "cycleTimeSec": 62 },
+    { "id": "ps-b2", "name": "B-工站 2", "productionLineId": "pl-b", "operationStepId": "op-b2", "position": { "x": 890, "y": 275 }, "cycleTimeSec": 66 },
+    { "id": "ps-b3", "name": "B-工站 3", "productionLineId": "pl-b", "operationStepId": "op-b3", "position": { "x": 1020, "y": 275 }, "cycleTimeSec": 59 }
+  ],
+  "deliveryPoints": [
+    { "id": "dp-a1", "name": "A1 配送点", "position": { "x": 735, "y": 205 }, "servesProductionStationIds": ["ps-a1"], "storageAreaId": "sa-line-side" },
+    { "id": "dp-a2", "name": "A2 配送点", "position": { "x": 875, "y": 205 }, "servesProductionStationIds": ["ps-a2"], "storageAreaId": "sa-line-side" },
+    { "id": "dp-a3", "name": "A3 配送点", "position": { "x": 1010, "y": 205 }, "servesProductionStationIds": ["ps-a3"], "storageAreaId": "sa-line-side" },
+    { "id": "dp-b1", "name": "B1 配送点", "position": { "x": 735, "y": 330 }, "servesProductionStationIds": ["ps-b1"], "storageAreaId": "sa-line-side" },
+    { "id": "dp-b2", "name": "B2 配送点", "position": { "x": 875, "y": 330 }, "servesProductionStationIds": ["ps-b2"], "storageAreaId": "sa-line-side" },
+    { "id": "dp-b3", "name": "B3 配送点", "position": { "x": 1010, "y": 330 }, "servesProductionStationIds": ["ps-b3"], "storageAreaId": "sa-line-side" }
+  ],
+  "pathNetwork": {
+    "nodes": [
+      { "id": "rn-wh", "name": "主仓出库点", "position": { "x": 360, "y": 210 } },
+      { "id": "rn-sm", "name": "超市区发运点", "position": { "x": 590, "y": 240 } },
+      { "id": "rn-line-a", "name": "产线 A 通道点", "position": { "x": 690, "y": 205 } },
+      { "id": "rn-line-b", "name": "产线 B 通道点", "position": { "x": 690, "y": 330 } },
+      { "id": "rn-high-bay", "name": "高位货架点", "position": { "x": 360, "y": 500 } }
+    ],
+    "segments": [
+      { "id": "rs-wh-sm", "fromNodeId": "rn-wh", "toNodeId": "rn-sm", "distanceM": 18.6, "bidirectional": true },
+      { "id": "rs-sm-a", "fromNodeId": "rn-sm", "toNodeId": "rn-line-a", "distanceM": 10.8, "bidirectional": true },
+      { "id": "rs-sm-b", "fromNodeId": "rn-sm", "toNodeId": "rn-line-b", "distanceM": 13.5, "bidirectional": true },
+      { "id": "rs-wh-a", "fromNodeId": "rn-wh", "toNodeId": "rn-line-a", "distanceM": 31.2, "bidirectional": true },
+      { "id": "rs-wh-b", "fromNodeId": "rn-wh", "toNodeId": "rn-line-b", "distanceM": 35.7, "bidirectional": true },
+      { "id": "rs-wh-high-bay", "fromNodeId": "rn-wh", "toNodeId": "rn-high-bay", "distanceM": 23.2, "bidirectional": true }
+    ]
+  },
+  "materials": [
+    { "id": "mat-a1", "name": "高频小件 - 卡扣", "fitmentRate": 1, "qtyPerFinishedGood": 4, "frequencyClass": "high", "strategyClass": "A1_high_frequency_small_part", "assignedDeliveryPointId": "dp-a1" },
+    { "id": "mat-a2", "name": "高频大件 - 座椅总成", "fitmentRate": 1, "qtyPerFinishedGood": 1, "frequencyClass": "high", "strategyClass": "A2_high_frequency_large_part", "assignedDeliveryPointId": "dp-a2" },
+    { "id": "mat-b", "name": "中频拣配件 - 支架包", "fitmentRate": 0.6, "qtyPerFinishedGood": 1, "frequencyClass": "medium", "strategyClass": "B_medium_frequency_kitting_part", "assignedDeliveryPointId": "dp-b1" },
+    { "id": "mat-c", "name": "低频上架件 - 备选模块", "fitmentRate": 0.15, "qtyPerFinishedGood": 1, "frequencyClass": "low", "strategyClass": "C_low_frequency_rackable_part", "assignedDeliveryPointId": "dp-b3" }
+  ],
+  "handlingUnits": [
+    { "id": "hu-a1", "materialId": "mat-a1", "huType": "box", "qtyPerHu": 80, "lengthM": 0.4, "widthM": 0.3, "heightM": 0.25, "stackable": true, "maxStackLayers": 3, "weightKg": 8 },
+    { "id": "hu-a2", "materialId": "mat-a2", "huType": "rack_cart", "qtyPerHu": 2, "lengthM": 1.8, "widthM": 1.2, "heightM": 1.4, "stackable": false, "maxStackLayers": 1, "weightKg": 120 },
+    { "id": "hu-b", "materialId": "mat-b", "huType": "box", "qtyPerHu": 40, "lengthM": 0.6, "widthM": 0.4, "heightM": 0.3, "stackable": true, "maxStackLayers": 2, "weightKg": 12 },
+    { "id": "hu-c", "materialId": "mat-c", "huType": "pallet", "qtyPerHu": 12, "lengthM": 1.2, "widthM": 1, "heightM": 1.1, "stackable": true, "maxStackLayers": 2, "weightKg": 260 }
+  ],
+  "waterLevels": [
+    { "locationId": "dp-a1", "materialId": "mat-a1", "currentHuQty": 4, "minHuQty": 2, "operatingHuQty": 3, "maxHuQty": 6, "physicalCapacityHuQty": 8, "riskStatus": "normal" },
+    { "locationId": "dp-a2", "materialId": "mat-a2", "currentHuQty": 3, "minHuQty": 2, "operatingHuQty": 4, "maxHuQty": 6, "physicalCapacityHuQty": 5, "riskStatus": "warning" },
+    { "locationId": "sa-supermarket", "materialId": "mat-b", "currentHuQty": 8, "minHuQty": 4, "operatingHuQty": 7, "maxHuQty": 12, "physicalCapacityHuQty": 16, "riskStatus": "normal" },
+    { "locationId": "sa-high-bay", "materialId": "mat-c", "currentHuQty": 12, "minHuQty": 4, "operatingHuQty": 8, "maxHuQty": 18, "physicalCapacityHuQty": 28, "riskStatus": "normal" }
+  ],
+  "transportResources": [
+    { "id": "tr-agv", "name": "AGV / Dolly 小车", "type": "agv", "quantity": 2, "speedMPerMin": 55, "huPerTrip": 2, "loadingTimeMin": 2, "unloadingTimeMin": 2, "availabilityRate": 0.9, "cvFactor": 1.15 },
+    { "id": "tr-forklift", "name": "叉车 / 地牛", "type": "forklift", "quantity": 1, "speedMPerMin": 70, "huPerTrip": 1, "loadingTimeMin": 4, "unloadingTimeMin": 4, "availabilityRate": 0.85, "cvFactor": 1.25 }
+  ],
+  "racks": [
+    {
+      "id": "rack-sm-01",
+      "name": "超市区流利架 01",
+      "rackType": "supermarket_flow_rack",
+      "storageAreaId": "sa-supermarket",
+      "levels": [
+        { "id": "sm-l1", "levelIndex": 1, "lanes": [{ "id": "sm-l1-a", "name": "Lane 1A", "levelIndex": 1, "skuSlots": [{ "id": "slot-a1", "materialId": "mat-a1", "deliveryPointId": "dp-a1", "currentHuQty": 4, "minHuQty": 2, "operatingHuQty": 3, "maxHuQty": 6, "physicalCapacityHuQty": 8, "fifoEnabled": true, "pickTimeEstimateMin": 1.2, "riskStatus": "normal" }] }] },
+        { "id": "sm-l2", "levelIndex": 2, "lanes": [{ "id": "sm-l2-a", "name": "Lane 2A", "levelIndex": 2, "skuSlots": [{ "id": "slot-b", "materialId": "mat-b", "deliveryPointId": "dp-b1", "currentHuQty": 8, "minHuQty": 4, "operatingHuQty": 7, "maxHuQty": 12, "physicalCapacityHuQty": 16, "fifoEnabled": true, "pickTimeEstimateMin": 1.6, "riskStatus": "normal" }] }] }
+      ]
+    },
+    {
+      "id": "rack-hb-01",
+      "name": "高位货架 01",
+      "rackType": "high_bay_rack",
+      "storageAreaId": "sa-high-bay",
+      "levels": [
+        { "id": "hb-l1", "levelIndex": 1, "lanes": [{ "id": "hb-l1-a", "name": "Pallet Lane 1A", "levelIndex": 1, "skuSlots": [{ "id": "slot-c1", "materialId": "mat-c", "currentHuQty": 6, "minHuQty": 2, "operatingHuQty": 5, "maxHuQty": 8, "physicalCapacityHuQty": 10, "fifoEnabled": false, "pickTimeEstimateMin": 3.5, "riskStatus": "normal" }] }] },
+        { "id": "hb-l2", "levelIndex": 2, "lanes": [{ "id": "hb-l2-a", "name": "Pallet Lane 2A", "levelIndex": 2, "skuSlots": [{ "id": "slot-c2", "materialId": "mat-c", "currentHuQty": 6, "minHuQty": 2, "operatingHuQty": 5, "maxHuQty": 10, "physicalCapacityHuQty": 18, "fifoEnabled": false, "pickTimeEstimateMin": 4.2, "riskStatus": "normal" }] }] }
+      ]
+    }
+  ],
+  "wipBuffers": [
+    { "id": "wip-a-b", "upstreamOperationStepId": "op-a3", "downstreamOperationStepId": "op-b1", "storageAreaId": "sa-wip", "materialId": "mat-b", "handlingUnitId": "hu-b", "coverageTimeMin": 60, "minHuQty": 4, "operatingHuQty": 7, "maxHuQty": 10, "physicalCapacityHuQty": 14 }
+  ],
+  "scenarios": [
+    {
+      "id": "baseline",
+      "name": "Baseline 当前直送线边",
+      "type": "baseline",
+      "description": "主仓库直接配送到线边，线边库存偏高，长距离补货频次较高。",
+      "supermarketModeEnabled": false,
+      "highBayRackEnabled": false,
+      "demandChangeFactor": 1,
+      "kpi": {
+        "totalTravelDistanceM": 2840,
+        "avgReplenishmentResponseMin": 28,
+        "lineSideInventoryHu": 42,
+        "supermarketAreaM2": 0,
+        "storageAreaRequiredM2": 768,
+        "transportUtilizationRate": 0.78,
+        "shortageRiskCount": 3,
+        "capacityRiskCount": 4
+      }
+    },
+    {
+      "id": "proposed",
+      "name": "Proposed 超市区 + 高位货架",
+      "type": "proposed",
+      "description": "启用超市区分段补货，低频上架件进入高位货架，高频大件进入近线边缓存。",
+      "supermarketModeEnabled": true,
+      "highBayRackEnabled": true,
+      "demandChangeFactor": 1,
+      "kpi": {
+        "totalTravelDistanceM": 2130,
+        "avgReplenishmentResponseMin": 17,
+        "lineSideInventoryHu": 27,
+        "supermarketAreaM2": 184,
+        "storageAreaRequiredM2": 612,
+        "transportUtilizationRate": 0.64,
+        "shortageRiskCount": 1,
+        "capacityRiskCount": 1
+      }
+    },
+    {
+      "id": "stress-plus-20",
+      "name": "Stress 需求 +20%",
+      "type": "stress",
+      "description": "需求上升 20%，用于观察生产、空间、运输和交通四类约束。",
+      "supermarketModeEnabled": true,
+      "highBayRackEnabled": true,
+      "demandChangeFactor": 1.2,
+      "kpi": {
+        "totalTravelDistanceM": 2580,
+        "avgReplenishmentResponseMin": 22,
+        "lineSideInventoryHu": 35,
+        "supermarketAreaM2": 218,
+        "storageAreaRequiredM2": 724,
+        "transportUtilizationRate": 0.83,
+        "shortageRiskCount": 2,
+        "capacityRiskCount": 3
+      }
+    }
+  ]
+}
