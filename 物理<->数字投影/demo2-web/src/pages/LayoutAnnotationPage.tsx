@@ -12,6 +12,20 @@ export function LayoutAnnotationPage() {
   const persistence = useScenarioStore((state)=>state.persistence);
   const [selectedId,setSelectedId] = useState(scenario.deliveryPoints[0]?.id ?? '');
   const point = scenario.deliveryPoints.find((item)=>item.id===selectedId);
+  const updatePointPosition = (axis:'x'|'y', value:number) => {
+    if(!point) return;
+    const position = {...point.position,[axis]:value};
+    const nodes = scenario.pathNetwork.nodes.map((node)=>node.id===point.routeNodeId && node.id===point.id?{...node,position}:node);
+    const nodeById = new Map(nodes.map((node)=>[node.id,node]));
+    const scale = scenario.layout.calculationScaleMPerPx ?? scenario.layout.scaleMetersPerPixel;
+    const segments = scenario.pathNetwork.segments.map((segment)=>{
+      if(segment.fromNodeId!==point.id && segment.toNodeId!==point.id) return segment;
+      const from = nodeById.get(segment.fromNodeId)?.position;
+      const to = nodeById.get(segment.toNodeId)?.position;
+      return from && to ? {...segment,distanceM:Math.round(Math.hypot(to.x-from.x,to.y-from.y)*scale*10)/10} : segment;
+    });
+    update({deliveryPoints:scenario.deliveryPoints.map((item)=>item.id===point.id?{...item,position}:item),pathNetwork:{...scenario.pathNetwork,nodes,segments}});
+  };
   const onImage = (file?:File) => {
     if(!file) return;
     const reader=new FileReader();
@@ -31,10 +45,10 @@ export function LayoutAnnotationPage() {
     <section className="section-card"><p className="eyebrow">T3 FACTORY SCENE</p><h2>工厂场景与 Layout 标注</h2><p>{persistence.message} · revision {persistence.revision}</p>
       <div className="recovery-grid"><label className="recovery-field">导入 Layout 图片<input type="file" accept="image/*" onChange={(event)=>onImage(event.target.files?.[0])}/></label><label className="recovery-field">比例尺 m/px<input type="number" min="0.001" step="0.001" value={scenario.layout.scaleMetersPerPixel} onChange={(event)=>update({layout:{scaleMetersPerPixel:Number(event.target.value)}})}/></label><button type="button" onClick={save}>保存本地草稿</button><button type="button" onClick={exportCurrentScene}>导出当前场景 JSON</button><button type="button" onClick={()=>{if(window.confirm('将当前草稿备份后切换到演示样板。确定继续吗？')){resetToSample();setSelectedId('DP-A1');}}}>恢复演示样板</button><button type="button" onClick={()=>{restorePreviousDraft();setSelectedId('DP-A1');}}>恢复上次草稿</button></div>
     </section>
-    {scenario.layout.backgroundDataUrl && <img src={scenario.layout.backgroundDataUrl} alt="导入的工厂 Layout" style={{width:'100%',maxHeight:480,objectFit:'contain',background:'#f8fafc',borderRadius:14}}/>}
+    {scenario.layout.backgroundDataUrl && <p className="section-card">当前底图：{scenario.layout.sourceFileName ?? 'Layout 图片'}。重建参考图与路径叠加在下方；原始障碍物边界尚未恢复。</p>}
     <OperationalLayoutMap scenario={scenario} roughCalculation={result} compact />
     <section className="section-card"><h3>配送点人工编辑</h3><div className="recovery-grid"><label className="recovery-field">选择配送点<select value={selectedId} onChange={(event)=>setSelectedId(event.target.value)}>{scenario.deliveryPoints.map((item)=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-      {point && <><label className="recovery-field">X 坐标<input type="number" value={point.position.x} onChange={(event)=>update({deliveryPoints:scenario.deliveryPoints.map((item)=>item.id===point.id?{...item,position:{...item.position,x:Number(event.target.value)}}:item)})}/></label><label className="recovery-field">Y 坐标<input type="number" value={point.position.y} onChange={(event)=>update({deliveryPoints:scenario.deliveryPoints.map((item)=>item.id===point.id?{...item,position:{...item.position,y:Number(event.target.value)}}:item)})}/></label><label className="recovery-field">连接通道节点<select value={point.routeNodeId??''} onChange={(event)=>update({deliveryPoints:scenario.deliveryPoints.map((item)=>item.id===point.id?{...item,routeNodeId:event.target.value||undefined}:item)})}><option value="">未连接 / 待确认</option>{scenario.pathNetwork.nodes.map((node)=><option key={node.id} value={node.id}>{node.name}</option>)}</select></label></>}
+      {point && <><label className="recovery-field">X 坐标<input type="number" value={point.position.x} onChange={(event)=>updatePointPosition('x',Number(event.target.value))}/></label><label className="recovery-field">Y 坐标<input type="number" value={point.position.y} onChange={(event)=>updatePointPosition('y',Number(event.target.value))}/></label><label className="recovery-field">连接通道节点<select value={point.routeNodeId??''} onChange={(event)=>update({deliveryPoints:scenario.deliveryPoints.map((item)=>item.id===point.id?{...item,routeNodeId:event.target.value||undefined}:item)})}><option value="">未连接 / 待确认</option>{scenario.pathNetwork.nodes.map((node)=><option key={node.id} value={node.id}>{node.name}</option>)}</select></label></>}
     </div></section>
     <section className="section-card"><h3>路径段状态</h3><div className="recovery-grid">{scenario.pathNetwork.segments.map((segment)=><label className="recovery-field" key={segment.id}><span><input type="checkbox" checked={segment.enabled!==false} onChange={(event)=>update({pathNetwork:{...scenario.pathNetwork,segments:scenario.pathNetwork.segments.map((item)=>item.id===segment.id?{...item,enabled:event.target.checked}:item)}})}/> {segment.fromNodeId} → {segment.toNodeId} · {segment.distanceM}m</span></label>)}</div></section>
   </div>;

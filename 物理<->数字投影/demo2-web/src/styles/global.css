@@ -389,11 +389,11 @@ button {
 .recovery-list button { padding:10px 12px; text-align:left; border:1px solid rgba(148,163,184,.28); border-radius:9px; background:#111d31; color:#e2e8f0; cursor:pointer; }
 .recovery-list button.active { border-color:#22d3ee; background:#164057; }
 
-/* T2 恢复样板：所有区域、节点和路径使用同一幅 1200×760 平面坐标。 */
+/* T2 重建样板：区域、节点、路径与参考底图共用像素坐标。 */
 .operational-layout-shell { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:16px; align-items:start; }
 .operational-layout-shell-compact { display:block; }
 .operational-map-canvas {
-  position:relative; width:100%; aspect-ratio:1200 / 760; min-height:420px;
+  position:relative; width:100%; aspect-ratio:1200 / 686;
   overflow:hidden; border:1px solid rgba(103,232,249,.24); border-radius:18px;
   background:linear-gradient(rgba(148,163,184,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.07) 1px,transparent 1px),#0b1729;
   background-size:5% 7.9%;
@@ -437,3 +437,10 @@ button {
 .operational-map-row em { overflow:hidden; color:#b8c8dc; font-style:normal; text-overflow:ellipsis; white-space:nowrap; }
 .operational-map-row strong { color:#f8fafc; }
 @media (max-width:1400px) { .operational-layout-shell { grid-template-columns:1fr; } .operational-map-sidepanel { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* 底图已有区域名称；交互热区保持可点选，避免文字覆盖参考图。 */
+.operational-map-reconstructed .operational-area { background:transparent; border-color:transparent; }
+.operational-map-reconstructed .operational-area strong,
+.operational-map-reconstructed .operational-area span { display:none; }
+.operational-map-reconstructed .operational-area:hover,
+.operational-map-reconstructed .operational-area:focus-visible { border-color:#22d3ee; background:rgba(34,211,238,.12); }

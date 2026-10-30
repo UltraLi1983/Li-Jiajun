@@ -1,0 +1,1221 @@
+{
+  "schemaVersion": "factory-layout-ground-truth-reconstructed-1.0",
+  "synthetic": true,
+  "provenance": "2026-09-05 Codex execution log: area and path records; original PNG and 55 obstacles unavailable",
+  "recoveryLimitations": [
+    "original pixel artwork unavailable",
+    "55 obstacle geometries unavailable",
+    "station positions A2-B4 inferred from line and delivery-point geometry"
+  ],
+  "units": "m",
+  "coordinateSystem": "origin: building top-left; x right; y down",
+  "building": {
+    "widthM": 120,
+    "heightM": 60,
+    "grossAreaM2": 7200
+  },
+  "originalImageMapping": {
+    "pngWidth": 3920,
+    "pngHeight": 2240,
+    "originPx": [
+      196,
+      280
+    ],
+    "metersPerPixel": 0.03571428571428571
+  },
+  "areas": [
+    {
+      "id": "recv",
+      "name": "收货 / 待检",
+      "type": "receiving",
+      "boundaryM": [
+        [
+          1,
+          1
+        ],
+        [
+          18,
+          1
+        ],
+        [
+          18,
+          8
+        ],
+        [
+          1,
+          8
+        ]
+      ],
+      "grossAreaM2": 119
+    },
+    {
+      "id": "iqc",
+      "name": "IQC 来料检验",
+      "type": "quality",
+      "boundaryM": [
+        [
+          19,
+          1
+        ],
+        [
+          30,
+          1
+        ],
+        [
+          30,
+          8
+        ],
+        [
+          19,
+          8
+        ]
+      ],
+      "grossAreaM2": 77
+    },
+    {
+      "id": "hold",
+      "name": "质量隔离 / 上锁",
+      "type": "quarantine",
+      "boundaryM": [
+        [
+          31,
+          1
+        ],
+        [
+          41,
+          1
+        ],
+        [
+          41,
+          8
+        ],
+        [
+          31,
+          8
+        ]
+      ],
+      "grossAreaM2": 70
+    },
+    {
+      "id": "tool",
+      "name": "工装 / 维修",
+      "type": "service",
+      "boundaryM": [
+        [
+          42,
+          1
+        ],
+        [
+          57,
+          1
+        ],
+        [
+          57,
+          8
+        ],
+        [
+          42,
+          8
+        ]
+      ],
+      "grossAreaM2": 105
+    },
+    {
+      "id": "qa",
+      "name": "测量室",
+      "type": "quality",
+      "boundaryM": [
+        [
+          58,
+          1
+        ],
+        [
+          70,
+          1
+        ],
+        [
+          70,
+          8
+        ],
+        [
+          58,
+          8
+        ]
+      ],
+      "grossAreaM2": 84
+    },
+    {
+      "id": "util",
+      "name": "公用工程",
+      "type": "service",
+      "boundaryM": [
+        [
+          71,
+          1
+        ],
+        [
+          84,
+          1
+        ],
+        [
+          84,
+          8
+        ],
+        [
+          71,
+          8
+        ]
+      ],
+      "grossAreaM2": 91
+    },
+    {
+      "id": "fg",
+      "name": "成品待发 / FIFO",
+      "type": "shipping",
+      "boundaryM": [
+        [
+          85,
+          1
+        ],
+        [
+          119,
+          1
+        ],
+        [
+          119,
+          8
+        ],
+        [
+          85,
+          8
+        ]
+      ],
+      "grossAreaM2": 238
+    },
+    {
+      "id": "main",
+      "name": "主仓 / 托盘与周转箱",
+      "type": "main_warehouse",
+      "boundaryM": [
+        [
+          1,
+          12
+        ],
+        [
+          28,
+          12
+        ],
+        [
+          28,
+          25
+        ],
+        [
+          1,
+          25
+        ]
+      ],
+      "grossAreaM2": 351
+    },
+    {
+      "id": "hb",
+      "name": "高位货架区 / 4 层",
+      "type": "high_bay",
+      "boundaryM": [
+        [
+          1,
+          35
+        ],
+        [
+          28,
+          35
+        ],
+        [
+          28,
+          48
+        ],
+        [
+          1,
+          48
+        ]
+      ],
+      "grossAreaM2": 351
+    },
+    {
+      "id": "sm",
+      "name": "超市 / 拣配",
+      "type": "supermarket",
+      "boundaryM": [
+        [
+          35,
+          35
+        ],
+        [
+          47,
+          35
+        ],
+        [
+          47,
+          47
+        ],
+        [
+          35,
+          47
+        ]
+      ],
+      "grossAreaM2": 144
+    },
+    {
+      "id": "empty",
+      "name": "空箱分拣 / 回收",
+      "type": "returnables",
+      "boundaryM": [
+        [
+          35,
+          12
+        ],
+        [
+          47,
+          12
+        ],
+        [
+          47,
+          23
+        ],
+        [
+          35,
+          23
+        ]
+      ],
+      "grossAreaM2": 132
+    },
+    {
+      "id": "charge",
+      "name": "牵引车充电 / 停放",
+      "type": "service",
+      "boundaryM": [
+        [
+          35,
+          54
+        ],
+        [
+          47,
+          54
+        ],
+        [
+          47,
+          57
+        ],
+        [
+          35,
+          57
+        ]
+      ],
+      "grossAreaM2": 36
+    },
+    {
+      "id": "line-A",
+      "name": "A 线 / 骨架与滑轨分装",
+      "type": "production",
+      "boundaryM": [
+        [
+          52,
+          12
+        ],
+        [
+          100,
+          12
+        ],
+        [
+          100,
+          24
+        ],
+        [
+          52,
+          24
+        ]
+      ],
+      "grossAreaM2": 576
+    },
+    {
+      "id": "ls-A1",
+      "name": "LS-A1",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          54,
+          24.3
+        ],
+        [
+          61,
+          24.3
+        ],
+        [
+          61,
+          25.8
+        ],
+        [
+          54,
+          25.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-A2",
+      "name": "LS-A2",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          66,
+          24.3
+        ],
+        [
+          73,
+          24.3
+        ],
+        [
+          73,
+          25.8
+        ],
+        [
+          66,
+          25.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-A3",
+      "name": "LS-A3",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          78,
+          24.3
+        ],
+        [
+          85,
+          24.3
+        ],
+        [
+          85,
+          25.8
+        ],
+        [
+          78,
+          25.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-A4",
+      "name": "LS-A4",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          90,
+          24.3
+        ],
+        [
+          97,
+          24.3
+        ],
+        [
+          97,
+          25.8
+        ],
+        [
+          90,
+          25.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "line-B",
+      "name": "B 线 / 总成与终检",
+      "type": "production",
+      "boundaryM": [
+        [
+          52,
+          35
+        ],
+        [
+          100,
+          35
+        ],
+        [
+          100,
+          47
+        ],
+        [
+          52,
+          47
+        ]
+      ],
+      "grossAreaM2": 576
+    },
+    {
+      "id": "ls-B1",
+      "name": "LS-B1",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          54,
+          47.3
+        ],
+        [
+          61,
+          47.3
+        ],
+        [
+          61,
+          48.8
+        ],
+        [
+          54,
+          48.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-B2",
+      "name": "LS-B2",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          66,
+          47.3
+        ],
+        [
+          73,
+          47.3
+        ],
+        [
+          73,
+          48.8
+        ],
+        [
+          66,
+          48.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-B3",
+      "name": "LS-B3",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          78,
+          47.3
+        ],
+        [
+          85,
+          47.3
+        ],
+        [
+          85,
+          48.8
+        ],
+        [
+          78,
+          48.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "ls-B4",
+      "name": "LS-B4",
+      "type": "line_side",
+      "boundaryM": [
+        [
+          90,
+          47.3
+        ],
+        [
+          97,
+          47.3
+        ],
+        [
+          97,
+          48.8
+        ],
+        [
+          90,
+          48.8
+        ]
+      ],
+      "grossAreaM2": 10.5
+    },
+    {
+      "id": "wip",
+      "name": "WIP / FIFO",
+      "type": "wip",
+      "boundaryM": [
+        [
+          101,
+          35
+        ],
+        [
+          106,
+          35
+        ],
+        [
+          106,
+          47
+        ],
+        [
+          101,
+          47
+        ]
+      ],
+      "grossAreaM2": 60
+    },
+    {
+      "id": "rework",
+      "name": "返修",
+      "type": "rework",
+      "boundaryM": [
+        [
+          101,
+          12
+        ],
+        [
+          106,
+          12
+        ],
+        [
+          106,
+          24
+        ],
+        [
+          101,
+          24
+        ]
+      ],
+      "grossAreaM2": 60
+    },
+    {
+      "id": "pack",
+      "name": "包装辅料",
+      "type": "storage",
+      "boundaryM": [
+        [
+          113,
+          35
+        ],
+        [
+          119,
+          35
+        ],
+        [
+          119,
+          47
+        ],
+        [
+          113,
+          47
+        ]
+      ],
+      "grossAreaM2": 72
+    },
+    {
+      "id": "scrap",
+      "name": "废料暂存",
+      "type": "service",
+      "boundaryM": [
+        [
+          113,
+          12
+        ],
+        [
+          119,
+          12
+        ],
+        [
+          119,
+          24
+        ],
+        [
+          113,
+          24
+        ]
+      ],
+      "grossAreaM2": 72
+    }
+  ],
+  "stations": [
+    {
+      "id": "A1",
+      "name": "A1 工站",
+      "lineId": "A",
+      "positionM": [
+        57.5,
+        17.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "A2",
+      "name": "A2 工站",
+      "lineId": "A",
+      "positionM": [
+        69.5,
+        17.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "A3",
+      "name": "A3 工站",
+      "lineId": "A",
+      "positionM": [
+        81.5,
+        17.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "A4",
+      "name": "A4 工站",
+      "lineId": "A",
+      "positionM": [
+        93.5,
+        17.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "B1",
+      "name": "B1 工站",
+      "lineId": "B",
+      "positionM": [
+        57.5,
+        40.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "B2",
+      "name": "B2 工站",
+      "lineId": "B",
+      "positionM": [
+        69.5,
+        40.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "B3",
+      "name": "B3 工站",
+      "lineId": "B",
+      "positionM": [
+        81.5,
+        40.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    },
+    {
+      "id": "B4",
+      "name": "B4 工站",
+      "lineId": "B",
+      "positionM": [
+        93.5,
+        40.5
+      ],
+      "positionSource": "line geometry inferred from first original station"
+    }
+  ],
+  "deliveryPoints": [
+    {
+      "id": "DP-A1",
+      "stationId": "A1",
+      "positionM": [
+        57.5,
+        26
+      ]
+    },
+    {
+      "id": "DP-A2",
+      "stationId": "A2",
+      "positionM": [
+        69.5,
+        26
+      ]
+    },
+    {
+      "id": "DP-A3",
+      "stationId": "A3",
+      "positionM": [
+        81.5,
+        26
+      ]
+    },
+    {
+      "id": "DP-A4",
+      "stationId": "A4",
+      "positionM": [
+        93.5,
+        26
+      ]
+    },
+    {
+      "id": "DP-B1",
+      "stationId": "B1",
+      "positionM": [
+        57.5,
+        49
+      ]
+    },
+    {
+      "id": "DP-B2",
+      "stationId": "B2",
+      "positionM": [
+        69.5,
+        49
+      ]
+    },
+    {
+      "id": "DP-B3",
+      "stationId": "B3",
+      "positionM": [
+        81.5,
+        49
+      ]
+    },
+    {
+      "id": "DP-B4",
+      "stationId": "B4",
+      "positionM": [
+        93.5,
+        49
+      ]
+    }
+  ],
+  "pathNetwork": {
+    "nodes": [
+      {
+        "id": "N0",
+        "positionM": [
+          14,
+          29.6
+        ]
+      },
+      {
+        "id": "N1",
+        "positionM": [
+          32,
+          29.6
+        ]
+      },
+      {
+        "id": "N2",
+        "positionM": [
+          41,
+          29.6
+        ]
+      },
+      {
+        "id": "N3",
+        "positionM": [
+          49.5,
+          29.6
+        ]
+      },
+      {
+        "id": "N4",
+        "positionM": [
+          57.5,
+          29.6
+        ]
+      },
+      {
+        "id": "N5",
+        "positionM": [
+          69.5,
+          29.6
+        ]
+      },
+      {
+        "id": "N6",
+        "positionM": [
+          81.5,
+          29.6
+        ]
+      },
+      {
+        "id": "N7",
+        "positionM": [
+          93.5,
+          29.6
+        ]
+      },
+      {
+        "id": "N8",
+        "positionM": [
+          110,
+          29.6
+        ]
+      },
+      {
+        "id": "S0",
+        "positionM": [
+          14,
+          51
+        ]
+      },
+      {
+        "id": "S1",
+        "positionM": [
+          32,
+          51
+        ]
+      },
+      {
+        "id": "S2",
+        "positionM": [
+          41,
+          51
+        ]
+      },
+      {
+        "id": "S3",
+        "positionM": [
+          49.5,
+          51
+        ]
+      },
+      {
+        "id": "S4",
+        "positionM": [
+          57.5,
+          51
+        ]
+      },
+      {
+        "id": "S5",
+        "positionM": [
+          69.5,
+          51
+        ]
+      },
+      {
+        "id": "S6",
+        "positionM": [
+          81.5,
+          51
+        ]
+      },
+      {
+        "id": "S7",
+        "positionM": [
+          93.5,
+          51
+        ]
+      },
+      {
+        "id": "S8",
+        "positionM": [
+          110,
+          51
+        ]
+      },
+      {
+        "id": "DP-A1",
+        "positionM": [
+          57.5,
+          26
+        ]
+      },
+      {
+        "id": "DP-A2",
+        "positionM": [
+          69.5,
+          26
+        ]
+      },
+      {
+        "id": "DP-A3",
+        "positionM": [
+          81.5,
+          26
+        ]
+      },
+      {
+        "id": "DP-A4",
+        "positionM": [
+          93.5,
+          26
+        ]
+      },
+      {
+        "id": "DP-B1",
+        "positionM": [
+          57.5,
+          49
+        ]
+      },
+      {
+        "id": "DP-B2",
+        "positionM": [
+          69.5,
+          49
+        ]
+      },
+      {
+        "id": "DP-B3",
+        "positionM": [
+          81.5,
+          49
+        ]
+      },
+      {
+        "id": "DP-B4",
+        "positionM": [
+          93.5,
+          49
+        ]
+      }
+    ],
+    "segments": [
+      {
+        "id": "N-0",
+        "fromNodeId": "N0",
+        "toNodeId": "N1",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 18.0
+      },
+      {
+        "id": "N-1",
+        "fromNodeId": "N1",
+        "toNodeId": "N2",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 9.0
+      },
+      {
+        "id": "N-2",
+        "fromNodeId": "N2",
+        "toNodeId": "N3",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 8.5
+      },
+      {
+        "id": "N-3",
+        "fromNodeId": "N3",
+        "toNodeId": "N4",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 8.0
+      },
+      {
+        "id": "N-4",
+        "fromNodeId": "N4",
+        "toNodeId": "N5",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 12.0
+      },
+      {
+        "id": "N-5",
+        "fromNodeId": "N5",
+        "toNodeId": "N6",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 12.0
+      },
+      {
+        "id": "N-6",
+        "fromNodeId": "N6",
+        "toNodeId": "N7",
+        "bidirectional": true,
+        "clearWidthM": 2.8,
+        "distanceM": 12.0
+      },
+      {
+        "id": "N-7",
+        "fromNodeId": "N7",
+        "toNodeId": "N8",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 16.5
+      },
+      {
+        "id": "S-0",
+        "fromNodeId": "S0",
+        "toNodeId": "S1",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 18.0
+      },
+      {
+        "id": "S-1",
+        "fromNodeId": "S1",
+        "toNodeId": "S2",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 9.0
+      },
+      {
+        "id": "S-2",
+        "fromNodeId": "S2",
+        "toNodeId": "S3",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 8.5
+      },
+      {
+        "id": "S-3",
+        "fromNodeId": "S3",
+        "toNodeId": "S4",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 8.0
+      },
+      {
+        "id": "S-4",
+        "fromNodeId": "S4",
+        "toNodeId": "S5",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 12.0
+      },
+      {
+        "id": "S-5",
+        "fromNodeId": "S5",
+        "toNodeId": "S6",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 12.0
+      },
+      {
+        "id": "S-6",
+        "fromNodeId": "S6",
+        "toNodeId": "S7",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 12.0
+      },
+      {
+        "id": "S-7",
+        "fromNodeId": "S7",
+        "toNodeId": "S8",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 16.5
+      },
+      {
+        "id": "V1",
+        "fromNodeId": "N1",
+        "toNodeId": "S1",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 21.4
+      },
+      {
+        "id": "V8",
+        "fromNodeId": "N8",
+        "toNodeId": "S8",
+        "bidirectional": true,
+        "clearWidthM": 4.0,
+        "distanceM": 21.4
+      },
+      {
+        "id": "spur-DP-A1",
+        "fromNodeId": "N4",
+        "toNodeId": "DP-A1",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 3.6,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-A2",
+        "fromNodeId": "N5",
+        "toNodeId": "DP-A2",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 3.6,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-A3",
+        "fromNodeId": "N6",
+        "toNodeId": "DP-A3",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 3.6,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-A4",
+        "fromNodeId": "N7",
+        "toNodeId": "DP-A4",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 3.6,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-B1",
+        "fromNodeId": "S4",
+        "toNodeId": "DP-B1",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 2.0,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-B2",
+        "fromNodeId": "S5",
+        "toNodeId": "DP-B2",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 2.0,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-B3",
+        "fromNodeId": "S6",
+        "toNodeId": "DP-B3",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 2.0,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      },
+      {
+        "id": "spur-DP-B4",
+        "fromNodeId": "S7",
+        "toNodeId": "DP-B4",
+        "bidirectional": true,
+        "clearWidthM": 2.0,
+        "distanceM": 2.0,
+        "allowedResourceTypes": [
+          "manual_cart"
+        ]
+      }
+    ]
+  },
+  "obstacles": []
+}

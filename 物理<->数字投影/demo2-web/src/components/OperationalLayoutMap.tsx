@@ -13,11 +13,11 @@ type Selection =
   | { type: 'delivery'; id: string }
   | { type: 'segment'; id: string };
 
-const VIEWBOX_WIDTH = 1200;
-const VIEWBOX_HEIGHT = 760;
 
 export function OperationalLayoutMap({ scenario, roughCalculation, compact = false }: OperationalLayoutMapProps) {
   const [selected, setSelected] = useState<Selection | undefined>();
+  const viewWidth = scenario.layout.width;
+  const viewHeight = scenario.layout.height;
   const routeNodeById = useMemo(() => new Map(scenario.pathNetwork.nodes.map((node) => [node.id, node])), [scenario.pathNetwork.nodes]);
   const areaRiskById = useMemo(() => new Map(roughCalculation.areas.map((area) => [area.storageAreaId, area])), [roughCalculation.areas]);
   const resourceLoadByType = useMemo(() => new Map(roughCalculation.transportPlan.resourceLoads.map((load) => [load.resourceType, load])), [roughCalculation.transportPlan.resourceLoads]);
@@ -56,8 +56,8 @@ export function OperationalLayoutMap({ scenario, roughCalculation, compact = fal
 
   return (
     <div className={compact ? 'operational-layout-shell operational-layout-shell-compact' : 'operational-layout-shell'}>
-      <div className="operational-map-canvas" aria-label="factory operational layout map">
-        <svg className="operational-route-layer" viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`} role="img" aria-label="route network">
+      <div className={`operational-map-canvas${scenario.layout.sourceType === 'sample' && scenario.layout.backgroundDataUrl ? ' operational-map-reconstructed' : ''}`} aria-label="factory operational layout map" style={{ aspectRatio: `${viewWidth} / ${viewHeight}`, backgroundImage: scenario.layout.backgroundDataUrl ? `url(${JSON.stringify(scenario.layout.backgroundDataUrl)})` : undefined, backgroundSize: scenario.layout.backgroundDataUrl ? '100% 100%' : undefined }}>
+        <svg className="operational-route-layer" viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label="route network">
           <defs>
             <filter id="routeGlow" x="-40%" y="-40%" width="180%" height="180%">
               <feGaussianBlur stdDeviation="3" result="blur" />
@@ -82,8 +82,8 @@ export function OperationalLayoutMap({ scenario, roughCalculation, compact = fal
                   x2={to.position.x}
                   y2={to.position.y}
                   onClick={() => setSelected({ type: 'segment', id: segment.id })}
-                />
-                {!compact && (
+                ><title>{segment.fromNodeId} → {segment.toNodeId} · {segment.distanceM}m</title></line>
+                {!compact && selected?.type === 'segment' && selected.id === segment.id && (
                   <text
                     className="operational-route-label"
                     x={(from.position.x + to.position.x) / 2}
@@ -107,7 +107,7 @@ export function OperationalLayoutMap({ scenario, roughCalculation, compact = fal
               key={area.id}
               type="button"
               className={`operational-area operational-area-${area.type} operational-risk-${areaResult?.riskStatus ?? 'normal'}`}
-              style={boxStyle(area.boundary)}
+              style={boxStyle(area.boundary, viewWidth, viewHeight)}
               onClick={() => setSelected({ type: 'area', id: area.id })}
             >
               <strong>{area.name}</strong>
@@ -121,7 +121,7 @@ export function OperationalLayoutMap({ scenario, roughCalculation, compact = fal
             key={station.id}
             type="button"
             className="operational-station"
-            style={pointStyle(station.position)}
+            style={pointStyle(station.position, viewWidth, viewHeight)}
             onClick={() => setSelected({ type: 'station', id: station.id })}
             title={station.name}
           >
@@ -137,7 +137,7 @@ export function OperationalLayoutMap({ scenario, roughCalculation, compact = fal
               key={point.id}
               type="button"
               className={`operational-delivery operational-risk-${risk}`}
-              style={pointStyle(point.position)}
+              style={pointStyle(point.position, viewWidth, viewHeight)}
               onClick={() => setSelected({ type: 'delivery', id: point.id })}
               title={point.name}
             >
@@ -230,21 +230,21 @@ function describeSelection(
   };
 }
 
-function boxStyle(boundary: Array<{ x: number; y: number }>) {
+function boxStyle(boundary: Array<{ x: number; y: number }>, viewWidth: number, viewHeight: number) {
   const xs = boundary.map((point) => point.x);
   const ys = boundary.map((point) => point.y);
   return {
-    left: `${(Math.min(...xs) / VIEWBOX_WIDTH) * 100}%`,
-    top: `${(Math.min(...ys) / VIEWBOX_HEIGHT) * 100}%`,
-    width: `${((Math.max(...xs) - Math.min(...xs)) / VIEWBOX_WIDTH) * 100}%`,
-    height: `${((Math.max(...ys) - Math.min(...ys)) / VIEWBOX_HEIGHT) * 100}%`
+    left: `${(Math.min(...xs) / viewWidth) * 100}%`,
+    top: `${(Math.min(...ys) / viewHeight) * 100}%`,
+    width: `${((Math.max(...xs) - Math.min(...xs)) / viewWidth) * 100}%`,
+    height: `${((Math.max(...ys) - Math.min(...ys)) / viewHeight) * 100}%`
   };
 }
 
-function pointStyle(point: { x: number; y: number }) {
+function pointStyle(point: { x: number; y: number }, viewWidth: number, viewHeight: number) {
   return {
-    left: `${(point.x / VIEWBOX_WIDTH) * 100}%`,
-    top: `${(point.y / VIEWBOX_HEIGHT) * 100}%`
+    left: `${(point.x / viewWidth) * 100}%`,
+    top: `${(point.y / viewHeight) * 100}%`
   };
 }
 
