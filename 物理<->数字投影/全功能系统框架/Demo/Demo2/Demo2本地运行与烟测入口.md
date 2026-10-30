@@ -10,7 +10,7 @@
 cd "/Users/lijiajun/Documents/GitHub/Li-Jiajun/物理<->数字投影/demo2-web" && npm run dev
 ```
 
-启动成功后，终端通常会显示 Vite 地址。
+双击 `demo2-web/启动Demo2.command` 时，服务启动成功后会自动打开默认浏览器。手动运行 `npm run dev` 时，终端会显示 Vite 地址。
 
 ## 2. 浏览器访问地址
 
