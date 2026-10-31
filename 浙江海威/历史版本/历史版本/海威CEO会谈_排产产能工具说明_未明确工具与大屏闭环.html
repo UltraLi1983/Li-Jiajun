@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>排产产能参数工具｜CEO 会谈说明</title>
+<style>
+:root{--ink:#143247;--muted:#5d7280;--blue:#29a4d1;--green:#8ac53f;--bg:#f3f7f8;--line:#d9e5e9;--pale:#eaf5f9;--lime:#f2f8e7;--warn:#d75a55}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#dfe8eb;color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif}button{font:inherit}
+.deck{max-width:1600px;margin:auto}.slide{min-height:100vh;background:#fff;padding:4.8vh 5.3vw 4vh;position:relative;display:flex;flex-direction:column;overflow:hidden;break-after:page}.slide+ .slide{border-top:16px solid #e8eff1}.slide:before{content:"";position:absolute;top:0;left:0;right:0;height:9px;background:linear-gradient(90deg,var(--green) 0 27%,var(--blue) 27% 100%)}
+.kicker{font-size:clamp(14px,1vw,20px);font-weight:800;letter-spacing:.17em;color:#328db2}.title{font-size:clamp(33px,3.35vw,60px);line-height:1.18;letter-spacing:-.035em;margin:13px 0 8px}.lede{font-size:clamp(17px,1.38vw,25px);color:var(--muted);margin:0 0 3vh;line-height:1.5}.tag{display:inline-block;padding:7px 13px;border-radius:7px;background:#e7f3f8;color:#217da3;font-size:16px;font-weight:700}
+.section-label{font-size:17px;color:#62818e;font-weight:800;letter-spacing:.08em;margin:0 0 14px}.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 2.5vh}.step{background:#f3f8fa;border:1px solid var(--line);border-top:5px solid var(--blue);border-radius:12px;padding:19px 17px;min-height:154px;position:relative}.step:nth-child(2),.step:nth-child(4){border-top-color:var(--green);background:#f7faef}.step:not(:last-child):after{content:"→";position:absolute;right:-17px;top:43%;color:#4d9ab7;font-size:22px;font-weight:900;z-index:2}.step .n{font-size:13px;font-weight:800;color:#4b9dbc}.step h3{font-size:clamp(18px,1.44vw,25px);margin:9px 0 8px}.step p{margin:0;color:var(--muted);font-size:clamp(14px,1.04vw,18px);line-height:1.45}
+.two{display:grid;grid-template-columns:1.13fr .87fr;gap:19px;flex:1;min-height:0}.box{border:1px solid var(--line);border-radius:14px;padding:24px 26px;background:#fff}.box.soft{background:var(--pale)}.box.green{background:var(--lime)}.box h3{font-size:clamp(21px,1.65vw,29px);margin:0 0 16px}.bullets{margin:0;padding-left:1.15em;font-size:clamp(16px,1.16vw,20px);line-height:1.65}.bullets li{margin:8px 0}.mini{font-size:clamp(15px,1.05vw,18px);line-height:1.55;color:var(--muted)}.bigline{font-size:clamp(20px,1.7vw,31px);font-weight:850;line-height:1.4;margin:0 0 16px}.highlight{color:#188bb7}.greenword{color:#69a625}.smallcap{font-size:15px;color:#60808c;font-weight:800;letter-spacing:.08em;margin-bottom:9px}.footer{margin-top:2vh;border-top:1px solid var(--line);padding-top:11px;display:flex;justify-content:space-between;gap:18px;color:#708891;font-size:15px}
+.ledger{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}.ledger .item{background:#f2f7f9;border:1px solid var(--line);padding:19px;border-radius:12px;min-height:142px}.ledger .item:nth-child(2){background:#edf6e6}.ledger .item:nth-child(3){background:#eaf4f8}.ledger .label{font-size:15px;color:#60808c;font-weight:800}.ledger .value{font-size:clamp(23px,2vw,35px);font-weight:850;margin:8px 0 4px}.ledger .sub{font-size:clamp(14px,1.04vw,18px);color:var(--muted);line-height:1.35}
+.chain{display:flex;align-items:stretch;gap:10px;margin:0 0 20px}.chain .node{flex:1;border:1px solid var(--line);border-radius:11px;background:#f7fafb;padding:17px 16px;min-width:0}.chain .node:nth-of-type(2){background:#f1f8e9}.chain .node:nth-of-type(3){background:#eaf5fa}.chain .node h3{font-size:clamp(18px,1.3vw,23px);margin:0 0 8px}.chain .node p{font-size:clamp(14px,1.04vw,18px);color:var(--muted);line-height:1.45;margin:0}.arrow{align-self:center;color:#2f9bc2;font-size:25px;font-weight:900}.decision{display:grid;grid-template-columns:1fr 1fr;gap:15px;flex:1}.decision .box{padding:20px 24px}.decision .box h3{font-size:clamp(20px,1.5vw,27px)}.callout{border-left:5px solid var(--green);padding:11px 15px;background:#f4f9eb;font-size:clamp(16px,1.15vw,20px);line-height:1.5;font-weight:700;margin-top:10px}.nav{position:fixed;right:20px;bottom:18px;z-index:5;display:flex;gap:7px}.nav button{border:1px solid #b8cfd8;background:rgba(255,255,255,.94);color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer;box-shadow:0 3px 12px #1637461e}.nav button:hover,.nav button:focus-visible{background:#eaf5fa;outline:2px solid var(--blue)}
+@media(max-width:950px){.slide{padding:42px 24px 35px;min-height:0}.flow{grid-template-columns:repeat(2,1fr)}.step:not(:last-child):after{display:none}.two,.decision{grid-template-columns:1fr}.chain{flex-wrap:wrap}.chain .node{flex-basis:100%}.arrow{display:none}.ledger{grid-template-columns:1fr}.footer{font-size:13px}.nav{display:none}}
+@media print{@page{size:16in 9in;margin:0}body{background:#fff}.deck{max-width:none}.slide{width:16in;height:9in;min-height:0;padding:.48in .65in}.slide+.slide{border-top:0}.nav{display:none}.title{font-size:35pt}.lede{font-size:17pt}.step{min-height:0}.flow{margin-bottom:.18in}.footer{margin-top:auto}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<main class="deck">
+  <section class="slide" id="p1" aria-label="第一页：产能参数工具的目的">
+    <div class="kicker">01 / 为什么做这个工具</div>
+    <h1 class="title">让计划建立在<span class="highlight">可核算的现场能力</span>之上</h1>
+    <p class="lede">我的目标不是再造一套报表，而是把“需求能否交付、哪里受限、该改什么”变成可追溯的计算与行动。</p>
+    <div class="section-label">从业务问题到可执行计划</div>
+    <div class="flow">
+      <div class="step"><div class="n">01 INPUT</div><h3>需求与工艺路线</h3><p>客户需求、产品、工序、可用工站和资源约束。</p></div>
+      <div class="step"><div class="n">02 BASELINE</div><h3>标准 SA 基线</h3><p>定义计划生产时间和工站 Best case 能力。</p></div>
+      <div class="step"><div class="n">03 FIELD</div><h3>现场 R&amp;R</h3><p>同一工站记录生产段、OK/NOK、节拍与异常。</p></div>
+      <div class="step"><div class="n">04 CALCULATE</div><h3>参数校准</h3><p>核对 SA、CT、P、Q 和数据有效性，找出瓶颈。</p></div>
+      <div class="step"><div class="n">05 DECIDE</div><h3>路线能力判断</h3><p>汇总周需求与周能力，形成可执行计划和改进优先级。</p></div>
+    </div>
+    <div class="two">
+      <div class="box soft"><div class="smallcap">今天已经能展示</div><h3>标准时间、现场记录、参数验证与路线周能力</h3><ul class="bullets"><li>工站的标准 SA 与现场 R&amp;R 使用同窗口核对；</li><li>CT/P/Q 经校准后进入能力测算，识别工序瓶颈；</li><li>路线周计划报告展示需求、能力与前置缺口。</li></ul></div>
+      <div class="box green"><div class="smallcap">CEO 应看到的最终价值</div><p class="bigline">计划不是“发工单”，而是先证明<span class="greenword">能执行</span>。</p><p class="mini">现场变化反向修正参数，计划再指导生产、物料和交付。参数有来源、结论有边界、问题有责任接口。</p><div class="callout">本工具是计划与现场之间的计算层；ERP、APS 和现场系统的正式集成仍是后续工作。</div></div>
+    </div>
+    <div class="footer"><span>海威 CEO 会谈说明｜讨论版 · 2026-10-30</span><span>已实现能力依据现有本地工具；未接入海威现场数据</span></div>
+  </section>
+  <section class="slide" id="p2" aria-label="第二页：宁德先导与物理数字投影">
+    <div class="kicker">02 / 如何从宁德项目走向可复制运营</div>
+    <h1 class="title">先把宁德的<span class="highlight">生产与交付闭环</span>跑通</h1>
+    <p class="lede">排产工具给出能力边界；作战室接入班次实际并推动决策；经验证的规则再进入跨基地平台。</p>
+    <div class="ledger">
+      <div class="item"><div class="label">计划端｜事前</div><div class="value">能否按期生产？</div><div class="sub">客户需求 × 班次 × 路线能力 × 物料约束</div></div>
+      <div class="item"><div class="label">现场端｜班中</div><div class="value">偏差因何发生？</div><div class="sub">累计良品、设备时间、节拍、质量、人员与物流事件</div></div>
+      <div class="item"><div class="label">经营端｜班末</div><div class="value">交付会差多少？</div><div class="sub">预计良品 ＋ 班初可用成品 − 客户应交</div></div>
+    </div>
+    <div class="chain">
+      <div class="node"><h3>工具：能力边界</h3><p>基于路线、SA 与验证后的 CT/P/Q，判断计划是否可执行。</p></div><div class="arrow">→</div>
+      <div class="node"><h3>作战室：班中决策</h3><p>用现场事实重算预测，明确停机、废件、欠产与交付的不同差额。</p></div><div class="arrow">→</div>
+      <div class="node"><h3>平台：方法复用</h3><p>将规则、接口、责任和收益验证方式复制到国内外基地。</p></div>
+    </div>
+    <div class="decision">
+      <div class="box"><div class="smallcap">宁德先导的第一批决策</div><h3>谁在什么时候采取什么动作？</h3><ul class="bullets"><li>设备故障：预计恢复时间是否改变本班可交付？</li><li>质量损失：报废发生在哪个工序，能否阻断？</li><li>计划偏差：当前落后多少，班末仍差多少？</li><li>库存与发运：生产欠产是否真的造成客户欠交？</li></ul></div>
+      <div class="box green"><div class="smallcap">与物理数字投影的连接</div><h3>把“数字”放回真实物理位置</h3><p class="mini">设备、工站、配送点、通道、库位、运输资源各有身份和状态；需求、节拍或路线变化时，系统能重算物料移动、线边水位和空间负荷，并把结果映射回现场。</p><div class="callout">Demo2 恢复版可用示意场景展示这条路径；原始厂房图和部分后期交互仍需恢复。</div></div>
+    </div>
+    <div class="footer"><span>先导收益要由运营、业务与财务共同核实</span><span>作战室与排产工具目前是概念衔接，尚未完成现场数据集成</span></div>
+  </section>
+</main>
+<nav class="nav" aria-label="页面导航"><button type="button" onclick="document.getElementById('p1').scrollIntoView()">1 产能工具</button><button type="button" onclick="document.getElementById('p2').scrollIntoView()">2 宁德先导</button></nav>
+<script>addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='PageDown')document.getElementById('p2').scrollIntoView();if(e.key==='ArrowLeft'||e.key==='PageUp')document.getElementById('p1').scrollIntoView()});</script>
+</body>
+</html>

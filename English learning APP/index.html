@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#153c43" />
+    <meta name="description" content="面向商务场景的每日英语听说训练。" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>English Coach · 每日听说训练</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">e<span>.</span></span><span>English<br />Coach</span></div>
+        <nav class="side-nav" aria-label="主导航">
+          <button class="nav-item active" data-view="today" type="button"><span aria-hidden="true">◫</span> 今日训练</button>
+          <button class="nav-item" data-view="review" type="button"><span aria-hidden="true">↺</span> 表达复习 <span id="reviewBadge" class="nav-badge" hidden>0</span></button>
+          <button class="nav-item" data-view="progress" type="button"><span aria-hidden="true">▥</span> 训练记录</button>
+          <button class="nav-item" data-view="settings" type="button"><span aria-hidden="true">⚙</span> 数据设置</button>
+        </nav>
+        <div class="sidebar-note"><span class="note-dot"></span> 专注于你的下次英文会议。<br />每次练习，解决一个真实问题。</div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar"><div id="breadcrumb">今日训练</div><div class="topbar-right"><span id="todayDate"></span><span class="avatar" aria-label="个人使用">你</span></div></header>
+        <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+        <section id="todayView" class="view">
+          <div class="hero">
+            <div class="hero-copy"><p class="hero-kicker">你的每日商务英语训练</p><h1>把下一次对话<br />练得更从容。</h1><p>听懂关键信息，说清影响与下一步。今天从一个供应链沟通场景开始。</p></div>
+            <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="speech-card card-a">Could you confirm the revised ETA?</div><div class="speech-card card-b">We need a recovery plan.</div><div class="orb">↗</div></div>
+          </div>
+          <div class="section-heading"><div><h2>开始一轮训练</h2><p>先听，再说，最后复盘。预计 12–15 分钟。</p></div><span class="section-meta">场景 01 / 02</span></div>
+          <div class="scenario-grid" id="scenarioGrid"></div>
+          <div class="how-it-works"><div><strong>练习流程</strong><span>1　盲听并回答</span><span>2　角色扮演</span><span>3　查看有依据的反馈</span><span>4　隔天复习</span></div><p>目前是本地练习版：内容与任务反馈由预设规则提供，数据只保存在此浏览器。</p></div>
+        </section>
+
+        <section id="sessionView" class="view" hidden>
+          <div class="session-header"><button class="text-button" id="backHome" type="button">← 返回场景</button><span id="sessionScenarioType"></span></div>
+          <div class="session-title-row"><div><p class="step-kicker" id="stepKicker">听力练习</p><h1 id="sessionTitle"></h1><p id="sessionSubtitle"></p></div><div class="step-indicator" id="stepIndicator" aria-label="当前步骤"></div></div>
+          <div id="sessionContent" class="session-content"></div>
+        </section>
+
+        <section id="reviewView" class="view" hidden><div class="page-title"><p class="step-kicker">巩固表达</p><h1>让有用的句子留下来。</h1><p>在新语境里重新说一遍，比重复看答案更有效。</p></div><div id="reviewContent"></div></section>
+        <section id="progressView" class="view" hidden><div class="page-title"><p class="step-kicker">练习记录</p><h1>看得见的进步。</h1><p>记录完成情况与任务表现；当前版本不推断英语等级。</p></div><div id="progressContent"></div></section>
+        <section id="settingsView" class="view" hidden><div class="page-title"><p class="step-kicker">隐私与数据</p><h1>你的练习，由你掌控。</h1><p>练习记录保存在当前浏览器。录音仅供当次转写，不保存音频。</p></div><div class="settings-card"><h2>本地数据</h2><p>导出包含场景结果、你确认过的转写文本和复习记录。不会包含音频。</p><div class="button-row"><button class="button secondary" id="exportData" type="button">导出 JSON</button><button class="button danger" id="deleteData" type="button">删除全部记录</button></div></div><div class="settings-card"><h2>语音说明</h2><p>浏览器语音识别可能在部分设备上不可用，也可能将英语识别错；浏览器或系统服务可能会处理语音。提交前请检查和修改转写；任务反馈只基于确认后的文字。</p></div></section>
+      </main>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
+</html>

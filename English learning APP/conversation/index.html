@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#173e42" />
+  <meta name="description" content="在真实商务对话中练习英语，结束后获得有原话依据的反馈。" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+  <title>English Coach · 对话练习</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">e<span>.</span></span><span>English<br>Coach</span></div>
+      <div class="sidebar-heading">选择对话语境</div>
+      <div id="scenarioList" class="scenario-list"></div>
+      <div class="sidebar-bottom"><span class="online-dot"></span> 为真实工作对话做准备</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div><span class="topbar-label">对话训练</span><span class="topbar-divider">/</span><span id="topbarScene">选择语境</span></div><div class="topbar-actions"><span id="connectionStatus" class="connection-status" role="status" aria-live="polite">准备就绪</span><button id="endButton" class="end-button" type="button" hidden>结束并复盘</button></div></header>
+      <div id="errorBanner" class="error-banner" role="alert" hidden></div>
+
+      <section id="landingView" class="landing view">
+        <div class="landing-copy"><p class="eyebrow">在真实语境中练习</p><h1>让英语从练习题<br>走进你的工作对话。</h1><p class="intro">AI 扮演你的业务伙伴。你需要听懂情况、追问细节、表达立场，并一起推进下一步。</p></div>
+        <div class="scene-panel"><div class="scene-panel-top"><span id="selectedCategory" class="tag">供应链</span><span>每轮建议 5–10 分钟</span></div><h2 id="selectedTitle"></h2><p id="selectedBrief"></p><div class="scene-details"><div><span>对话对象</span><strong id="selectedCounterpart"></strong></div><div><span>你的目标</span><strong id="selectedMission"></strong></div></div><div id="customBox" class="custom-box" hidden><label for="customTopic">你想练习什么情境？</label><textarea id="customTopic" maxlength="300" placeholder="例如：我需要和美国客户讨论下周的交货调整。"></textarea></div><div class="start-actions"><button id="startVoice" class="primary-button" type="button">开始语音对话 <span>↗</span></button><button id="startText" class="secondary-button" type="button">先用文字体验</button></div><p class="scene-note">对话中自然沟通，结束后再看重点反馈。AI 语音为合成语音。</p></div>
+      </section>
+
+      <section id="conversationView" class="conversation view" hidden>
+        <div class="conversation-heading"><div><p class="eyebrow">正在对话</p><h1 id="conversationTitle"></h1><p id="conversationSubtitle"></p></div><div class="live-pill"><span></span> 对话进行中</div></div>
+        <div id="messages" class="messages" role="log" aria-live="polite" aria-label="对话记录"></div>
+        <div class="composer"><div id="voiceControls" class="voice-controls" hidden><button id="micButton" class="mic-button" type="button" aria-pressed="false"><span id="micIcon">●</span><span id="micLabel">点击开始说话</span></button><p>说完后再点一次发送。你的语音会交给 AI 处理，转写结果可能有误。</p></div><div class="text-controls"><label for="textInput" class="sr-only">输入英文回复</label><input id="textInput" type="text" maxlength="1200" placeholder="也可以输入英文回复…" autocomplete="off"><button id="sendText" class="send-button" type="button" aria-label="发送文字">↑</button></div></div>
+      </section>
+
+      <section id="reviewView" class="review view" hidden><div class="review-heading"><p class="eyebrow">对话复盘</p><h1>回看刚才的表达。</h1><p>先核对语音转写，再让 AI 从真实对话中挑出最值得改进的地方。</p></div><div class="review-layout"><div class="review-transcript"><div class="section-label">本次对话 <span>你的发言可编辑</span></div><div id="editableTranscript"></div><button id="requestFeedback" class="primary-button" type="button">生成重点反馈 <span>↗</span></button></div><div id="feedbackPanel" class="feedback-panel"><div class="feedback-placeholder"><div class="feedback-symbol">✳</div><strong>准备好后，生成复盘</strong><p>只根据你确认后的原话给建议；最多三条，不评价口音或发音。</p></div></div></div><button id="startAgain" class="text-button" type="button">← 选择新语境</button></section>
+    </main>
+
+    <aside class="coach-panel"><div class="coach-panel-inner"><p class="eyebrow">你的练习目标</p><h2>把话说清，<br>把事推进。</h2><div class="coach-rule"></div><div class="coach-tip"><span>01</span><p>听懂对方的关键事实。</p></div><div class="coach-tip"><span>02</span><p>追问不确定的信息。</p></div><div class="coach-tip"><span>03</span><p>确认下一步与时间。</p></div><div class="coach-privacy">当前会话只在本页内显示；本应用不保存录音或对话记录。与 AI 服务的通信需要联网。</div></div></aside>
+  </div>
+  <audio id="remoteAudio" autoplay></audio>
+  <script src="/client.js" defer></script>
+</body>
+</html>
