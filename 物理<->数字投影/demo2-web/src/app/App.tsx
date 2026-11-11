@@ -8,6 +8,7 @@ import { ParametersPage } from '../pages/ParametersPage';
 import { ScenarioComparePage } from '../pages/ScenarioComparePage';
 import { ReportPage } from '../pages/ReportPage';
 import { useScenarioStore } from './scenarioStore';
+import { ImportedLayoutPending } from '../components/ImportedLayoutPending';
 
 type PageKey = 'dashboard' | 'layout' | 'plane' | 'elevation' | 'parameters' | 'compare' | 'report';
 
@@ -24,6 +25,8 @@ const pages = [
 export function App() {
   const [activePage, setActivePage] = useState<PageKey>('dashboard');
   const scenario = useScenarioStore((state) => state.scenario);
+  const activeLayout = useScenarioStore((state) => state.activeImportedLayout);
+  const setActiveLayout = useScenarioStore((state) => state.setActiveImportedLayout);
   const supermarketEnabled = useScenarioStore((state) => state.supermarketEnabled);
   const toggleSupermarket = useScenarioStore((state) => state.toggleSupermarket);
 
@@ -64,25 +67,25 @@ export function App() {
       <main className="main-area">
         <header className="topbar">
           <div>
-            <div className="eyebrow">Standard Demo Scenario</div>
+            <div className="eyebrow">{activeLayout ? "Selected Imported Layout" : "Standard Demo Scenario"}</div>
             <h1>{activeTitle}</h1>
           </div>
           <div className="topbar-actions">
-            <div className="scenario-chip">{scenario.name}</div>
-            <button className="mode-toggle" type="button" onClick={toggleSupermarket} aria-pressed={supermarketEnabled}>
+            <div className="scenario-chip">{activeLayout ? `${activeLayout.unitName || activeLayout.fileName} · ${activeLayout.floorLabel || '楼层待定义'}` : scenario.name}</div>
+            {activeLayout ? <button className="mode-toggle" type="button" onClick={() => setActiveLayout(null)}>切回原计算场景</button> : <button className="mode-toggle" type="button" onClick={toggleSupermarket} aria-pressed={supermarketEnabled}>
               Supermarket {supermarketEnabled ? 'ON' : 'OFF'}
-            </button>
+            </button>}
           </div>
         </header>
 
         <section className="content-panel">
           {activePage === 'dashboard' && <DashboardPage />}
-          {activePage === 'layout' && <LayoutAnnotationPage />}
+          {activePage === 'layout' && <LayoutAnnotationPage onOpenPlane={() => setActivePage('plane')} />}
           {activePage === 'plane' && <PlaneViewPage />}
-          {activePage === 'elevation' && <ElevationViewPage />}
-          {activePage === 'parameters' && <ParametersPage />}
-          {activePage === 'compare' && <ScenarioComparePage />}
-          {activePage === 'report' && <ReportPage />}
+          {activePage === 'elevation' && (activeLayout ? <ImportedLayoutPending layout={activeLayout} title="库位与线边水位" /> : <ElevationViewPage />)}
+          {activePage === 'parameters' && (activeLayout ? <ImportedLayoutPending layout={activeLayout} title="生产、物料与运输资源" /> : <ParametersPage />)}
+          {activePage === 'compare' && (activeLayout ? <ImportedLayoutPending layout={activeLayout} title="方案对比" /> : <ScenarioComparePage />)}
+          {activePage === 'report' && (activeLayout ? <ImportedLayoutPending layout={activeLayout} title="当前方案计算报告" /> : <ReportPage />)}
         </section>
       </main>
     </div>

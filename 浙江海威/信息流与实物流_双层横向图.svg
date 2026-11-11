@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 590" role="img" aria-labelledby="title desc">
+  <title id="title">正常业务流：上层信息流，下层实物流</title>
+  <desc id="desc">信息流横向从订单预测到实绩反馈；实物流横向从供应商发货到客户交付。竖向连线表示信息指令驱动实物动作，以及现场状态回传。</desc>
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" fill="#2364aa"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1 1 L9 5 L1 9 Z" fill="#15846c"/></marker>
+    <marker id="arrowGray" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M1 1 L8 4.5 L1 8 Z" fill="#697b8b"/></marker>
+    <style>
+      text{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;fill:#203243}
+      .title{font-size:30px;font-weight:700}.subtitle{font-size:15px;fill:#627487}
+      .band{font-size:17px;font-weight:700;letter-spacing:1px}.node{font-size:18px;font-weight:650;text-anchor:middle}.sub{font-size:13px;fill:#526578;text-anchor:middle}
+      .label{font-size:13px;fill:#667789;text-anchor:middle}
+      .i{fill:#eef5ff;stroke:#88add7;stroke-width:1.5}.p{fill:#ebf8f3;stroke:#72bea6;stroke-width:1.5}
+      .hlineI{stroke:#2364aa;stroke-width:3;fill:none;marker-end:url(#arrowBlue)}.hlineP{stroke:#15846c;stroke-width:3;fill:none;marker-end:url(#arrowGreen)}
+      .down{stroke:#697b8b;stroke-width:1.8;stroke-dasharray:5 5;fill:none;marker-end:url(#arrowGray)}
+      .up{stroke:#697b8b;stroke-width:1.8;stroke-dasharray:5 5;fill:none;marker-end:url(#arrowGray)}
+    </style>
+  </defs>
+  <rect width="1680" height="590" fill="#f9fbfd"/>
+  <text x="60" y="54" class="title">正常业务流｜信息指令驱动实物，实绩回传计划</text>
+  <text x="60" y="82" class="subtitle">横向为流程推进；竖向虚线为指令下达或现场反馈</text>
+
+  <text x="62" y="132" class="band" fill="#2364aa">信息流</text>
+  <line x1="58" y1="146" x2="1620" y2="146" stroke="#d6e5f6" stroke-width="2"/>
+
+  <rect class="i" x="40" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="135" y="210">订单／预测</text><text class="sub" x="135" y="237">需求输入</text>
+  <rect class="i" x="285" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="380" y="210">生产计划</text><text class="sub" x="380" y="237">成品水位、产能、排程</text>
+  <rect class="i" x="530" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="625" y="210">物料采购／计划</text><text class="sub" x="625" y="237">需求、物料水位、补货</text>
+  <rect class="i" x="775" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="870" y="210">采购订单</text><text class="sub" x="870" y="237">供应与到货承诺</text>
+  <rect class="i" x="1020" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="1115" y="210">物流作业指令</text><text class="sub" x="1115" y="237">收、存、备、补、运</text>
+  <rect class="i" x="1265" y="172" width="190" height="95" rx="13"/>
+  <text class="node" x="1360" y="210">生产／发运指令</text><text class="sub" x="1360" y="237">工单、交付任务</text>
+  <rect class="i" x="1510" y="172" width="140" height="95" rx="13"/>
+  <text class="node" x="1580" y="210">实绩回传</text><text class="sub" x="1580" y="237">更新下一轮</text>
+  <path class="hlineI" d="M230 219 H278"/><path class="hlineI" d="M475 219 H523"/><path class="hlineI" d="M720 219 H768"/><path class="hlineI" d="M965 219 H1013"/><path class="hlineI" d="M1210 219 H1258"/><path class="hlineI" d="M1455 219 H1503"/>
+
+  <text x="62" y="359" class="band" fill="#15846c">实物流</text>
+  <line x1="58" y1="373" x2="1620" y2="373" stroke="#d1ebdf" stroke-width="2"/>
+  <rect class="p" x="40" y="400" width="215" height="96" rx="13"/>
+  <text class="node" x="147" y="439">供应商发货</text><text class="sub" x="147" y="467">新物料／量产物料</text>
+  <rect class="p" x="320" y="400" width="215" height="96" rx="13"/>
+  <text class="node" x="427" y="439">到货与 IQC</text><text class="sub" x="427" y="467">质量状态确认</text>
+  <rect class="p" x="600" y="400" width="215" height="96" rx="13"/>
+  <text class="node" x="707" y="439">仓库存储</text><text class="sub" x="707" y="467">数量、库位、批次</text>
+  <rect class="p" x="880" y="400" width="215" height="96" rx="13"/>
+  <text class="node" x="987" y="439">线边补料</text><text class="sub" x="987" y="467">按任务搬运与交接</text>
+  <rect class="p" x="1160" y="400" width="215" height="96" rx="13"/>
+  <text class="node" x="1267" y="439">生产与成品入库</text><text class="sub" x="1267" y="467">消耗、产出、入库</text>
+  <rect class="p" x="1440" y="400" width="210" height="96" rx="13"/>
+  <text class="node" x="1545" y="439">发运与客户</text><text class="sub" x="1545" y="467">实物交付</text>
+  <path class="hlineP" d="M255 448 H313"/><path class="hlineP" d="M535 448 H593"/><path class="hlineP" d="M815 448 H873"/><path class="hlineP" d="M1095 448 H1153"/><path class="hlineP" d="M1375 448 H1433"/>
+
+  <path class="down" d="M870 267 V390"/><text class="label" x="917" y="339">到货计划</text>
+  <path class="down" d="M1115 267 V390"/><text class="label" x="1165" y="339">作业指令</text>
+  <path class="down" d="M1360 267 V390"/><text class="label" x="1422" y="339">生产指令</text>
+  <path class="up" d="M1545 393 V303 H1580 V274"/><text class="label" x="1515" y="319">交付回传</text>
+  <text x="60" y="554" class="subtitle">物流规划定义场地、运力、包装与作业指令，并评价指令与实际动作的偏差；信息系统负责传递和回传。</text>
+</svg>

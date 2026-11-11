@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { loadActiveImportedLayout, persistActiveImportedLayout } from './activeImportedLayout';
+import type { ActiveImportedLayout } from './activeImportedLayout';
 import { factoryLayoutDemoScenario } from '../data/factory-layout-demo-scenario';
 import { calculateRoughMetrics } from '../features/rough-calculation/calculateRoughMetrics';
 import { clearSceneDraft, loadSceneDraft, restoreSceneBackup, saveSceneDraft } from './scenePersistence';
@@ -22,6 +24,8 @@ type PersistenceStatus = {
 
 type ScenarioStore = {
   scenario: Demo2Scenario;
+  activeImportedLayout: ActiveImportedLayout | null;
+  setActiveImportedLayout: (layout: ActiveImportedLayout | null) => boolean;
   supermarketEnabled: boolean;
   activeScenarioId: string;
   roughCalculation: RoughCalculationResult;
@@ -55,6 +59,8 @@ const initialPersistence: PersistenceStatus = loadedDraft
 
 export const useScenarioStore = create<ScenarioStore>((set, get) => ({
   scenario: initialScenario,
+  activeImportedLayout: loadActiveImportedLayout(),
+  setActiveImportedLayout: (layout) => { const saved = persistActiveImportedLayout(layout); set({ activeImportedLayout: layout }); return saved; },
   supermarketEnabled: initialSupermarketEnabled,
   activeScenarioId: 'baseline',
   roughCalculation: calculateRoughMetrics(initialScenario, initialSupermarketEnabled),
@@ -124,7 +130,9 @@ export const useScenarioStore = create<ScenarioStore>((set, get) => ({
       set((state) => ({ persistence: { ...state.persistence, message: '原草稿备份失败，已保留当前场景' } }));
       return;
     }
+    persistActiveImportedLayout(null);
     set({
+      activeImportedLayout: null,
       scenario: factoryLayoutDemoScenario,
       supermarketEnabled: factoryLayoutDemoScenario.settings.supermarketModeEnabled,
       activeScenarioId: 'baseline',

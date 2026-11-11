@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2300 1320" role="img" aria-labelledby="t d">
+  <title id="t">价值流岗位配置：职能型与支持型</title>
+  <desc id="d">上层信息流从客户需求经S&amp;OP、生产计划、物料采购计划到供应商承诺；下层实物流从供应商、收货、原材料仓储、发料上线、生产、成品仓储到客户。职能型岗位在业务流节点中，支持型岗位位于下方独立区域。</desc>
+  <defs>
+    <marker id="blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#276aa5"/></marker>
+    <marker id="green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#168269"/></marker>
+    <marker id="gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#8091a1"/></marker>
+    <style>
+      text{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;fill:#1f3343}
+      .title{font-size:40px;font-weight:700}.subtitle{font-size:19px;fill:#5c6e7d}.band{font-size:25px;font-weight:700}
+      .step{font-size:23px;font-weight:700}.role{font-size:18px;fill:#34495a}.small{font-size:16px;fill:#617487}
+      .info{fill:#edf5fc;stroke:#8fb6d6;stroke-width:2}.physical{fill:#edf8f4;stroke:#80bca9;stroke-width:2}
+      .boundary{fill:#f3f5f7;stroke:#b7c2ca;stroke-width:2}.support{fill:#fff;stroke:#c5d3dc;stroke-width:2}
+      .hinfo{stroke:#276aa5;stroke-width:4;fill:none;marker-end:url(#blue)}
+      .hphys{stroke:#168269;stroke-width:4;fill:none;marker-end:url(#green)}
+      .feedback{stroke:#8091a1;stroke-width:2;stroke-dasharray:8 7;fill:none;marker-end:url(#gray)}
+    </style>
+  </defs>
+  <rect width="2300" height="1320" fill="#f9fbfc"/>
+  <text x="58" y="66" class="title">价值流岗位配置｜正常量产业务</text>
+  <text x="58" y="103" class="subtitle">职能型岗位位于信息与实物业务流；支持型岗位在下方定义规则、提供能力、提升效率。按现有 JD 配岗，未推定编制数。</text>
+
+  <rect x="40" y="138" width="2220" height="754" rx="20" fill="#fff" stroke="#d6e0e7" stroke-width="2"/>
+  <rect x="60" y="153" width="170" height="44" rx="22" fill="#dcecf8"/>
+  <text x="84" y="183" class="band" fill="#276aa5">职能型人员</text>
+
+  <text x="62" y="242" class="band" fill="#276aa5">信息流</text>
+  <text x="210" y="241" class="small">客户需求 → 供应承诺</text>
+  <line x1="62" y1="257" x2="2237" y2="257" stroke="#dceaf5" stroke-width="3"/>
+
+  <rect class="boundary" x="60" y="281" width="390" height="164" rx="13"/>
+  <text x="84" y="322" class="step">客户需求</text>
+  <text x="84" y="358" class="role">销售／客户接口（本批 JD 外）</text>
+  <text x="84" y="392" class="small">订单、预测、交付要求</text>
+
+  <rect class="info" x="505" y="281" width="390" height="164" rx="13"/>
+  <text x="529" y="322" class="step">S&amp;OP</text>
+  <text x="529" y="358" class="role">计划物流经理</text>
+  <text x="529" y="391" class="small">生产计划主管参与；供需平衡</text>
+
+  <rect class="info" x="950" y="281" width="390" height="164" rx="13"/>
+  <text x="974" y="322" class="step">生产计划</text>
+  <text x="974" y="358" class="role">生产计划主管、计划员</text>
+  <text x="974" y="391" class="small">成品水位、产能、排程与工单</text>
+
+  <rect class="info" x="1395" y="281" width="390" height="164" rx="13"/>
+  <text x="1419" y="322" class="step">物料计划制作与发布</text>
+  <text x="1419" y="358" class="role">物料采购／计划（目标职责组合）</text>
+  <text x="1419" y="391" class="small">现计划员＋采购员的物料端职责</text>
+
+  <rect class="boundary" x="1840" y="281" width="390" height="164" rx="13"/>
+  <text x="1864" y="322" class="step">订单与供应承诺</text>
+  <text x="1864" y="358" class="role">采购员（生产物料）执行“购”</text>
+  <text x="1864" y="391" class="small">使用“采”已确定的供应资源与条件</text>
+
+  <path class="hinfo" d="M450 363 H497"/><path class="hinfo" d="M895 363 H942"/>
+  <path class="hinfo" d="M1340 363 H1387"/><path class="hinfo" d="M1785 363 H1832"/>
+
+  <text x="62" y="559" class="band" fill="#168269">实物流</text>
+  <text x="210" y="558" class="small">供应商 → 客户（方向与上层相反）</text>
+  <line x1="62" y1="574" x2="2237" y2="574" stroke="#d9eee5" stroke-width="3"/>
+
+  <rect class="physical" x="60" y="600" width="270" height="218" rx="13"/>
+  <text x="83" y="641" class="step">成品发货／客户</text>
+  <text x="83" y="678" class="role">打包工、仓管员</text>
+  <text x="83" y="708" class="role">驾驶员、计划员</text>
+  <text x="83" y="774" class="small">包装、装车、运输、签收</text>
+
+  <rect class="physical" x="376" y="600" width="270" height="218" rx="13"/>
+  <text x="399" y="641" class="step">成品仓储</text>
+  <text x="399" y="678" class="role">仓库主管、组长</text>
+  <text x="399" y="708" class="role">仓管员、统计文员</text>
+  <text x="399" y="774" class="small">实物准确；水位归生产计划</text>
+
+  <rect class="boundary" x="692" y="600" width="270" height="218" rx="13"/>
+  <text x="715" y="641" class="step">生产</text>
+  <text x="715" y="678" class="role">生产部门（本批 JD 外）</text>
+  <text x="715" y="774" class="small">领料、报工、成品产出</text>
+
+  <rect class="physical" x="1008" y="600" width="270" height="218" rx="13"/>
+  <text x="1031" y="641" class="step">发料上线</text>
+  <text x="1031" y="678" class="role">仓库组长、仓管员</text>
+  <text x="1031" y="708" class="role">叉车工、刀具管理员</text>
+  <text x="1031" y="774" class="small">按指令备料、搬运、交接</text>
+
+  <rect class="physical" x="1324" y="600" width="270" height="218" rx="13"/>
+  <text x="1347" y="641" class="step">原材料仓储</text>
+  <text x="1347" y="677" class="role">仓库主管、组长</text>
+  <text x="1347" y="707" class="role">仓管／统计／叉车</text>
+  <text x="1347" y="736" class="role">贵重物品主管、刀具管理员</text>
+  <text x="1347" y="774" class="small">实物准确；水位归物料计划</text>
+
+  <rect class="physical" x="1640" y="600" width="270" height="218" rx="13"/>
+  <text x="1663" y="641" class="step">原材料收货</text>
+  <text x="1663" y="678" class="role">仓管员、仓库组长</text>
+  <text x="1663" y="708" class="role">仓库统计文员</text>
+  <text x="1663" y="774" class="small">IQC 质量判定（本批 JD 外）</text>
+
+  <rect class="boundary" x="1956" y="600" width="270" height="218" rx="13"/>
+  <text x="1979" y="641" class="step">供应商</text>
+  <text x="1979" y="678" class="role">外部实物流起点</text>
+  <text x="1979" y="774" class="small">按承诺交付物料</text>
+
+  <path class="hphys" d="M1956 709 H1918"/><path class="hphys" d="M1640 709 H1602"/>
+  <path class="hphys" d="M1324 709 H1286"/><path class="hphys" d="M1008 709 H970"/>
+  <path class="hphys" d="M692 709 H654"/><path class="hphys" d="M376 709 H338"/>
+
+  <path class="feedback" d="M195 600 V454"/>
+  <path class="feedback" d="M827 600 V485 H1145 V454"/>
+  <path class="feedback" d="M1775 600 V485 H1590 V454"/>
+  <text x="74" y="512" class="small">发运实绩反馈需求</text>
+  <text x="980" y="512" class="small">生产实绩反馈排程</text>
+  <text x="1608" y="512" class="small">收货实绩反馈物料计划</text>
+
+  <rect x="40" y="922" width="2220" height="336" rx="20" fill="#f0f4f7" stroke="#d6e0e7" stroke-width="2"/>
+  <rect x="60" y="939" width="170" height="44" rx="22" fill="#dee6ed"/>
+  <text x="84" y="969" class="band">支持型人员</text>
+  <text x="258" y="970" class="small">不承担每日实物交付；定义规则、提供能力、评价并改善价值流</text>
+
+  <rect class="support" x="60" y="1010" width="500" height="211" rx="13"/>
+  <text x="86" y="1052" class="step">物流规划（拟设）</text>
+  <text x="86" y="1087" class="role">未来纳入数字化团队</text>
+  <text x="86" y="1122" class="small">场地、运力、运输、包装、HU</text>
+  <text x="86" y="1150" class="small">定义量化指令，评价实物流效果</text>
+
+  <rect class="support" x="620" y="1010" width="500" height="211" rx="13"/>
+  <text x="646" y="1052" class="step">工业工程</text>
+  <text x="646" y="1087" class="role">高级经理、助理</text>
+  <text x="646" y="1122" class="small">标准工时／C/T、产能、工位布局</text>
+  <text x="646" y="1150" class="small">现场效率与线边接口改善</text>
+
+  <rect class="support" x="1180" y="1010" width="500" height="211" rx="13"/>
+  <text x="1206" y="1052" class="step">信息化与系统集成</text>
+  <text x="1206" y="1087" class="role">信息经理、网络安全、软件开发</text>
+  <text x="1206" y="1117" class="role">ERP／PLM／OA／桌面运维</text>
+  <text x="1206" y="1150" class="small">系统贯通、指令下发、状态回传</text>
+
+  <rect class="support" x="1740" y="1010" width="500" height="211" rx="13"/>
+  <text x="1766" y="1052" class="step">前期“采”与采购治理</text>
+  <text x="1766" y="1087" class="role">采购总监、项目采购</text>
+  <text x="1766" y="1117" class="role">采购主管部分职责；采购助理待确认</text>
+  <text x="1766" y="1150" class="small">寻源、准入、价格、供货条件</text>
+
+  <text x="58" y="1291" class="small">注：采购主管现 JD 跨“采”与“购”，目标职责待拆分；OA、桌面运维和采购助理原 JD 有缺项。图中反复出现的岗位表示其参与多个节点，不表示增加编制。</text>
+</svg>

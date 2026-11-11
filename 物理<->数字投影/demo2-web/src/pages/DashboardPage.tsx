@@ -1,9 +1,12 @@
 import { useScenarioStore } from '../app/scenarioStore';
+import { ImportedOperationalMap } from '../components/ImportedOperationalMap';
 
 export function DashboardPage() {
   const scenario = useScenarioStore((state) => state.scenario);
+  const activeLayout = useScenarioStore((state) => state.activeImportedLayout);
   const proposed = scenario.scenarios.find((item) => item.id === 'proposed');
   const baseline = scenario.scenarios.find((item) => item.id === 'baseline');
+  if (activeLayout) return <div className="page-stack"><section className="section-card"><p className="eyebrow">DEMO2 SELECTED LAYOUT</p><h2>{activeLayout.unitName || activeLayout.fileName}</h2><p>{activeLayout.buildingName || '楼栋待定义'} / {activeLayout.floorLabel || '楼层待定义'} · 第 {activeLayout.pageNumber} 页。当前是所选 Layout 的空间投影；业务映射后再计算库存与运力。</p></section><div className="recovery-grid"><article className="recovery-card"><strong>功能区</strong>{activeLayout.regions.length} 个</article><article className="recovery-card"><strong>墙段</strong>{activeLayout.lines.filter((line) => line.type === 'wall').length} 段</article><article className="recovery-card"><strong>通道候选线</strong>{activeLayout.lines.filter((line) => line.type === 'aisle').length} 条</article><article className="recovery-card"><strong>业务点位</strong>{activeLayout.objectPoints.length} 个</article></div><ImportedOperationalMap layout={activeLayout} compact /></div>;
 
   return (
     <div className="page-stack">
